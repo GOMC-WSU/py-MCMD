@@ -5,7 +5,7 @@ NAMD simulation the energies will be different.  It should be OK to not use impr
 and using them in NAMD, since the protein will not move in the GOMC simulation due to its size.  
 
 
-## TO RUN hybrid simulations:
+## TO RUN hybrid simulations
 - (1) Change the variables in the user_input_variables_NAMD_GOMC.json file.  Note the information about the variables is in the python code. 
 There is some initial setup required to add and rename the GOMC and NAMD binary files and properly place the starting PDB, PDF and force field files.
 	
@@ -40,21 +40,10 @@ There is some initial setup required to add and rename the GOMC and NAMD binary 
 		Number of CPU cores to use for box 0.  This is the ONLY place to enter CPU cores for 
 		'GCMC', 'NPT', 'NVT', and  'GEMC' and only_use_box_0_for_namd_for_gemc = True
 		Note: The total simulation core = no_core_box_0 + no_core_box_1, when using the
-		('GEMC' and only_use_box_0_for_namd_for_gemc = False) values and .  
+		(GEMC' and only_use_box_0_for_namd_for_gemc = False) values.  
 		Note: If using the 'GCMC', 'NPT', 'NVT', or 
-		('GEMC' and only_use_box_0_for_namd_for_gemc = True) ensembles, 
+		(GEMC' and only_use_box_0_for_namd_for_gemc = True) ensembles, 
 		the total simulation cores = no_core_box_0, regardless of the no_core_box_1 value.
-		Note: the "-namd_sims_order" or "--namd_simulation_order" flags are set to 'series' 
-		by default, which means that the total cores will be used when running both 
-		box 0 and box 1 in series for the GEMC simulations with two (2) NAMD simulations boxes 
-		('GEMC' and only_use_box_0_for_namd_for_gemc = False).
-		Note: If the "-namd_sims_order" or "--namd_simulation_order" flags are set manually 
-		set to 'parallel', then the two (2) boxes will run the NAMD simulations in parallel 
-		with designated cores.  
-		Note: the GPU could be overloaded if running both NAMD simulations in parallel. 
-		Therefore, the user should run in 'parallel' mode with some caution and understanding 
-		of the system. 
-		Example for flags: python run_NAMD_GOMC.py -f user_input_NAMD_GOMC.json --namd_simulation_order parallel
 
 	no_core_box_1 : integer (>= 0)  
 		Number or CPU cores to use in box 1.  This always ZERO for 'GCMC', 'NPT', 'NVT' (>= 0).  
@@ -63,18 +52,7 @@ There is some initial setup required to add and rename the GOMC and NAMD binary 
 		(GEMC' and only_use_box_0_for_namd_for_gemc = False) values.  
 		Note: If using the 'GCMC', 'NPT', 'NVT', or 
 		(GEMC' and only_use_box_0_for_namd_for_gemc = True) ensembles, 
-		the total simulation cores = no_core_box_0, regardless of the no_core_box_1 value.
-		Note: the "-namd_sims_order" or "--namd_simulation_order" flags are set to 'series' 
-		by default, which means that the total cores will be used when running both 
-		box 0 and box 1 in series for the GEMC simulations with two (2) NAMD simulations boxes 
-		('GEMC' and only_use_box_0_for_namd_for_gemc = False).
-		Note: If the "-namd_sims_order" or "--namd_simulation_order" flags are set manually 
-		set to 'parallel', then the two (2) boxes will run the NAMD simulations in parallel 
-		with designated cores.  
-		Note: the GPU could be overloaded if running both NAMD simulations in parallel. 
-		Therefore, the user should run in 'parallel' mode with some caution and understanding 
-		of the system. 
-		Example for flags: python run_NAMD_GOMC.py -f user_input_NAMD_GOMC.json --namd_simulation_order parallel
+		the total simulation cores = no_core_box_0, regardless of the no_core_box_1 value.	
 		
 	simulation_temp_k : float or integer 
 		GOMC and NAMD units of temperature are in Kelvin.
@@ -218,13 +196,15 @@ There is some initial setup required to add and rename the GOMC and NAMD binary 
 - (2) If you have previous  "NAMD" and  "GOMC" folders in this directory deleted them, so you do not have mixed data in the simulation folders. 
 If they are not deleted the new data will overwrite the old data. 
  
+
 - (3) Assuming that you have the packages installed or running anaconda env, if not install them.  Then run the hybrid simulations from its current directory with its json user variable file name (user_input_NAMD_GOMC.json) or whatever the user named it :
 
-python run_NAMD_GOMC.py -f "user_input_NAMD_GOMC.json"  or     python run_NAMD_GOMC.py --file "user_input_NAMD_GOMC.json"
+python run_NAMD_GOMC.py -f user_input_NAMD_GOMC.json  	or     python run_NAMD_GOMC.py --file user_input_NAMD_GOMC.json
 
 or 
 
-python run_NAMD_GOMC.py -f "user_set_name.json"  or     python run_NAMD_GOMC.py --file "user_set_name.json"
+python run_NAMD_GOMC.py -f "user_set_name.json" 	 or     python run_NAMD_GOMC.py --file "user_set_name.json"
+
 
 - (4) The simulation runs are sent to the "NAMD" and  "GOMC" folders, and the hybrid log file is in the same directory as the "run_NAMD_GOMC.py" file.
 
@@ -236,8 +216,10 @@ python run_NAMD_GOMC.py -f "user_set_name.json"  or     python run_NAMD_GOMC.py 
 
 - (1) This file currently needs to be run from the directory with the "NAMD" and  "GOMC" folders !!!!
 
+
 - (2) Download the The CatDCD - Concatenate DCD files (see reference information below) 
 and put the catdcd-4.0b directory in the relative directory ->  required_data/bin .
+
 
 - (3) Change the variables to the same as the ones used in the code:
 	
@@ -255,10 +237,13 @@ and put the catdcd-4.0b directory in the relative directory ->  required_data/bi
 		The type of simulation you are combining.  
 		Hybrid is the hybrid NAMD-GOMC simulations.
 		'GOMC-only' is stand-alone GOMC simulation.
-		The NAMD-only option is currently unavailable.
+		'NAMD-only' is stand-alone NAMD simulation.
+		When using the 'GOMC-only', or 'NAMD-only' the dcd combining
+		options and catdcd program and path are not required
 
-	gomc_only_log_filename : string
-		The relative or full path and file name of the log file for the GOMC simulation,
+	gomc_or_namd_only_log_filename : string
+		The relative path and file name of the log file for the 
+		GOMC-only or NAMD-only simulation,
 		which is used to create the same file format as the
 		hybrid simulation combining files.   
 
@@ -269,6 +254,8 @@ and put the catdcd-4.0b directory in the relative directory ->  required_data/bi
 		simulations/ensembles (simulation_type). 
 		true = combine all the NAMD dcd files 
 		false = do not combine all the NAMD dcd files 
+		This is not required for the when only combining the  
+		'GOMC-only', or 'NAMD-only' data.
 
 	combine_gomc_dcd_file : bool (true or false)
 		This chooses if you want combine all the GOMC dcd files into one
@@ -277,17 +264,26 @@ and put the catdcd-4.0b directory in the relative directory ->  required_data/bi
 		simulations/ensembles (simulation_type). 
 		true = combine all the GOMC dcd files 
 		false = do not combine all the GOMC dcd files 
+		This is not required for the when only combining the  
+		'GOMC-only', or 'NAMD-only' data.
 
 	rel_path_to_combine_binary_catdcd : string (only 'Hybrid' or 'GOMC-only') 
 		The relative path and file name to the catdcd, which are provided
 		from the Theoretical and Compuational Biopyysisc group (VMD/NAMD development team)
 		(https://www.ks.uiuc.edu/Development/MDTools/catdcd/). 
 		This tool is used to combine the dcd files for the hybrid simulations.
+		This is not required for the when only combining the  
+		'GOMC-only', or 'NAMD-only' data.
 
 
 - (4) Assuming that you have the packages installed or running anaconda env, if not install them.  Then run :
 
-python combine_data_NAMD_GOMC.py    # runs all the combining file data provided its in its current location
+python combine_data_NAMD_GOMC.py -f user_input_combine_data_NAMD_GOMC.json 	 or     python combine_data_NAMD_GOMC.py --file user_input_combine_data_NAMD_GOMC.json      	# runs all the combining file data provided its in its current location
+
+or 
+
+python combine_data_NAMD_GOMC.py -f "user_set_name.json"	  or     python combine_data_NAMD_GOMC.py --file "user_set_name.json"
+
 
 - (5) The combined data is now located in the "combined_data" folder, with the minimization run data removed (i.e., step 0 is the first step after the minimization.)
 
