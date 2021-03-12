@@ -1,3 +1,5 @@
+import argparse
+import sys
 import os
 import pandas as pd
 import scipy as sp
@@ -9,13 +11,59 @@ import glob
 from warnings import warn
 
 # combines the data from the MD/MC simulations (NAMD/GOMC) for the NPT, NVT, GEMC, and GCMC ensembles
+# or just combines the log files for the NAMD-only or GOMC-only simulations.
+
+# *************************************************
+# The python arguments that need to be selected to run the simulations (start)
+# *************************************************
+def _get_args():
+    arg_parser = argparse.ArgumentParser()
+
+    # get the filename with the user required input
+    arg_parser.add_argument("-f", "--file",
+                            help="Defines the variable inputs to the hybrid NAMD/GOMC, NAMD-only, or GOMC-only "
+                                 "log or consol output combining scipt.",
+                            type=str)
+
+    parser_arguments = arg_parser.parse_args()
+
+    # check to see if the file exists
+    if parser_arguments.file :
+        if os.path.exists(parser_arguments.file) :
+            print("INFO: Reading data from <{}> file.".format(parser_arguments.file))
+        else :
+            print("ERROR: Console file <{}> does not exist!".format(parser_arguments.file))
+            sys.exit(1)
+
+    print('arg_parser.file = ' + str(parser_arguments.file))
+
+    return [parser_arguments.file]
+
+# *************************************************
+# The python arguments that need to be selected to run the simulations (end)
+# *************************************************
+
+
+
+# *************************************************
+# Import read and check the user input file for errors (start)
+# *************************************************
+# import and read the users json file
+[json_filename] = _get_args()
+print('json_filename = ' +str(json_filename))
+
+# just for testing , need to remove later
+manual_testing_filename_input_override = False
+if json_filename is None and manual_testing_filename_input_override is True:
+    json_filename = "user_input_combine_data_NAMD_GOMC.json"
+
+json_file_data = json.load(open(json_filename))
+#json_file_data = json.load(open("user_input_combine_data_NAMD_GOMC.json"))
+json_file_data_keys_list = json_file_data.keys()
+
 # *************************************************
 # Changeable variables (start)
 # *************************************************
-
-# import and read the users json file
-json_file_data = json.load(open("user_input_combine_data_NAMD_GOMC.json"))
-json_file_data_keys_list = json_file_data.keys()
 
 # get the simulation_type variable from the json file
 if "simulation_type" not in json_file_data_keys_list:
@@ -39,16 +87,16 @@ if only_use_box_0_for_namd_for_gemc is not True and only_use_box_0_for_namd_for_
 if "simulation_engine_options" not in json_file_data_keys_list:
     raise TypeError("The simulation_engine_options key is not provided.\n")
 simulation_engine_options = json_file_data["simulation_engine_options"]
-if simulation_engine_options not in ["Hybrid", "GOMC-only"]:
-    raise TypeError('The simulation_engine_options currently only as the "Hybrid", or "GOMC-only" options, '
-                    'available to enter in the json file.\n')
+if simulation_engine_options not in ["Hybrid", "GOMC-only", "NAMD-only"]:
+    raise TypeError('The simulation_engine_options are only "Hybrid", "GOMC-only", or "NAMD-only", '
+                    'which are entered in the json file.\n')
 
-# get the gomc_only_log_filename variable from the json file
-if "gomc_only_log_filename" not in json_file_data_keys_list:
-    raise TypeError("The gomc_only_log_filename key is not provided.\n")
-gomc_only_log_filename = json_file_data["gomc_only_log_filename"]
-if not isinstance(gomc_only_log_filename, str):
-    raise TypeError('The gomc_only_log_filename must be entered as a string in the json file.\n')
+# get the gomc_or_namd_only_log_filename variable from the json file
+if "gomc_or_namd_only_log_filename" not in json_file_data_keys_list:
+    raise TypeError("The gomc_or_namd_only_log_filename key is not provided.\n")
+gomc_or_namd_only_log_filename = json_file_data["gomc_or_namd_only_log_filename"]
+if not isinstance(gomc_or_namd_only_log_filename, str):
+    raise TypeError('The gomc_or_namd_only_log_filename must be entered as a string in the json file.\n')
 
 # get the combine_namd_dcd_file variable from the json file
 if "combine_namd_dcd_file" not in json_file_data_keys_list:
@@ -185,57 +233,73 @@ if simulation_engine_options == 'Hybrid':
 
 
 # set all the filenames and paths
-namd_box_0_data_filename = "{}/{}".format(full_path_to_combined_data_folder, 'NAMD_data_box_0.txt')
-if simulation_type in ["GEMC"] and only_use_box_0_for_namd_for_gemc is False:
-    namd_box_1_data_filename = "{}/{}".format(full_path_to_combined_data_folder, 'NAMD_data_box_1.txt')
+if simulation_engine_options in ['Hybrid', 'NAMD-only']:
+    namd_box_0_data_filename = "{}/{}".format(full_path_to_combined_data_folder, 'NAMD_data_box_0.txt')
+    if simulation_type in ["GEMC"] and only_use_box_0_for_namd_for_gemc is False:
+        namd_box_1_data_filename = "{}/{}".format(full_path_to_combined_data_folder, 'NAMD_data_box_1.txt')
 
 
-namd_box_0_data_density_filename = "{}/{}".format(full_path_to_combined_data_folder, 'NAMD_data_density_box_0.txt')
-if simulation_type in ["GEMC"] and only_use_box_0_for_namd_for_gemc is False:
-    namd_box_1_data_density_filename = "{}/{}".format(full_path_to_combined_data_folder, 'NAMD_data_density_box_1.txt')
+    namd_box_0_data_density_filename = "{}/{}".format(full_path_to_combined_data_folder, 'NAMD_data_density_box_0.txt')
+    if simulation_type in ["GEMC"] and only_use_box_0_for_namd_for_gemc is False:
+        namd_box_1_data_density_filename = "{}/{}".format(full_path_to_combined_data_folder, 'NAMD_data_density_box_1.txt')
+
+if simulation_engine_options in ['Hybrid', 'GOMC-only']:
+    gomc_box_0_data_filename = "{}/{}".format(full_path_to_combined_data_folder, 'GOMC_data_box_0.txt')
+    gomc_box_0_energies_stat_filename = "{}/{}".format(full_path_to_combined_data_folder, 'GOMC_Energies_Stat_box_0.txt')
+    gomc_box_0_energies_stat_kcal_per_mol_filename = "{}/{}".format(full_path_to_combined_data_folder,
+                                                                    'GOMC_Energies_Stat_kcal_per_mol_box_0.txt')
 
 
-gomc_box_0_data_filename = "{}/{}".format(full_path_to_combined_data_folder, 'GOMC_data_box_0.txt')
-gomc_box_0_energies_stat_filename = "{}/{}".format(full_path_to_combined_data_folder, 'GOMC_Energies_Stat_box_0.txt')
-gomc_box_0_energies_stat_kcal_per_mol_filename = "{}/{}".format(full_path_to_combined_data_folder,
-                                                                'GOMC_Energies_Stat_kcal_per_mol_box_0.txt')
+    if simulation_type in ["GEMC", "GCMC"]:
+        gomc_box_1_data_filename = "{}/{}".format(full_path_to_combined_data_folder,'GOMC_data_box_1.txt')
+        gomc_box_1_energies_stat_filename = "{}/{}".format(full_path_to_combined_data_folder,
+                                                           'GOMC_Energies_Stat_box_1.txt')
+        gomc_box_1_energies_stat_kcal_per_mol_filename = "{}/{}".format(full_path_to_combined_data_folder,
+                                                                        'GOMC_Energies_Stat_kcal_per_mol_box_1.txt')
 
+    gomc_box_0_data_file = open(gomc_box_0_data_filename, 'w')
+    if simulation_type in ["GEMC"]:
+        gomc_box_1_data_file = open(gomc_box_1_data_filename, 'w')
 
-if simulation_type in ["GEMC", "GCMC"]:
-    gomc_box_1_data_filename = "{}/{}".format(full_path_to_combined_data_folder,'GOMC_data_box_1.txt')
-    gomc_box_1_energies_stat_filename = "{}/{}".format(full_path_to_combined_data_folder,
-                                                       'GOMC_Energies_Stat_box_1.txt')
-    gomc_box_1_energies_stat_kcal_per_mol_filename = "{}/{}".format(full_path_to_combined_data_folder,
-                                                                    'GOMC_Energies_Stat_kcal_per_mol_box_1.txt')
+    gomc_box_0_hist_filename = "{}/{}".format(full_path_to_combined_data_folder, 'GOMC_hist_data_box_0.txt')
+    if simulation_type in ["GCMC"]:
+        gomc_box_0_hist_file = open(gomc_box_0_hist_filename, 'w')
 
-gomc_box_0_data_file = open(gomc_box_0_data_filename, 'w')
-if simulation_type in ["GEMC"]:
-    gomc_box_1_data_file = open(gomc_box_1_data_filename, 'w')
+if simulation_engine_options in ['Hybrid', 'NAMD-only']:
+    namd_box_0_data_file = open(namd_box_0_data_filename, 'w')
+    if simulation_type in ["GEMC"] and only_use_box_0_for_namd_for_gemc is False:
+        namd_box_1_data_file = open(namd_box_1_data_filename, 'w')
+        e_values_namd_box_1_density_list = []
 
-gomc_box_0_hist_filename = "{}/{}".format(full_path_to_combined_data_folder, 'GOMC_hist_data_box_0.txt')
-if simulation_type in ["GCMC"]:
-    gomc_box_0_hist_file = open(gomc_box_0_hist_filename, 'w')
+if simulation_engine_options in ['Hybrid']:
+    combined_box_0_filename_only = 'combined_NAMD_GOMC_data_box_0.txt'
+    combined_box_1_filename_only = 'combined_NAMD_GOMC_data_box_1.txt'
 
-namd_box_0_data_file = open(namd_box_0_data_filename, 'w')
-if simulation_type in ["GEMC"] and only_use_box_0_for_namd_for_gemc is False:
-    namd_box_1_data_file = open(namd_box_1_data_filename, 'w')
-    e_values_namd_box_1_density_list = []
+elif simulation_engine_options in ['GOMC-only']:
+    combined_box_0_filename_only = 'combined_GOMC_data_box_0.txt'
+    combined_box_1_filename_only = 'combined_GOMC_data_box_1.txt'
+elif simulation_engine_options in ['NAMD-only']:
+    combined_box_0_filename_only = 'combined_NAMD_data_box_0.txt'
+    combined_box_1_filename_only = 'combined_NAMDC_data_box_1.txt'
 
-combined_box_0_data_filename = "{}/{}".format(full_path_to_combined_data_folder, 'combined_NAMD_GOMC_data_box_0.txt')
-combined_box_1_data_filename = "{}/{}".format(full_path_to_combined_data_folder, 'combined_NAMD_GOMC_data_box_1.txt')
+combined_box_0_data_filename = "{}/{}".format(full_path_to_combined_data_folder,
+                                              combined_box_0_filename_only)
+combined_box_1_data_filename = "{}/{}".format(full_path_to_combined_data_folder,
+                                              combined_box_1_filename_only)
 
+if simulation_engine_options in ['Hybrid']:
 # starting point for the GOMC dist dicts for GCMC only
-if simulation_type in ['GCMC']:
-    full_path_dist_files_only_run_0_list = glob.glob('{}/{}/{}/{}'.format(python_file_directory,
-                                                                          path_gomc_runs,
-                                                                          gomc_directory_list[0],
-                                                                          "*dis1a.dat")
-                                                     )
+    if simulation_type in ['GCMC']:
+        full_path_dist_files_only_run_0_list = glob.glob('{}/{}/{}/{}'.format(python_file_directory,
+                                                                              path_gomc_runs,
+                                                                              gomc_directory_list[0],
+                                                                              "*dis1a.dat")
+                                                         )
 
-    no_dist_files_only_run_0_list = len(full_path_dist_files_only_run_0_list)
-    dict_of_current_dist_dicts = {}
-    for i in range(0, no_dist_files_only_run_0_list):
-        dict_of_current_dist_dicts.update({i + 1: {}})
+        no_dist_files_only_run_0_list = len(full_path_dist_files_only_run_0_list)
+        dict_of_current_dist_dicts = {}
+        for i in range(0, no_dist_files_only_run_0_list):
+            dict_of_current_dist_dicts.update({i + 1: {}})
 
 
 def get_namd_log_data(read_namd_box_x_log_file,
@@ -1022,7 +1086,7 @@ if simulation_engine_options == 'Hybrid':
                     e_titles_stat_titles_gomc_box_1_iteration_list, \
                     e_titles_kcal_per_mol_stat_titles_gomc_box_1_iteration_list, \
                     e_stat_values_gomc_box_1_iteration_list, \
-                    e_stat_values_gomc_box_1_list
+                    e_stat_values_gomc_box_1_list, \
                     e_stat_values_gomc_kcal_per_mol_box_1_list = get_gomc_log_data(read_gomc_box_1_log_file,
                                                                                    gomc_box_1_data_file,
                                                                                    run_no, box_no_1)
@@ -1031,7 +1095,7 @@ if simulation_engine_options == 'Hybrid':
                     e_titles_stat_titles_gomc_box_1_iteration_list, \
                     e_titles_kcal_per_mol_stat_titles_gomc_box_1_iteration_list, \
                     e_stat_values_gomc_box_1_iteration_list, \
-                    e_stat_values_gomc_box_1_list
+                    e_stat_values_gomc_box_1_list, \
                     e_stat_values_gomc_kcal_per_mol_box_1_list  = get_gomc_log_data(read_gomc_box_1_log_file,
                                                                                     gomc_box_1_data_file,
                                                                                     run_no, box_no_1,
@@ -1313,7 +1377,7 @@ if simulation_engine_options == 'Hybrid':
     # ****************************************
     # write the combined NAMD and GOMC data for box 1  (end)
     # ****************************************
-    
+
     # ****************************************
     # write the combined NAMD and GOMC data  (end)
     # ****************************************
@@ -1338,16 +1402,16 @@ elif simulation_engine_options == 'GOMC-only':
 
     print("INFO: Started all data extraction for GOMC-only runs and exported into muliple files and types")
 
-    read_gomc_box_0_log_file = open(gomc_only_log_filename, 'r').readlines()
+    read_gomc_box_0_log_file = open(gomc_or_namd_only_log_filename, 'r').readlines()
     # get box 0 data
     box_no_0 = int(0)
+
     e_titles_gomc_box_0_iteration, \
-    e_titles_Stat_titles_gomc_box_0_iteration_list, \
+    e_titles_stat_titles_gomc_box_0_iteration_list, \
     e_titles_kcal_per_mol_stat_titles_gomc_box_0_iteration_list, \
     e_stat_values_gomc_box_0_iteration_list, \
-    e_stat_values_gomc_kcal_per_mol_box_0_list, \
-    e_titles_kcal_per_mol_stat_titles_gomc_box_0_iteration_list, \
-    e_stat_values_gomc_box_0_list = get_gomc_log_data(read_gomc_box_0_log_file,
+    e_stat_values_gomc_box_0_list, \
+    e_stat_values_gomc_kcal_per_mol_box_0_list = get_gomc_log_data(read_gomc_box_0_log_file,
                                                       gomc_box_0_data_file,
                                                       run_no,
                                                       box_no_0
@@ -1357,7 +1421,7 @@ elif simulation_engine_options == 'GOMC-only':
     # generate energy and system file data for box 1
     print('simulation_type = ' +str(simulation_type))
     if simulation_type in ["GEMC"]:
-        read_gomc_box_1_log_file = open(gomc_only_log_filename, 'r').readlines()
+        read_gomc_box_1_log_file = open(gomc_or_namd_only_log_filename, 'r').readlines()
 
         box_no_1 = int(1)
 
@@ -1365,10 +1429,8 @@ elif simulation_engine_options == 'GOMC-only':
         e_titles_stat_titles_gomc_box_1_iteration_list, \
         e_titles_kcal_per_mol_stat_titles_gomc_box_1_iteration_list, \
         e_stat_values_gomc_box_1_iteration_list, \
-        e_stat_values_gomc_kcal_per_mol_box_1_list, \
-        get_e_gomc_box_1_titles, \
-        get_stat_box_1_titles, \
-        e_stat_values_gomc_box_1_list = get_gomc_log_data(read_gomc_box_1_log_file,
+        e_stat_values_gomc_box_1_list, \
+        e_stat_values_gomc_kcal_per_mol_box_1_list = get_gomc_log_data(read_gomc_box_1_log_file,
                                                           gomc_box_1_data_file,
                                                           run_no,
                                                           box_no_1
@@ -1381,7 +1443,7 @@ elif simulation_engine_options == 'GOMC-only':
     # *************************************************
 
     e_stat_gomc_box_0_df = pd.DataFrame(data=e_stat_values_gomc_box_0_list,
-                                     columns=e_titles_Stat_titles_gomc_box_0_iteration_list)
+                                     columns=e_titles_stat_titles_gomc_box_0_iteration_list)
     e_stat_gomc_box_0_df.to_csv(gomc_box_0_energies_stat_filename, sep="	", index=False)
 
     e_stat_kcal_per_mol_gomc_box_0_df = pd.DataFrame(data=e_stat_values_gomc_kcal_per_mol_box_0_list,
@@ -1522,17 +1584,113 @@ elif simulation_engine_options == 'GOMC-only':
         combined_data_sorted_box_1_df.drop("MOD_STEP", axis=1, inplace=True)
         combined_data_sorted_box_1_df.to_csv(combined_box_1_data_filename, sep="	", index=False)
 
-    # ****************************************
-    # write the combined NAMD and GOMC data for box 1  (end)
-    # ****************************************
+        # ****************************************
+        # write the combined NAMD and GOMC data for box 1  (end)
+        # ****************************************
+
+        # ****************************************
+        # write the combined NAMD and GOMC data  (end)
+        # ****************************************
+        print("INFO: Finished all data extraction for GOMC-only runs and exported into muliple files and types")
+
+        # ****************************************
+        # ****************************************
+        # NAMD-onl data extraction (end)
+        # ****************************************
+        # ****************************************
+
+elif simulation_engine_options == 'NAMD-only':
+
+    run_no = 0  # run number is always 1
+    current_step = 0
+
+    print("INFO: Started all data extraction for NAMD-only runs and exported into multiple files and types")
+
+    # *************************************
+    # get NAMD- only energies
+    # ***********************initial_Energies**************
+    no_namd_box_0_directory = str(gomc_or_namd_only_log_filename)
+
+    read_namd_box_0_log_file = open(gomc_or_namd_only_log_filename, 'r').readlines()
+
+    for i, line in enumerate(read_namd_box_0_log_file):
+        split_line = line.split()
+        if line.startswith('TCL:') is True:
+            if split_line[0] == 'TCL:' and len(split_line) >= 5:
+                if split_line[1] == 'Minimizing' and split_line[2] == 'for' and split_line[4] == 'steps':
+                    namd_minimizing_steps_box_0 = float(split_line[3])
+                    current_step += (-1 * namd_minimizing_steps_box_0)
+
+    e_titles_namd_box_0_iteration, \
+    e_titles_namd_box_0_density_iteration, \
+    e_values_namd_box_0_iteration, \
+    e_values_namd_box_0_density_list, \
+    e_property_values_namd_box_0_list = get_namd_log_data(read_namd_box_0_log_file,
+                                                          namd_box_0_data_file,
+                                                          run_no)
+
+    e_values_density_namd_box_0_df = pd.DataFrame(data=e_values_namd_box_0_density_list,
+                                                  columns=e_titles_namd_box_0_density_iteration)
+    e_values_density_namd_box_0_df.to_csv(namd_box_0_data_density_filename, sep="	", index=False)
 
     # ****************************************
-    # write the combined NAMD and GOMC data  (end)
+    # write the combined NAMD data  (Start)
     # ****************************************
-    print("INFO: finished all data extraction for GOMC-only runs and exported into muliple files and types")
+
+    e_values_density_namd_box_0_STEP_list = e_values_density_namd_box_0_df.loc[:, '#TS'].tolist()
+    # add 0.1 to the NAMD modified timestep for easy sorting later
+    e_values_density_namd_box_0_MOD_STEP_list = [str(float(i) + 0.2) for i in e_values_density_namd_box_0_STEP_list]
+    e_values_density_namd_box_0_ENGINE_list = ["NAMD" for i in e_values_density_namd_box_0_STEP_list]
+    e_values_density_namd_box_0_TOTAL_POT_list = e_values_density_namd_box_0_df.loc[:, 'POTENTIAL'].tolist()
+    e_values_density_namd_box_0_TOTAL_ELECT_list = e_values_density_namd_box_0_df.loc[:, 'ELECT'].tolist()
+    e_values_density_namd_box_0_TOTAL_VDW_list = e_values_density_namd_box_0_df.loc[:, 'VDW'].tolist()
+    e_values_density_namd_box_0_PRESSURE_list = e_values_density_namd_box_0_df.loc[:, 'PRESSURE'].tolist()
+    e_values_density_namd_box_0_VOLUME_list = e_values_density_namd_box_0_df.loc[:, 'VOLUME'].tolist()
+    e_values_density_namd_box_0_DENSITY_list = e_values_density_namd_box_0_df.loc[:, 'DENSITY'].tolist()
+
+    # ****************************************
+    # write the combined NAMD  data (end)
+    # ****************************************
+
+    # combine Engine data
+    namd_MOD_STEP_box_0 = []
+    # combine MOD_STEP data
+    for i in range(0, len(e_values_density_namd_box_0_MOD_STEP_list)):
+        namd_MOD_STEP_box_0.append(float(e_values_density_namd_box_0_MOD_STEP_list[i]))
+
+    namd_ENGINE_box_0 = e_values_density_namd_box_0_ENGINE_list
+    namd_STEP_box_0 = e_values_density_namd_box_0_STEP_list
+    namd_TOTAL_POT_box_0 = e_values_density_namd_box_0_TOTAL_POT_list
+    namd_TOTAL_ELECT_box_0 = e_values_density_namd_box_0_TOTAL_ELECT_list
+    namd_TOTAL_VDW_box_0 = e_values_density_namd_box_0_TOTAL_VDW_list
+    namd_PRESSURE_box_0 = e_values_density_namd_box_0_PRESSURE_list
+    namd_VOLUME_box_0 = e_values_density_namd_box_0_VOLUME_list
+    namd_DENSITY_box_0 = e_values_density_namd_box_0_DENSITY_list
+
+    namd_data_box_0_df = pd.DataFrame({
+        "#ENGINE": namd_ENGINE_box_0,
+        "MOD_STEP": namd_MOD_STEP_box_0,
+        "STEP": namd_STEP_box_0,
+        'TOTAL_POT': namd_TOTAL_POT_box_0,
+        'TOTAL_ELECT': namd_TOTAL_ELECT_box_0,
+        'TOTAL_VDW': namd_TOTAL_VDW_box_0,
+        'PRESSURE': namd_PRESSURE_box_0,
+        'VOLUME': namd_VOLUME_box_0,
+        'DENSITY': namd_DENSITY_box_0
+    })
+    namd_data_sorted_box_0_df = namd_data_box_0_df.sort_values(by=["MOD_STEP"], axis=0, ascending=True)
+    namd_data_sorted_box_0_df.drop("MOD_STEP", axis=1, inplace=True)
+    namd_data_sorted_box_0_df.to_csv(combined_box_0_data_filename, sep="	", index=False)
+
+
+    # ****************************************
+    # write the combined NAMD data  (end)
+    # ****************************************
+    print("INFO: Finished all data extraction for NAMD-only runs and exported into multiple files and types")
 
     # ****************************************
     # ****************************************
-    # GOMC only data extraction (end)
+    # NAMD-only data extraction (end)
     # ****************************************
     # ****************************************
+
