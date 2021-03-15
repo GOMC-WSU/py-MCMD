@@ -21,23 +21,59 @@ def _get_args():
 
     # get the filename with the user required input
     arg_parser.add_argument("-f", "--file",
-                            help="Defines the variable inputs to the hybrid NAMD/GOMC, NAMD-only, or GOMC-only "
+                            help="str. Defines the variable inputs to the hybrid NAMD/GOMC, NAMD-only, or GOMC-only "
                                  "log or consol output combining scipt.",
+                            type=str)
+
+    # name the file folder in which the data will be combined.
+    arg_parser.add_argument("-w", "--write_folder_name",
+                            help="str. Defines the folder name in which the files containing the output variables "
+                                 "will be combined and written in.",
+                            type=str)
+
+    # name the file folder in which the data will be combined.
+    arg_parser.add_argument("-o", "--overwrite",
+                            help="bool (True or False). Overwrites the folder in which the output variables "
+                                 "will be combined and added in, if the file already exists..",
                             type=str)
 
     parser_arguments = arg_parser.parse_args()
 
     # check to see if the file exists
-    if parser_arguments.file :
+    if parser_arguments.file:
         if os.path.exists(parser_arguments.file) :
             print("INFO: Reading data from <{}> file.".format(parser_arguments.file))
         else :
-            print("ERROR: Console file <{}> does not exist!".format(parser_arguments.file))
-            sys.exit(1)
+            raise FileNotFoundError("ERROR: Console file <{}> does not exist!".format(parser_arguments.file))
+    else:
+        raise IOError("ERROR: The user input file was not specified as -f or --file")
 
-    print('arg_parser.file = ' + str(parser_arguments.file))
+    # set check if overwrite is set to true, if not set to False
+    if parser_arguments.overwrite is not True:
+        print("INFO: By default, the combining folder will not be overwritten.")
+        parser_arguments.overwrite = False
+    else:
+        print("INFO: The combining folder will be overwritten.")
+        parser_arguments.overwrite = True
 
-    return [parser_arguments.file]
+    # set check if the combining data file folder name is provided
+    if isinstance(parser_arguments.write_folder_name, str) is True:
+        print("INFO: The combining folder is named <{}>.".format(parser_arguments.write_folder_name))
+    else:
+        raise TypeError("ERROR: The -w or --write_folder_name flag was not provided.  This flag defines "
+                        "the folder name which is created and will contain the combined data.")
+
+    # check to see if the folder exists
+    if os.path.exists(parser_arguments.write_folder_name) and parser_arguments.overwrite is False:
+        raise IOError("ERROR: The file folder <{}> already exists. If you want to overwrite it, set the "
+                  "-o or --overwrite flag as True.".format(parser_arguments.write_folder_name)
+                      )
+    elif os.path.exists(parser_arguments.write_folder_name) and parser_arguments.overwrite is True:
+        print("INFO: The combining folder <{}> will be overwritten."
+              "".format(parser_arguments.namd_simulation_order)
+              )
+
+    return [parser_arguments.file, parser_arguments.write_folder_name, parser_arguments.overwrite]
 
 # *************************************************
 # The python arguments that need to be selected to run the simulations (end)
@@ -49,13 +85,10 @@ def _get_args():
 # Import read and check the user input file for errors (start)
 # *************************************************
 # import and read the users json file
-[json_filename] = _get_args()
-print('json_filename = ' +str(json_filename))
-
-# just for testing , need to remove later
-manual_testing_filename_input_override = False
-if json_filename is None and manual_testing_filename_input_override is True:
-    json_filename = "user_input_combine_data_NAMD_GOMC.json"
+[json_filename, write_folder_name, overwrite_folder] = _get_args()
+print('arg_parser.file = {}'.format(json_filename))
+print('parser_arguments.write_folder_name = {}'.format(write_folder_name))
+print('parser_arguments.overwrite = {}'.format(overwrite_folder))
 
 json_file_data = json.load(open(json_filename))
 #json_file_data = json.load(open("user_input_combine_data_NAMD_GOMC.json"))
@@ -147,7 +180,7 @@ python_file_directory = os.getcwd()
 path_namd_runs = "NAMD"
 path_gomc_runs = "GOMC"
 
-path_combined_data_folder = "combined_data"
+path_combined_data_folder = write_folder_name
 os.makedirs(path_combined_data_folder, exist_ok=True)
 
 full_path_to_namd_data_folder = python_file_directory + "/" + str(path_namd_runs)
@@ -157,21 +190,6 @@ full_path_to_combined_data_folder = python_file_directory + "/" + str(path_combi
 # create NAMD and GOMC folders (end)
 # *************************************************
 K_to_kcal_mol = 1.98720425864083 * 10**(-3)
-
-# check the NAMD, GOMC combine dcd variable (bools) and if path to catdcd is a string
-if (combine_namd_dcd_file is not True and combine_namd_dcd_file is not False) \
-        or (str(combine_namd_dcd_file) != str(True) and str(combine_namd_dcd_file) != str(False)):
-    warn('ERROR: the combine_namd_dcd_file variable must be set as True or False')
-
-if (combine_gomc_dcd_file is not True and combine_gomc_dcd_file is not False) \
-        or (str(combine_gomc_dcd_file) != str(True) and str(combine_gomc_dcd_file) != str(False)):
-    warn('ERROR: the combine_gomc_dcd_file variable must be set as True or False')
-
-if isinstance(rel_path_to_combine_binary_catdcd, str) is False:
-    warn('ERROR: rel_path_to_combine_binary_catdcd variable must be a string')
-
-if not isinstance(combine_dcd_files_cycle_freq, int):
-    warn('ERROR:combine_dcd_files_cycle_freq variable must be an interger')
 
 # get the number of directories in each NAMD or GOMC folder.  Note: for the NAMD simulations,  '
 # the data is split between the liquid box (dir ending in '_a'), and the vapor box (dir ending in '_b')
