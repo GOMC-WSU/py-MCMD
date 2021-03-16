@@ -33,9 +33,9 @@ def _get_args():
 
     # name the file folder in which the data will be combined.
     arg_parser.add_argument("-o", "--overwrite",
-                            help="bool (True or False). Overwrites the folder in which the output variables "
-                                 "will be combined and added in, if the file already exists..",
-                            type=str)
+                            help="bool (True, true, T, t, False, false, F, or f). Overwrites the folder in which "
+                                 "the output variables will be combined and added in, if the file already exists.",
+                            type=str, default='False')
 
     parser_arguments = arg_parser.parse_args()
 
@@ -43,18 +43,20 @@ def _get_args():
     if parser_arguments.file:
         if os.path.exists(parser_arguments.file) :
             print("INFO: Reading data from <{}> file.".format(parser_arguments.file))
-        else :
+        else:
             raise FileNotFoundError("ERROR: Console file <{}> does not exist!".format(parser_arguments.file))
     else:
         raise IOError("ERROR: The user input file was not specified as -f or --file")
 
     # set check if overwrite is set to true, if not set to False
-    if parser_arguments.overwrite is not True:
+    if parser_arguments.overwrite in ['False', 'false', 'F', 'f']:
         print("INFO: By default, the combining folder will not be overwritten.")
         parser_arguments.overwrite = False
-    else:
+    elif parser_arguments.overwrite in ['True', 'true', 'T', 't']:
         print("INFO: The combining folder will be overwritten.")
         parser_arguments.overwrite = True
+    else:
+        raise TypeError("ERROR: -o or --overwrite flag is not a boolean.")
 
     # set check if the combining data file folder name is provided
     if isinstance(parser_arguments.write_folder_name, str) is True:
@@ -66,11 +68,11 @@ def _get_args():
     # check to see if the folder exists
     if os.path.exists(parser_arguments.write_folder_name) and parser_arguments.overwrite is False:
         raise IOError("ERROR: The file folder <{}> already exists. If you want to overwrite it, set the "
-                  "-o or --overwrite flag as True.".format(parser_arguments.write_folder_name)
+                      "-o or --overwrite flag as True.".format(parser_arguments.write_folder_name)
                       )
     elif os.path.exists(parser_arguments.write_folder_name) and parser_arguments.overwrite is True:
         print("INFO: The combining folder <{}> will be overwritten."
-              "".format(parser_arguments.namd_simulation_order)
+              "".format(parser_arguments.write_folder_name)
               )
 
     return [parser_arguments.file, parser_arguments.write_folder_name, parser_arguments.overwrite]
