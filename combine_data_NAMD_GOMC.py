@@ -384,6 +384,11 @@ def get_namd_log_data(read_namd_box_x_log_file,
     not minimization.
     """
 
+    error_for_bad_namd_input_file_data = "ERROR: This NAMD file output file does not contain all " \
+                                         "the required information. The Energy titles/values " \
+                                         "are missing from the NAMD output/log file(s) in " \
+                                         "run number {}.".format(run_no)
+
     if e_values_namd_box_x_density_list is None:
         e_values_namd_box_x_density_list = []
     else:
@@ -442,7 +447,6 @@ def get_namd_log_data(read_namd_box_x_log_file,
                 e_values_namd_box_x_density_iteration.append(e_density_data_namd_box_x_iteration)
                 e_values_namd_box_x_density_list.append(e_values_namd_box_x_density_iteration)
 
-
     if (e_titles_namd_box_x_iteration is None or e_titles_namd_box_x_density_iteration is None) and run_no != 0:
         warn("enter the e_titles_namd_box_x_iteration variable in the get_namd_log_data, as "
              " it is not in the NAMD log file to read.")
@@ -453,6 +457,15 @@ def get_namd_log_data(read_namd_box_x_log_file,
     # add a pound symbol (#) before some of the titles
     if str(e_titles_namd_box_x_density_iteration[0][0]) != '#':
         e_titles_namd_box_x_density_iteration[0] = '#' + str(e_titles_namd_box_x_density_iteration[0])
+
+    try:
+        isinstance(e_titles_namd_box_x_iteration, list)
+        isinstance(e_titles_namd_box_x_density_iteration, list)
+        isinstance(e_values_namd_box_x_iteration, list)
+        isinstance(e_values_namd_box_x_density_list, list)
+        isinstance(e_property_values_namd_box_x_list, list)
+    except:
+        raise ValueError(error_for_bad_namd_input_file_data)
 
     return e_titles_namd_box_x_iteration, e_titles_namd_box_x_density_iteration, \
            e_values_namd_box_x_iteration, \
@@ -585,6 +598,10 @@ def get_gomc_log_data(read_gomc_box_x_log_file, gomc_box_x_data_file, run_no, bo
     The timesteps are rescaled so that the NAMD and GOMC data are added
     properly in order.
     """
+    error_for_bad_gomc_input_file_data = "ERROR: This GOMC file output file does not contain all " \
+                                         "the required information. The Energy and Stat titles/values " \
+                                         "are missing from the GOMC output/log file in "\
+                                         "run number {} in box {}.".format(run_no, box_no)
 
     if e_stat_values_gomc_box_x_list is None:
         e_stat_values_gomc_box_x_list = []
@@ -681,8 +698,20 @@ def get_gomc_log_data(read_gomc_box_x_log_file, gomc_box_x_data_file, run_no, bo
             e_stat_values_gomc_kcal_per_mol_box_x_list.append(e_stat_values_gomc_kcal_per_mol_box_x_iteration_list)
 
             # combine the energy and stat titles (ENER_X and STAT_X) into 1 line and remove ENER_X and STAT_X) labels
-    e_stat_titles_gomc_box_x_iter_list = e_titles_gomc_box_x_iteration[1:]
-    e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list = e_titles_gomc_box_x_iteration[1:]
+    try:
+        e_stat_titles_gomc_box_x_iter_list = e_titles_gomc_box_x_iteration[1:]
+    except:
+        raise ValueError(error_for_bad_gomc_input_file_data)
+    try:
+        e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list = e_titles_gomc_box_x_iteration[1:]
+    except:
+        raise ValueError(error_for_bad_gomc_input_file_data)
+
+    try:
+        isinstance(stat_titles_box_x_iteration,list)
+    except:
+        raise ValueError(error_for_bad_gomc_input_file_data)
+
     for z in range(2, len(stat_titles_box_x_iteration)):
         e_stat_titles_gomc_box_x_iter_list.append(stat_titles_box_x_iteration[z])
         e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list.append(stat_titles_box_x_iteration[z])
@@ -690,8 +719,20 @@ def get_gomc_log_data(read_gomc_box_x_log_file, gomc_box_x_data_file, run_no, bo
     # add a pound symbol (#) before some of the titles
     if str(e_stat_titles_gomc_box_x_iter_list[0][0]) != '#':
         e_stat_titles_gomc_box_x_iter_list[0] = '#' + str(e_stat_titles_gomc_box_x_iter_list[0])
-    if str(e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0][0]) != '#':
-        e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0] = '#{}'.format(str(e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0]))
+
+        if str(e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0][0]) != '#':
+            e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0] = '#{}'.format(str(e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0]))
+
+    try:
+        isinstance(e_titles_gomc_box_x_iteration, list)
+        isinstance(e_stat_titles_gomc_box_x_iter_list, list)
+        isinstance(e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list, list)
+        isinstance(e_stat_values_gomc_box_x_iteration_list, list)
+        isinstance(e_stat_values_gomc_box_x_list, list)
+        isinstance(e_stat_values_gomc_kcal_per_mol_box_x_list, list)
+    except:
+        raise ValueError(error_for_bad_gomc_input_file_data)
+
 
     return e_titles_gomc_box_x_iteration, \
            e_stat_titles_gomc_box_x_iter_list, \

@@ -1,4 +1,4 @@
-{"simulation_type": "NVT",
+{"simulation_type": "GCMC",
 "only_use_box_0_for_namd_for_gemc": true,
 "simulation_engine_options": "Hybrid",
 "gomc_or_namd_only_log_filename": "out.dat",
