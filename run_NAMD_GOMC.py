@@ -418,9 +418,9 @@ else:
 # *************************************************
 # Potential changable variables in the future (start)
 # *************************************************
-allowable_error_fraction_vdw = 1 * 10**(-3)
-allowable_error_fraction_electro = 1 * 10**(-3)
-max_absolute_allowable_kcal_fraction_electro = 0.5
+allowable_error_fraction_vdw_plus_elec = 5 * 10**(-3)
+allowable_error_fraction_potential = 5 * 10**(-3)
+max_absolute_allowable_kcal_fraction_vdw_plus_elec = 0.5
 
 gomc_console_blkavg_hist_steps = int(gomc_run_steps)
 gomc_rst_coor_ckpoint_steps = int(gomc_run_steps)
@@ -1207,15 +1207,15 @@ def get_namd_energy_data(read_namd_box_x_energy_file, e_default_namd_titles):
     namd_e_potential_box_x_final_value : float
         The final potential energy as a float, as extracted from the
         the NAMD run data ('POTENTIAL').
-    namd_e_vdw_box_x : str
-        The list of VDW energies as strings, as extracted from the
-        the NAMD run data ('VDW').
-    namd_e_vdw_box_x_initial_value : float
-        The intitial VDW energy as a float, as extracted from the
-        the NAMD run data ('VDW').
-    namd_e_vdw_box_x_final_value : float
-        The final VDW energy as a float, as extracted from the
-        the NAMD run data ('VDW').
+    namd_e_vdw_plus_elec_box_x : str
+        The list of VDW + electrostatic energies as strings, as extracted from the
+        the NAMD run data ('VDW' + 'ELECT').
+    namd_e_vdw_plus_elec_box_x_initial_value : float
+        The intitial VDW + electrostatic energy as a float, as extracted from the
+        the NAMD run data ('VDW' + 'ELECT').
+    namd_e_vdw_plus_elec_box_x_final_value : float
+        The final VDW + electrostatic energy as a float, as extracted from the
+        the NAMD run data ('VDW' + 'ELECT').
     """
 
     get_e_titles = True
@@ -1250,14 +1250,23 @@ def get_namd_energy_data(read_namd_box_x_energy_file, e_default_namd_titles):
     namd_e_vdw_box_x = namd_energy_data_box_x_df.loc[:, 'VDW']
     namd_e_vdw_box_x_initial_value = float(namd_e_vdw_box_x.values.tolist()[0])
     namd_e_vdw_box_x_final_value = float(namd_e_vdw_box_x.values.tolist()[-1])
+    print('namd_e_vdw_box_x')
+    print(namd_e_vdw_box_x)
+    namd_e_vdw_plus_elec_box_x = [float(namd_e_vdw_box_x[k_i]) + float(namd_e_electro_box_x[k_i])
+                                  for k_i in range(0, len(namd_e_vdw_box_x))]
+    print('namd_e_vdw_plus_elec_box_x')
+    print(namd_e_vdw_plus_elec_box_x)
+    namd_e_vdw_plus_elec_box_x_initial_value = float(namd_e_vdw_plus_elec_box_x[0])
+    namd_e_vdw_plus_elec_box_x_final_value = float(namd_e_vdw_plus_elec_box_x[-1])
+
 
     return namd_e_electro_box_x, namd_e_electro_box_x_initial_value, namd_e_electro_box_x_final_value,\
            namd_e_potential_box_x, namd_e_potential_box_x_initial_value, namd_e_potential_box_x_final_value, \
-           namd_e_vdw_box_x, namd_e_vdw_box_x_initial_value, namd_e_vdw_box_x_final_value
+           namd_e_vdw_plus_elec_box_x, namd_e_vdw_plus_elec_box_x_initial_value, namd_e_vdw_plus_elec_box_x_final_value
 
 
-def compare_namd_gomc_energies(e_vdw_box_x_final_value, e_vdw_box_x_initial_value,
-                               e_electro_box_x_final_value, e_electro_box_x_initial_value,
+def compare_namd_gomc_energies(e_potential_box_x_final_value, e_potential_box_x_initial_value,
+                               e_vdw_plus_elec_box_x_final_value, e_vdw_plus_elec_box_x_initial_value,
                                run_no, box_number):
     """
     Compares the NAMD and GOMC energies when switching between
@@ -1266,91 +1275,98 @@ def compare_namd_gomc_energies(e_vdw_box_x_final_value, e_vdw_box_x_initial_valu
     You will recieve warnings since GOMC does not calculate the
     impropers. Otherwise, they should be the same or nearly the same
     between GOMC and NAMD.  The data is printing on the screen and
-    the Hybrid GOMC-NAMD log file.
+    the Hybrid GOMC-NAMD log file.  One GOMC and one NAMD file must 
+    either be the initial or last values.
 
     Parameters
     ----------
-    namd_e_vdw_box_x_initial_value : float
-        The intitial VDW energy as a float, as extracted from the
-        the NAMD run data ('VDW').
-    namd_e_vdw_box_x_final_value : float
-        The final VDW energy as a float, as extracted from the
-        the NAMD run data ('VDW').
-    namd_e_electro_box_x_initial_value : float
-        The initial electrostatic energy as a float, as extracted from the
-        the NAMD run data ('ELECT').
-    namd_e_electro_box_x_final_value : float
-        The final electrostatic energy as a float, as extracted from the
-        the NAMD run data ('ELECT').
+    e_potential_box_x_final_value : float
+        The final potential energy as a float, as extracted from the
+        the NAMD run data ('POTENTIAL').
+    e_potential_box_x_initial_value : float
+        The initial potential energy as a float, as extracted from the
+        the NAMD run data ('POTENTIAL').
+    e_vdw_plus_elec_box_x_final_value : float
+        The final VDW + electrostatic energy energy as a float, as extracted from the
+        the NAMD run data ('VDW' + 'ELECT').
+    e_vdw_plus_elec_box_x_initial_value : float
+        The initial VDW + electrostatic energy as a float, as extracted from the
+        the NAMD run data ('VDW' + 'ELECT').
     run_no : int
         Simulation run number
     box_number : int
         The simulation box number, which can only be 0 or 1
     """
 
+    # calc error in potential energies box x
     try:
-        error_fract_in_vdw_box_0 = np.abs((e_vdw_box_x_final_value - e_vdw_box_x_initial_value) /
-                                          e_vdw_box_x_final_value)
+        error_fract_in_potential_box_x = np.abs((e_potential_box_x_final_value -  e_potential_box_x_initial_value) /
+                                                e_potential_box_x_final_value)
     except:
-        if e_vdw_box_x_final_value == 0 and e_vdw_box_x_initial_value == 0:
-            error_fract_in_vdw_box_0 = 0
+        if e_potential_box_x_final_value == 0 and e_potential_box_x_initial_value == 0:
+            error_fract_in_potential_box_x = 0
         else:
-            error_fract_in_vdw_box_0 = 'NA'
+            error_fract_in_potential_box_x = 'NA'
 
-    if error_fract_in_vdw_box_0 != 'NA' and error_fract_in_vdw_box_0 <= allowable_error_fraction_vdw:
-        write_log_data = "PASSED: Box {}; VDW error fraction between the check between the last point in run {}" \
+    if error_fract_in_potential_box_x != 'NA' and error_fract_in_potential_box_x <= \
+            allowable_error_fraction_potential:
+        write_log_data = "PASSED: Box {}: Potential energies error fraction between the check " \
+                         "between the last point in run {}" \
                          " and the first point in run {}, error fraction = {}" \
                          " \n".format(str(box_number), str(int(run_no - 1)),
-                                      str(int(run_no)), str(error_fract_in_vdw_box_0)
+                                      str(int(run_no)), str(error_fract_in_potential_box_x)
                                       )
         log_template_file.write(str(write_log_data))
         print(str(write_log_data))
 
     else:
-        write_log_data = "FAILED: Box {}; VDW error fraction between the last point in run {}" \
-                         " and the first point in run {}, error fraction =  {}" \
+        write_log_data = "FAILED: Box {}: Potential energies error fraction between the last " \
+                         "point in run {} and the first point in run {}, error fraction =  {}" \
                          " \n".format(str(box_number), str(int(run_no - 1)),
-                                      str(int(run_no)), str(error_fract_in_vdw_box_0)
+                                      str(int(run_no)), str(error_fract_in_potential_box_x)
                                       )
         log_template_file.write('WARNING: ' + str(write_log_data))
         warn(write_log_data)
 
-    # calc error in Electrostatics box 0
+
+    # calc error in VDW + Electrostatics box x
     try:
-        error_fract_in_electro_box_0 = np.abs((e_electro_box_x_final_value - e_electro_box_x_initial_value) /
-                                              e_electro_box_x_final_value)
+        error_fract_in_vdw_plus_elec_box_x = np.abs((e_vdw_plus_elec_box_x_final_value -
+                                                     e_vdw_plus_elec_box_x_initial_value) /
+                                                    e_vdw_plus_elec_box_x_final_value)
     except:
-        if e_electro_box_x_final_value == 0 and e_electro_box_x_initial_value == 0:
-            error_fract_in_electro_box_0 = 0
+        if e_vdw_plus_elec_box_x_final_value == 0 and e_vdw_plus_elec_box_x_initial_value == 0:
+            error_fract_in_vdw_plus_elec_box_x = 0
         else:
-            error_fract_in_vdw_box_1 = 'NA'
+            error_fract_in_vdw_plus_elec_box_x = 'NA'
 
-    abs_diff_in_electro_box_0 = np.abs(e_electro_box_x_final_value - e_electro_box_x_initial_value)
+    abs_diff_in_vdw_plus_elec_box_x = np.abs(e_vdw_plus_elec_box_x_final_value - e_vdw_plus_elec_box_x_initial_value)
 
-    if error_fract_in_electro_box_0 != 'NA' and error_fract_in_electro_box_0 <= allowable_error_fraction_electro:
-        write_log_data = "PASSED: Box {}; The Electrostatic error fraction between the last point in run {}" \
+    if error_fract_in_vdw_plus_elec_box_x != 'NA' and error_fract_in_vdw_plus_elec_box_x <= \
+            allowable_error_fraction_vdw_plus_elec:
+        write_log_data = "PASSED: Box {}: VDW + electrostatic fraction between the last point in run {}" \
                          " and the first point in run {}, error fraction = {}" \
                          " \n".format(str(box_number), str(int(run_no - 1)),
-                                      str(int(run_no)), str(error_fract_in_electro_box_0)
+                                      str(int(run_no)), str(error_fract_in_vdw_plus_elec_box_x)
                                       )
         log_template_file.write(str(write_log_data))
         print(str(write_log_data))
 
-    elif abs_diff_in_electro_box_0 <= max_absolute_allowable_kcal_fraction_electro:
-        write_log_data = "PASSED: Box {}; The Electrostatic error fraction between the last point in run {} " \
+    elif abs_diff_in_vdw_plus_elec_box_x <= max_absolute_allowable_kcal_fraction_vdw_plus_elec:
+        write_log_data = "PASSED: Box {}: The VDW + electrostatic energy error fraction between the last point in run {} " \
                          "and the first point in run {}, absolute difference is = {} kcal/mol." \
                          " \n".format(str(box_number), str(int(run_no - 1)),
-                                      str(int(run_no)), str(abs_diff_in_electro_box_0),
+                                      str(int(run_no)), str(abs_diff_in_vdw_plus_elec_box_x),
                                       )
         log_template_file.write(str(write_log_data))
         print(str(write_log_data))
     else:
-        write_log_data = "FAILED: Box {}; Electrostatic error fraction between the last point in run {} " \
+        write_log_data = "FAILED: Box {}: vdw_plus_elec energy  error fraction between the last point in run {} " \
                          "and the first point in run {}, error fraction = {} or the absolute " \
                          "difference is = {} kcal/mol." \
                          " \n".format(str(box_number), str(int(run_no - 1)),
-                                      str(int(run_no)), str(error_fract_in_electro_box_0),
-                                      str(abs_diff_in_electro_box_0)
+                                      str(int(run_no)), str(error_fract_in_vdw_plus_elec_box_x),
+                                      str(abs_diff_in_vdw_plus_elec_box_x)
                                       )
         log_template_file.write('WARNING: ' + str(write_log_data))
         warn(str(write_log_data))
@@ -1846,15 +1862,15 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
     gomc_e_potential_box_x_final_value_kcal_mol : float
         The final potential energy as a float, as extracted from the
         the GOMC run data ('TOTAL').
-    gomc_e_vdw_box_x_kcal_per_mol : str
-        The list of VDW energies as strings, as extracted from the
-        the GOMC run data ('INTRA(NB)' + 'INTER(LJ)').
-    gomc_e_vdw_box_x_initial_value_kcal_per_mol : float
-        The intitial VDW energy as a float, as extracted from the
-        the GOMC run data ('INTRA(NB)' + 'INTER(LJ)').
-    gomc_e_vdw_box_x_initial_value_kcal_per_mol : float
-        The final VDW energy as a float, as extracted from the
-        the GOMC run data ('INTRA(NB)' + 'INTER(LJ)').
+    gomc_e_vdw_plus_elec_box_x_kcal_per_mol : str
+        The list of VDW + electrostatic energies as strings, as extracted from the
+        the GOMC run data ('INTRA(NB)' + 'INTER(LJ)' + 'TOTAL_ELECT').
+    gomc_e_vdw_plus_elec_box_x_initial_value_kcal_per_mol : float
+        The intitial VDW + electrostatic energy as a float, as extracted from the
+        the GOMC run data ('INTRA(NB)' + 'INTER(LJ)' + 'TOTAL_ELECT').
+    gomc_e_vdw_plus_elec_box_x_initial_value_kcal_per_mol : float
+        The final VDW + electrostatic energy as a float, as extracted from the
+        the GOMC run data ('INTRA(NB)' + 'INTER(LJ)' + 'TOTAL_ELECT').
         Generated the energy and system file data for specified
         box number.
 
@@ -1879,19 +1895,20 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
     gomc_e_inter_lj_box_x_initial_value = float(gomc_e_inter_lj_box_x_kcal_per_mol[0])
     gomc_e_inter_lj_box_x_final_value = float(gomc_e_inter_lj_box_x_kcal_per_mol[-1])
 
-    gomc_e_vdw_box_x_kcal_per_mol = []
-    for vwd_i in range(0, len(gomc_e_intra_nb_box_x_kcal_per_mol)):
-        gomc_e_vdw_box_x_kcal_per_mol.append(float(gomc_e_intra_nb_box_x_kcal_per_mol[vwd_i]) +
-                                             float(gomc_e_inter_lj_box_x_kcal_per_mol[vwd_i]))
-    gomc_e_vdw_box_x_initial_value_kcal_mol = float(gomc_e_vdw_box_x_kcal_per_mol[0])
-    gomc_e_vdw_box_x_final_value_kcal_mol = float(gomc_e_vdw_box_x_kcal_per_mol[-1])
+    gomc_e_vdw_plus_elec_box_x_kcal_per_mol = []
+    for vwd_elec_i in range(0, len(gomc_e_intra_nb_box_x_kcal_per_mol)):
+        gomc_e_vdw_plus_elec_box_x_kcal_per_mol.append(float(gomc_e_intra_nb_box_x_kcal_per_mol[vwd_elec_i]) +
+                                                       float(gomc_e_inter_lj_box_x_kcal_per_mol[vwd_elec_i])
+                                                       + float(gomc_e_electro_box_x_kcal_per_mol[vwd_elec_i]))
+    gomc_e_vdw_plus_elec_box_x_initial_value_kcal_mol = float(gomc_e_vdw_plus_elec_box_x_kcal_per_mol[0])
+    gomc_e_vdw_plus_elec_box_x_final_value_kcal_mol = float(gomc_e_vdw_plus_elec_box_x_kcal_per_mol[-1])
 
     return gomc_e_electro_box_x_kcal_per_mol, gomc_e_electro_box_x_initial_value_kcal_mol, \
            gomc_e_electro_box_x_final_value_kcal_mol, \
            gomc_e_potential_box_x_kcal_per_mol, gomc_e_potential_box_x_initial_value_kcal_mol, \
            gomc_e_potential_box_x_final_value_kcal_mol, \
-           gomc_e_vdw_box_x_kcal_per_mol, gomc_e_vdw_box_x_initial_value_kcal_mol, \
-           gomc_e_vdw_box_x_final_value_kcal_mol
+           gomc_e_vdw_plus_elec_box_x_kcal_per_mol, gomc_e_vdw_plus_elec_box_x_initial_value_kcal_mol, \
+           gomc_e_vdw_plus_elec_box_x_final_value_kcal_mol
 
 
 for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
@@ -2175,9 +2192,9 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
         namd_e_potential_box_0, \
         namd_e_potential_box_0_initial_value, \
         namd_e_potential_box_0_final_value, \
-        namd_e_vdw_box_0, \
-        namd_e_vdw_box_0_initial_value, \
-        namd_e_vdw_box_0_final_value = get_namd_energy_data(read_namd_box_0_energy_file,
+        namd_e_vdw_plus_elec_box_0, \
+        namd_e_vdw_plus_elec_box_0_initial_value, \
+        namd_e_vdw_plus_elec_box_0_final_value = get_namd_energy_data(read_namd_box_0_energy_file,
                                                             default_namd_e_titles)
 
         # note NAMD energy units in kcal/mol (no modifications required)
@@ -2191,21 +2208,25 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
             namd_e_potential_box_1, \
             namd_e_potential_box_1_initial_value, \
             namd_e_potential_box_1_final_value, \
-            namd_e_vdw_box_1, \
-            namd_e_vdw_box_1_initial_value, \
-            namd_e_vdw_box_1_final_value = get_namd_energy_data(read_namd_box_1_energy_file,
+            namd_e_vdw_plus_elec_box_1, \
+            namd_e_vdw_plus_elec_box_1_initial_value, \
+            namd_e_vdw_plus_elec_box_1_final_value = get_namd_energy_data(read_namd_box_1_energy_file,
                                                                 default_namd_e_titles)
 
         if run_no != 0 and run_no != starting_sims_namd_gomc:
             # Compare the Last GOMC and first NAMD value to confirm the simulation data
             # VMD comparison between NAMD and GOMC data box 0
 
-            compare_namd_gomc_energies(gomc_e_vdw_box_0_final_value, namd_e_vdw_box_0_initial_value,
-                                       gomc_e_electro_box_0_final_value, namd_e_electro_box_0_initial_value,
+            compare_namd_gomc_energies(gomc_e_potential_box_0_final_value,
+                                       namd_e_potential_box_0_initial_value,
+                                       gomc_e_vdw_plus_elec_box_0_final_value,
+                                       namd_e_vdw_plus_elec_box_0_initial_value,
                                        run_no, box_number_0)
             if simulation_type in ["GEMC"] and only_use_box_0_for_namd_for_gemc is False:
-                compare_namd_gomc_energies(gomc_e_vdw_box_1_final_value, namd_e_vdw_box_1_initial_value,
-                                           gomc_e_electro_box_1_final_value, namd_e_electro_box_1_initial_value,
+                compare_namd_gomc_energies(gomc_e_potential_box_1_final_value,
+                                           namd_e_potential_box_1_initial_value,
+                                           gomc_e_vdw_plus_elec_box_1_final_value,
+                                           namd_e_vdw_plus_elec_box_1_initial_value,
                                            run_no, box_number_1)
 
         # get the NAMD FFT file name to copy for future NAMD simulations if starting a new NAMD/GOMC simulation
@@ -2328,9 +2349,9 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
         gomc_e_potential_box_0_kcal_per_mol, \
         gomc_e_potential_box_0_initial_value, \
         gomc_e_potential_box_0_final_value, \
-        gomc_e_vdw_box_0_kcal_per_mol, \
-        gomc_e_vdw_box_0_initial_value, \
-        gomc_e_vdw_box_0_final_value = get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_0_df)
+        gomc_e_vdw_plus_elec_box_0_kcal_per_mol, \
+        gomc_e_vdw_plus_elec_box_0_initial_value, \
+        gomc_e_vdw_plus_elec_box_0_final_value = get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_0_df)
 
         # retrieve energy data from the printed file for the first and last points for box 1s
         if simulation_type in ["GEMC", "GCMC"]:  
@@ -2341,9 +2362,9 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
             gomc_e_potential_box_1_kcal_per_mol, \
             gomc_e_potential_box_1_initial_value, \
             gomc_e_potential_box_1_final_value, \
-            gomc_e_vdw_box_1_kcal_per_mol, \
-            gomc_e_vdw_box_1_initial_value, \
-            gomc_e_vdw_box_1_final_value = get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_1_df)
+            gomc_e_vdw_plus_elec_box_1_kcal_per_mol, \
+            gomc_e_vdw_plus_elec_box_1_initial_value, \
+            gomc_e_vdw_plus_elec_box_1_final_value = get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_1_df)
 
         # *******************************************************
         # get final system energies for box 0 and 1 (end)
@@ -2351,12 +2372,16 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
 
         # Compare the Last NAMD and first GOMC value to confirm the simulation data
         # VMD comparison between NAMD and GOMC data box 0
-        compare_namd_gomc_energies(namd_e_vdw_box_0_final_value, gomc_e_vdw_box_0_initial_value,
-                                   namd_e_electro_box_0_final_value, gomc_e_electro_box_0_initial_value,
+        compare_namd_gomc_energies(namd_e_potential_box_0_final_value,
+                                   gomc_e_potential_box_0_initial_value,
+                                   namd_e_vdw_plus_elec_box_0_final_value,
+                                   gomc_e_vdw_plus_elec_box_0_initial_value,
                                    run_no, box_number_0)
         if simulation_type in ["GEMC"] and only_use_box_0_for_namd_for_gemc is False:
-            compare_namd_gomc_energies(namd_e_vdw_box_1_final_value, gomc_e_vdw_box_1_initial_value,
-                                       namd_e_electro_box_1_final_value, gomc_e_electro_box_1_initial_value,
+            compare_namd_gomc_energies(namd_e_potential_box_1_final_value,
+                                       gomc_e_potential_box_1_initial_value,
+                                       namd_e_vdw_plus_elec_box_1_final_value,
+                                       gomc_e_vdw_plus_elec_box_1_initial_value,
                                        run_no, box_number_1)
 
         current_step += gomc_run_steps
