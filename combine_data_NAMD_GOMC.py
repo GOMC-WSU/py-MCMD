@@ -21,23 +21,61 @@ def _get_args():
 
     # get the filename with the user required input
     arg_parser.add_argument("-f", "--file",
-                            help="Defines the variable inputs to the hybrid NAMD/GOMC, NAMD-only, or GOMC-only "
+                            help="str. Defines the variable inputs to the hybrid NAMD/GOMC, NAMD-only, or GOMC-only "
                                  "log or consol output combining scipt.",
                             type=str)
+
+    # name the file folder in which the data will be combined.
+    arg_parser.add_argument("-w", "--write_folder_name",
+                            help="str. Defines the folder name in which the files containing the output variables "
+                                 "will be combined and written in.",
+                            type=str)
+
+    # name the file folder in which the data will be combined.
+    arg_parser.add_argument("-o", "--overwrite",
+                            help="bool (True, true, T, t, False, false, F, or f). Overwrites the folder in which "
+                                 "the output variables will be combined and added in, if the file already exists.",
+                            type=str, default='False')
 
     parser_arguments = arg_parser.parse_args()
 
     # check to see if the file exists
-    if parser_arguments.file :
+    if parser_arguments.file:
         if os.path.exists(parser_arguments.file) :
             print("INFO: Reading data from <{}> file.".format(parser_arguments.file))
-        else :
-            print("ERROR: Console file <{}> does not exist!".format(parser_arguments.file))
-            sys.exit(1)
+        else:
+            raise FileNotFoundError("ERROR: Console file <{}> does not exist!".format(parser_arguments.file))
+    else:
+        raise IOError("ERROR: The user input file was not specified as -f or --file")
 
-    print('arg_parser.file = ' + str(parser_arguments.file))
+    # set check if overwrite is set to true, if not set to False
+    if parser_arguments.overwrite in ['False', 'false', 'F', 'f']:
+        print("INFO: By default, the combining folder will not be overwritten.")
+        parser_arguments.overwrite = False
+    elif parser_arguments.overwrite in ['True', 'true', 'T', 't']:
+        print("INFO: The combining folder will be overwritten.")
+        parser_arguments.overwrite = True
+    else:
+        raise TypeError("ERROR: -o or --overwrite flag is not a boolean.")
 
-    return [parser_arguments.file]
+    # set check if the combining data file folder name is provided
+    if isinstance(parser_arguments.write_folder_name, str) is True:
+        print("INFO: The combining folder is named <{}>.".format(parser_arguments.write_folder_name))
+    else:
+        raise TypeError("ERROR: The -w or --write_folder_name flag was not provided.  This flag defines "
+                        "the folder name which is created and will contain the combined data.")
+
+    # check to see if the folder exists
+    if os.path.exists(parser_arguments.write_folder_name) and parser_arguments.overwrite is False:
+        raise IOError("ERROR: The file folder <{}> already exists. If you want to overwrite it, set the "
+                      "-o or --overwrite flag as True.".format(parser_arguments.write_folder_name)
+                      )
+    elif os.path.exists(parser_arguments.write_folder_name) and parser_arguments.overwrite is True:
+        print("INFO: The combining folder <{}> will be overwritten."
+              "".format(parser_arguments.write_folder_name)
+              )
+
+    return [parser_arguments.file, parser_arguments.write_folder_name, parser_arguments.overwrite]
 
 # *************************************************
 # The python arguments that need to be selected to run the simulations (end)
@@ -49,13 +87,10 @@ def _get_args():
 # Import read and check the user input file for errors (start)
 # *************************************************
 # import and read the users json file
-[json_filename] = _get_args()
-print('json_filename = ' +str(json_filename))
-
-# just for testing , need to remove later
-manual_testing_filename_input_override = False
-if json_filename is None and manual_testing_filename_input_override is True:
-    json_filename = "user_input_combine_data_NAMD_GOMC.json"
+[json_filename, write_folder_name, overwrite_folder] = _get_args()
+print('arg_parser.file = {}'.format(json_filename))
+print('parser_arguments.write_folder_name = {}'.format(write_folder_name))
+print('parser_arguments.overwrite = {}'.format(overwrite_folder))
 
 json_file_data = json.load(open(json_filename))
 #json_file_data = json.load(open("user_input_combine_data_NAMD_GOMC.json"))
@@ -147,7 +182,7 @@ python_file_directory = os.getcwd()
 path_namd_runs = "NAMD"
 path_gomc_runs = "GOMC"
 
-path_combined_data_folder = "combined_data"
+path_combined_data_folder = write_folder_name
 os.makedirs(path_combined_data_folder, exist_ok=True)
 
 full_path_to_namd_data_folder = python_file_directory + "/" + str(path_namd_runs)
@@ -157,21 +192,6 @@ full_path_to_combined_data_folder = python_file_directory + "/" + str(path_combi
 # create NAMD and GOMC folders (end)
 # *************************************************
 K_to_kcal_mol = 1.98720425864083 * 10**(-3)
-
-# check the NAMD, GOMC combine dcd variable (bools) and if path to catdcd is a string
-if (combine_namd_dcd_file is not True and combine_namd_dcd_file is not False) \
-        or (str(combine_namd_dcd_file) != str(True) and str(combine_namd_dcd_file) != str(False)):
-    warn('ERROR: the combine_namd_dcd_file variable must be set as True or False')
-
-if (combine_gomc_dcd_file is not True and combine_gomc_dcd_file is not False) \
-        or (str(combine_gomc_dcd_file) != str(True) and str(combine_gomc_dcd_file) != str(False)):
-    warn('ERROR: the combine_gomc_dcd_file variable must be set as True or False')
-
-if isinstance(rel_path_to_combine_binary_catdcd, str) is False:
-    warn('ERROR: rel_path_to_combine_binary_catdcd variable must be a string')
-
-if not isinstance(combine_dcd_files_cycle_freq, int):
-    warn('ERROR:combine_dcd_files_cycle_freq variable must be an interger')
 
 # get the number of directories in each NAMD or GOMC folder.  Note: for the NAMD simulations,  '
 # the data is split between the liquid box (dir ending in '_a'), and the vapor box (dir ending in '_b')
@@ -364,6 +384,11 @@ def get_namd_log_data(read_namd_box_x_log_file,
     not minimization.
     """
 
+    error_for_bad_namd_input_file_data = "ERROR: This NAMD file output file does not contain all " \
+                                         "the required information. The Energy titles/values " \
+                                         "are missing from the NAMD output/log file(s) in " \
+                                         "run number {}.".format(run_no)
+
     if e_values_namd_box_x_density_list is None:
         e_values_namd_box_x_density_list = []
     else:
@@ -422,7 +447,6 @@ def get_namd_log_data(read_namd_box_x_log_file,
                 e_values_namd_box_x_density_iteration.append(e_density_data_namd_box_x_iteration)
                 e_values_namd_box_x_density_list.append(e_values_namd_box_x_density_iteration)
 
-
     if (e_titles_namd_box_x_iteration is None or e_titles_namd_box_x_density_iteration is None) and run_no != 0:
         warn("enter the e_titles_namd_box_x_iteration variable in the get_namd_log_data, as "
              " it is not in the NAMD log file to read.")
@@ -433,6 +457,15 @@ def get_namd_log_data(read_namd_box_x_log_file,
     # add a pound symbol (#) before some of the titles
     if str(e_titles_namd_box_x_density_iteration[0][0]) != '#':
         e_titles_namd_box_x_density_iteration[0] = '#' + str(e_titles_namd_box_x_density_iteration[0])
+
+    try:
+        isinstance(e_titles_namd_box_x_iteration, list)
+        isinstance(e_titles_namd_box_x_density_iteration, list)
+        isinstance(e_values_namd_box_x_iteration, list)
+        isinstance(e_values_namd_box_x_density_list, list)
+        isinstance(e_property_values_namd_box_x_list, list)
+    except:
+        raise ValueError(error_for_bad_namd_input_file_data)
 
     return e_titles_namd_box_x_iteration, e_titles_namd_box_x_density_iteration, \
            e_values_namd_box_x_iteration, \
@@ -565,6 +598,10 @@ def get_gomc_log_data(read_gomc_box_x_log_file, gomc_box_x_data_file, run_no, bo
     The timesteps are rescaled so that the NAMD and GOMC data are added
     properly in order.
     """
+    error_for_bad_gomc_input_file_data = "ERROR: This GOMC file output file does not contain all " \
+                                         "the required information. The Energy and Stat titles/values " \
+                                         "are missing from the GOMC output/log file in "\
+                                         "run number {} in box {}.".format(run_no, box_no)
 
     if e_stat_values_gomc_box_x_list is None:
         e_stat_values_gomc_box_x_list = []
@@ -661,8 +698,20 @@ def get_gomc_log_data(read_gomc_box_x_log_file, gomc_box_x_data_file, run_no, bo
             e_stat_values_gomc_kcal_per_mol_box_x_list.append(e_stat_values_gomc_kcal_per_mol_box_x_iteration_list)
 
             # combine the energy and stat titles (ENER_X and STAT_X) into 1 line and remove ENER_X and STAT_X) labels
-    e_stat_titles_gomc_box_x_iter_list = e_titles_gomc_box_x_iteration[1:]
-    e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list = e_titles_gomc_box_x_iteration[1:]
+    try:
+        e_stat_titles_gomc_box_x_iter_list = e_titles_gomc_box_x_iteration[1:]
+    except:
+        raise ValueError(error_for_bad_gomc_input_file_data)
+    try:
+        e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list = e_titles_gomc_box_x_iteration[1:]
+    except:
+        raise ValueError(error_for_bad_gomc_input_file_data)
+
+    try:
+        isinstance(stat_titles_box_x_iteration,list)
+    except:
+        raise ValueError(error_for_bad_gomc_input_file_data)
+
     for z in range(2, len(stat_titles_box_x_iteration)):
         e_stat_titles_gomc_box_x_iter_list.append(stat_titles_box_x_iteration[z])
         e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list.append(stat_titles_box_x_iteration[z])
@@ -670,8 +719,20 @@ def get_gomc_log_data(read_gomc_box_x_log_file, gomc_box_x_data_file, run_no, bo
     # add a pound symbol (#) before some of the titles
     if str(e_stat_titles_gomc_box_x_iter_list[0][0]) != '#':
         e_stat_titles_gomc_box_x_iter_list[0] = '#' + str(e_stat_titles_gomc_box_x_iter_list[0])
-    if str(e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0][0]) != '#':
-        e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0] = '#{}'.format(str(e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0]))
+
+        if str(e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0][0]) != '#':
+            e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0] = '#{}'.format(str(e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0]))
+
+    try:
+        isinstance(e_titles_gomc_box_x_iteration, list)
+        isinstance(e_stat_titles_gomc_box_x_iter_list, list)
+        isinstance(e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list, list)
+        isinstance(e_stat_values_gomc_box_x_iteration_list, list)
+        isinstance(e_stat_values_gomc_box_x_list, list)
+        isinstance(e_stat_values_gomc_kcal_per_mol_box_x_list, list)
+    except:
+        raise ValueError(error_for_bad_gomc_input_file_data)
+
 
     return e_titles_gomc_box_x_iteration, \
            e_stat_titles_gomc_box_x_iter_list, \
@@ -1187,6 +1248,9 @@ if simulation_engine_options == 'Hybrid':
     e_values_density_namd_box_0_TOTAL_POT_list = e_values_density_namd_box_0_df.loc[:, 'POTENTIAL'].tolist()
     e_values_density_namd_box_0_TOTAL_ELECT_list = e_values_density_namd_box_0_df.loc[:, 'ELECT'].tolist()
     e_values_density_namd_box_0_TOTAL_VDW_list = e_values_density_namd_box_0_df.loc[:, 'VDW'].tolist()
+    e_values_density_namd_box_0_TOTAL_VDW_plus_ELECT_list = [float(e_values_density_namd_box_0_TOTAL_VDW_list[k_i]) +
+                                                             float(e_values_density_namd_box_0_TOTAL_ELECT_list[k_i])
+                                                             for k_i in range(0, len(e_values_density_namd_box_0_TOTAL_VDW_list))]
     e_values_density_namd_box_0_PRESSURE_list = e_values_density_namd_box_0_df.loc[:, 'PRESSURE'].tolist()
     e_values_density_namd_box_0_VOLUME_list = e_values_density_namd_box_0_df.loc[:, 'VOLUME'].tolist()
     e_values_density_namd_box_0_DENSITY_list = e_values_density_namd_box_0_df.loc[:, 'DENSITY'].tolist()
@@ -1199,6 +1263,9 @@ if simulation_engine_options == 'Hybrid':
         e_values_density_namd_box_1_TOTAL_POT_list = e_values_density_namd_box_1_df.loc[:, 'POTENTIAL'].tolist()
         e_values_density_namd_box_1_TOTAL_ELECT_list = e_values_density_namd_box_1_df.loc[:, 'ELECT'].tolist()
         e_values_density_namd_box_1_TOTAL_VDW_list = e_values_density_namd_box_1_df.loc[:, 'VDW'].tolist()
+        e_values_density_namd_box_1_TOTAL_VDW_plus_ELECT_list = [float(e_values_density_namd_box_1_TOTAL_VDW_list[k_i]) +
+                                                                 float(e_values_density_namd_box_1_TOTAL_ELECT_list[k_i])
+                                                                 for k_i in range(0, len(e_values_density_namd_box_1_TOTAL_VDW_list))]
         e_values_density_namd_box_1_PRESSURE_list = e_values_density_namd_box_1_df.loc[:, 'PRESSURE'].tolist()
         e_values_density_namd_box_1_VOLUME_list = e_values_density_namd_box_1_df.loc[:, 'VOLUME'].tolist()
         e_values_density_namd_box_1_DENSITY_list = e_values_density_namd_box_1_df.loc[:, 'DENSITY'].tolist()
@@ -1223,15 +1290,22 @@ if simulation_engine_options == 'Hybrid':
         e_values_density_gomc_box_0_VOLUME_list = [NAMD_Volume_for_NVT_or_GCMC_box_0
                                                    for i in e_values_density_gomc_box_0_STEP_list]
     else:
-        e_values_density_gomc_box_0_VOLUME_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'VOLUME'].tolist()
+        try:
+            e_values_density_gomc_box_0_VOLUME_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'VOLUME'].tolist()
+        except:
+            e_values_density_gomc_box_0_VOLUME_list = ['NA'
+                                                       for k_i in
+                                                       range(0, len(e_values_density_gomc_box_0_TOTAL_POT_list))]
 
     e_values_density_gomc_box_0_DENSITY_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'TOT_DENSITY'].tolist()
     e_values_density_gomc_box_0_INTRA_NB_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'INTRA(NB)'].tolist()
     e_values_density_gomc_box_0_INTER_LJ_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'INTER(LJ)'].tolist()
-    e_values_density_gomc_box_0_TOTAL_VDW_list = []
+    e_values_density_gomc_box_0_TOTAL_VDW_plus_ELECT_list = []
     for i in range(0, len(e_values_density_gomc_box_0_INTRA_NB_list)):
-        e_values_density_gomc_box_0_TOTAL_VDW_list.append(float(e_values_density_gomc_box_0_INTRA_NB_list[i])
-                                                          + float(e_values_density_gomc_box_0_INTER_LJ_list[i]))
+        e_values_density_gomc_box_0_TOTAL_VDW_plus_ELECT_list.append(float(e_values_density_gomc_box_0_INTRA_NB_list[i])
+                                                                     + float(e_values_density_gomc_box_0_INTER_LJ_list[i])
+                                                                     + float(e_values_density_gomc_box_0_TOTAL_ELECT_list[i])
+                                                                     )
 
     if simulation_type in ["GEMC"]:
         e_values_density_gomc_box_1_STEP_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, '#STEP'].tolist()
@@ -1257,15 +1331,22 @@ if simulation_engine_options == 'Hybrid':
             e_values_density_gomc_box_1_VOLUME_list = [NAMD_Volume_for_NVT_or_GCMC_box_1
                                                        for i in e_values_density_gomc_box_1_STEP_list]
         else:
-            e_values_density_gomc_box_1_VOLUME_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'VOLUME'].tolist()
+            try:
+                e_values_density_gomc_box_1_VOLUME_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'VOLUME'].tolist()
+            except:
+                e_values_density_gomc_box_1_VOLUME_list = ['NA'
+                                                           for k_i in
+                                                           range(0, len(e_values_density_gomc_box_1_TOTAL_POT_list))]
 
         e_values_density_gomc_box_1_DENSITY_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'TOT_DENSITY'].tolist()
         e_values_density_gomc_box_1_INTRA_NB_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'INTRA(NB)'].tolist()
         e_values_density_gomc_box_1_INTER_LJ_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'INTER(LJ)'].tolist()
-        e_values_density_gomc_box_1_TOTAL_VDW_list = []
+        e_values_density_gomc_box_1_TOTAL_VDW_plus_ELECT_list = []
         for i in range(0, len(e_values_density_gomc_box_1_INTRA_NB_list)):
-            e_values_density_gomc_box_1_TOTAL_VDW_list.append(float(e_values_density_gomc_box_1_INTRA_NB_list[i])
-                                                              + float(e_values_density_gomc_box_1_INTER_LJ_list[i]))
+            e_values_density_gomc_box_1_TOTAL_VDW_plus_ELECT_list.append(float(e_values_density_gomc_box_1_INTRA_NB_list[i])
+                                                                         + float(e_values_density_gomc_box_1_INTER_LJ_list[i])
+                                                                         + float(e_values_density_gomc_box_1_TOTAL_ELECT_list[i])
+                                                                         )
 
     # ****************************************
     # write the combined NAMD and GOMC data for box 0  (Start)
@@ -1283,7 +1364,7 @@ if simulation_engine_options == 'Hybrid':
     combined_STEP_box_0 = e_values_density_namd_box_0_STEP_list + e_values_density_gomc_box_0_STEP_list
     combined_TOTAL_POT_box_0 = e_values_density_namd_box_0_TOTAL_POT_list + e_values_density_gomc_box_0_TOTAL_POT_list
     combined_TOTAL_ELECT_box_0 = e_values_density_namd_box_0_TOTAL_ELECT_list + e_values_density_gomc_box_0_TOTAL_ELECT_list
-    combined_TOTAL_VDW_box_0 = e_values_density_namd_box_0_TOTAL_VDW_list + e_values_density_gomc_box_0_TOTAL_VDW_list
+    combined_TOTAL_VDW_plus_ELECT_box_0 = e_values_density_namd_box_0_TOTAL_VDW_plus_ELECT_list + e_values_density_gomc_box_0_TOTAL_VDW_plus_ELECT_list
     combined_PRESSURE_box_0 = e_values_density_namd_box_0_PRESSURE_list + e_values_density_gomc_box_0_PRESSURE_list
     combined_VOLUME_box_0 = e_values_density_namd_box_0_VOLUME_list + e_values_density_gomc_box_0_VOLUME_list
     combined_DENSITY_box_0 = e_values_density_namd_box_0_DENSITY_list + e_values_density_gomc_box_0_DENSITY_list
@@ -1294,7 +1375,7 @@ if simulation_engine_options == 'Hybrid':
         "STEP": combined_STEP_box_0,
         'TOTAL_POT': combined_TOTAL_POT_box_0,
         'TOTAL_ELECT': combined_TOTAL_ELECT_box_0,
-        'TOTAL_VDW': combined_TOTAL_VDW_box_0,
+        'TOTAL_VDW_plus_ELECT': combined_TOTAL_VDW_plus_ELECT_box_0,
         'PRESSURE': combined_PRESSURE_box_0,
         'VOLUME': combined_VOLUME_box_0,
         'DENSITY':  combined_DENSITY_box_0
@@ -1324,7 +1405,7 @@ if simulation_engine_options == 'Hybrid':
         combined_STEP_box_1 = e_values_density_namd_box_1_STEP_list + e_values_density_gomc_box_1_STEP_list
         combined_TOTAL_POT_box_1 = e_values_density_namd_box_1_TOTAL_POT_list + e_values_density_gomc_box_1_TOTAL_POT_list
         combined_TOTAL_ELECT_box_1 = e_values_density_namd_box_1_TOTAL_ELECT_list + e_values_density_gomc_box_1_TOTAL_ELECT_list
-        combined_TOTAL_VDW_box_1 = e_values_density_namd_box_1_TOTAL_VDW_list + e_values_density_gomc_box_1_TOTAL_VDW_list
+        combined_TOTAL_VDW_plus_ELECT_box_1 = e_values_density_namd_box_1_TOTAL_VDW_plus_ELECT_list + e_values_density_gomc_box_1_TOTAL_VDW_plus_ELECT_list
         combined_PRESSURE_box_1 = e_values_density_namd_box_1_PRESSURE_list + e_values_density_gomc_box_1_PRESSURE_list
         combined_VOLUME_box_1 = e_values_density_namd_box_1_VOLUME_list + e_values_density_gomc_box_1_VOLUME_list
         combined_DENSITY_box_1 = e_values_density_namd_box_1_DENSITY_list + e_values_density_gomc_box_1_DENSITY_list
@@ -1335,7 +1416,7 @@ if simulation_engine_options == 'Hybrid':
             "STEP": combined_STEP_box_1,
             'TOTAL_POT': combined_TOTAL_POT_box_1,
             'TOTAL_ELECT': combined_TOTAL_ELECT_box_1,
-            'TOTAL_VDW': combined_TOTAL_VDW_box_1,
+            'TOTAL_VDW_plus_ELECT': combined_TOTAL_VDW_plus_ELECT_box_1,
             'PRESSURE': combined_PRESSURE_box_1,
             'VOLUME': combined_VOLUME_box_1,
             'DENSITY':  combined_DENSITY_box_1
@@ -1354,7 +1435,7 @@ if simulation_engine_options == 'Hybrid':
         combined_STEP_box_1 = e_values_density_gomc_box_1_STEP_list
         combined_TOTAL_POT_box_1 = e_values_density_gomc_box_1_TOTAL_POT_list
         combined_TOTAL_ELECT_box_1 = e_values_density_gomc_box_1_TOTAL_ELECT_list
-        combined_TOTAL_VDW_box_1 = e_values_density_gomc_box_1_TOTAL_VDW_list
+        combined_TOTAL_VDW_plus_ELECT_box_1 = e_values_density_gomc_box_1_TOTAL_VDW_plus_ELECT_list
         combined_PRESSURE_box_1 = e_values_density_gomc_box_1_PRESSURE_list
         combined_VOLUME_box_1 = e_values_density_gomc_box_1_VOLUME_list
         combined_DENSITY_box_1 = e_values_density_gomc_box_1_DENSITY_list
@@ -1365,7 +1446,7 @@ if simulation_engine_options == 'Hybrid':
             "STEP": combined_STEP_box_1,
             'TOTAL_POT': combined_TOTAL_POT_box_1,
             'TOTAL_ELECT': combined_TOTAL_ELECT_box_1,
-            'TOTAL_VDW': combined_TOTAL_VDW_box_1,
+            'TOTAL_VDW_plus_ELECT': combined_TOTAL_VDW_plus_ELECT_box_1,
             'PRESSURE': combined_PRESSURE_box_1,
             'DENSITY':  combined_DENSITY_box_1
         })
@@ -1475,15 +1556,20 @@ elif simulation_engine_options == 'GOMC-only':
     e_values_density_gomc_box_0_TOTAL_POT_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'TOTAL'].tolist()
     e_values_density_gomc_box_0_TOTAL_ELECT_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'TOTAL_ELECT'].tolist()
     e_values_density_gomc_box_0_PRESSURE_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'PRESSURE'].tolist()
-    e_values_density_gomc_box_0_VOLUME_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'VOLUME'].tolist()
+    try:
+        e_values_density_gomc_box_0_VOLUME_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'VOLUME'].tolist()
+    except:
+        e_values_density_gomc_box_0_VOLUME_list = ['NA'
+                                                   for k_i in range(0, len(e_values_density_gomc_box_0_TOTAL_POT_list))]
     e_values_density_gomc_box_0_DENSITY_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'TOT_DENSITY'].tolist()
 
     e_values_density_gomc_box_0_INTRA_NB_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'INTRA(NB)'].tolist()
     e_values_density_gomc_box_0_INTER_LJ_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'INTER(LJ)'].tolist()
-    e_values_density_gomc_box_0_TOTAL_VDW_list = []
+    e_values_density_gomc_box_0_TOTAL_VDW_plus_ELECT_list = []
     for i in range(0, len(e_values_density_gomc_box_0_INTRA_NB_list)):
-        e_values_density_gomc_box_0_TOTAL_VDW_list.append(float(e_values_density_gomc_box_0_INTRA_NB_list[i])
-                                                          + float(e_values_density_gomc_box_0_INTER_LJ_list[i]))
+        e_values_density_gomc_box_0_TOTAL_VDW_plus_ELECT_list.append(float(e_values_density_gomc_box_0_INTRA_NB_list[i])
+                                                                     + float(e_values_density_gomc_box_0_INTER_LJ_list[i])
+                                                                     + float(e_values_density_gomc_box_0_TOTAL_ELECT_list[i]))
 
     if simulation_type in ["GEMC"]:
         e_values_density_gomc_box_1_STEP_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, '#STEP'].tolist()
@@ -1503,14 +1589,21 @@ elif simulation_engine_options == 'GOMC-only':
         e_values_density_gomc_box_1_TOTAL_ELECT_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'TOTAL_ELECT'].tolist()
         e_values_density_gomc_box_1_PRESSURE_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'PRESSURE'].tolist()
         e_values_density_gomc_box_1_VOLUME_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'VOLUME'].tolist()
-        e_values_density_gomc_box_1_DENSITY_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'TOT_DENSITY'].tolist()
+        try:
+            e_values_density_gomc_box_1_VOLUME_list  = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'VOLUME'].tolist()
+        except:
+            e_values_density_gomc_box_1_VOLUME_list  = ['NA'
+                                                       for k_i in
+                                                       range(0, len(e_values_density_gomc_box_1_TOTAL_POT_list))]
 
+        e_values_density_gomc_box_1_DENSITY_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'TOT_DENSITY'].tolist()
         e_values_density_gomc_box_1_INTRA_NB_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'INTRA(NB)'].tolist()
         e_values_density_gomc_box_1_INTER_LJ_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'INTER(LJ)'].tolist()
-        e_values_density_gomc_box_1_TOTAL_VDW_list = []
+        e_values_density_gomc_box_1_TOTAL_VDW_plus_ELECT_list = []
         for i in range(0, len(e_values_density_gomc_box_1_INTRA_NB_list)):
-            e_values_density_gomc_box_1_TOTAL_VDW_list.append(float(e_values_density_gomc_box_1_INTRA_NB_list[i])
-                                                              + float(e_values_density_gomc_box_1_INTER_LJ_list[i]))
+            e_values_density_gomc_box_1_TOTAL_VDW_plus_ELECT_list.append(float(e_values_density_gomc_box_1_INTRA_NB_list[i])
+                                                              + float(e_values_density_gomc_box_1_INTER_LJ_list[i])
+                                                              + float(e_values_density_gomc_box_0_TOTAL_ELECT_list[i]))
 
     # ****************************************
     # write the combined NAMD and GOMC data for box 0  (Start)
@@ -1525,7 +1618,7 @@ elif simulation_engine_options == 'GOMC-only':
     combined_STEP_box_0 = e_values_density_gomc_box_0_STEP_list
     combined_TOTAL_POT_box_0 = e_values_density_gomc_box_0_TOTAL_POT_list
     combined_TOTAL_ELECT_box_0 = e_values_density_gomc_box_0_TOTAL_ELECT_list
-    combined_TOTAL_VDW_box_0 = e_values_density_gomc_box_0_TOTAL_VDW_list
+    combined_TOTAL_VDW_plus_ELECT_box_0 = e_values_density_gomc_box_0_TOTAL_VDW_plus_ELECT_list
     combined_PRESSURE_box_0 = e_values_density_gomc_box_0_PRESSURE_list
     combined_VOLUME_box_0 = e_values_density_gomc_box_0_VOLUME_list
     combined_DENSITY_box_0 = e_values_density_gomc_box_0_DENSITY_list
@@ -1536,7 +1629,7 @@ elif simulation_engine_options == 'GOMC-only':
         "#STEP": combined_STEP_box_0,
         'TOTAL_POT': combined_TOTAL_POT_box_0,
         'TOTAL_ELECT': combined_TOTAL_ELECT_box_0,
-        'TOTAL_VDW': combined_TOTAL_VDW_box_0,
+        'TOTAL_VDW_plus_ELECT': combined_TOTAL_VDW_plus_ELECT_box_0,
         'PRESSURE': combined_PRESSURE_box_0,
         'VOLUME': combined_VOLUME_box_0,
         'DENSITY': combined_DENSITY_box_0
@@ -1564,7 +1657,7 @@ elif simulation_engine_options == 'GOMC-only':
         combined_STEP_box_1 = e_values_density_gomc_box_1_STEP_list
         combined_TOTAL_POT_box_1 = e_values_density_gomc_box_1_TOTAL_POT_list
         combined_TOTAL_ELECT_box_1 = e_values_density_gomc_box_1_TOTAL_ELECT_list
-        combined_TOTAL_VDW_box_1 = e_values_density_gomc_box_1_TOTAL_VDW_list
+        combined_TOTAL_VDW_plus_ELECT_box_1 = e_values_density_gomc_box_1_TOTAL_VDW_plus_ELECT_list
         combined_PRESSURE_box_1 = e_values_density_gomc_box_1_PRESSURE_list
         combined_VOLUME_box_1 = e_values_density_gomc_box_1_VOLUME_list
         combined_DENSITY_box_1 = e_values_density_gomc_box_1_DENSITY_list
@@ -1575,7 +1668,7 @@ elif simulation_engine_options == 'GOMC-only':
             "#STEP": combined_STEP_box_1,
             'TOTAL_POT': combined_TOTAL_POT_box_1,
             'TOTAL_ELECT': combined_TOTAL_ELECT_box_1,
-            'TOTAL_VDW': combined_TOTAL_VDW_box_1,
+            'TOTAL_VDW_plus_ELECT': combined_TOTAL_VDW_plus_ELECT_box_1,
             'PRESSURE': combined_PRESSURE_box_1,
             'VOLUME': combined_VOLUME_box_1,
             'DENSITY': combined_DENSITY_box_1
@@ -1644,6 +1737,9 @@ elif simulation_engine_options == 'NAMD-only':
     e_values_density_namd_box_0_TOTAL_POT_list = e_values_density_namd_box_0_df.loc[:, 'POTENTIAL'].tolist()
     e_values_density_namd_box_0_TOTAL_ELECT_list = e_values_density_namd_box_0_df.loc[:, 'ELECT'].tolist()
     e_values_density_namd_box_0_TOTAL_VDW_list = e_values_density_namd_box_0_df.loc[:, 'VDW'].tolist()
+    e_values_density_namd_box_0_TOTAL_VDW_plus_ELECT_list = [float(e_values_density_namd_box_0_TOTAL_VDW_list[k_i]) +
+                                                             float(e_values_density_namd_box_0_TOTAL_ELECT_list[k_i])
+                                                             for k_i in range(0, len(e_values_density_namd_box_0_TOTAL_VDW_list))]
     e_values_density_namd_box_0_PRESSURE_list = e_values_density_namd_box_0_df.loc[:, 'PRESSURE'].tolist()
     e_values_density_namd_box_0_VOLUME_list = e_values_density_namd_box_0_df.loc[:, 'VOLUME'].tolist()
     e_values_density_namd_box_0_DENSITY_list = e_values_density_namd_box_0_df.loc[:, 'DENSITY'].tolist()
@@ -1662,7 +1758,7 @@ elif simulation_engine_options == 'NAMD-only':
     namd_STEP_box_0 = e_values_density_namd_box_0_STEP_list
     namd_TOTAL_POT_box_0 = e_values_density_namd_box_0_TOTAL_POT_list
     namd_TOTAL_ELECT_box_0 = e_values_density_namd_box_0_TOTAL_ELECT_list
-    namd_TOTAL_VDW_box_0 = e_values_density_namd_box_0_TOTAL_VDW_list
+    namd_TOTAL_VDW_plus_ELECT_box_0 = e_values_density_namd_box_0_TOTAL_VDW_plus_ELECT_list
     namd_PRESSURE_box_0 = e_values_density_namd_box_0_PRESSURE_list
     namd_VOLUME_box_0 = e_values_density_namd_box_0_VOLUME_list
     namd_DENSITY_box_0 = e_values_density_namd_box_0_DENSITY_list
@@ -1673,7 +1769,7 @@ elif simulation_engine_options == 'NAMD-only':
         "STEP": namd_STEP_box_0,
         'TOTAL_POT': namd_TOTAL_POT_box_0,
         'TOTAL_ELECT': namd_TOTAL_ELECT_box_0,
-        'TOTAL_VDW': namd_TOTAL_VDW_box_0,
+        'TOTAL_VDW_plus_ELECT': namd_TOTAL_VDW_plus_ELECT_box_0,
         'PRESSURE': namd_PRESSURE_box_0,
         'VOLUME': namd_VOLUME_box_0,
         'DENSITY': namd_DENSITY_box_0
