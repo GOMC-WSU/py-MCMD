@@ -1000,6 +1000,10 @@ def write_namd_conf_file(python_file_directory, path_namd_template, path_namd_ru
                                               "{}/Output_data_BOX_{}_restart.xsc"
                                               "".format(gomc_rel_path, str(box_number))
                                               )
+        new_namd_data = new_namd_data.replace("vel_file",
+                                              "{}/Output_data_BOX_{}_restart.vel"
+                                              "".format(gomc_rel_path, str(box_number))
+                                              )
         new_namd_data = new_namd_data.replace("Bool_restart", str("true"))
 
         # Read the angles from the intital/starting PDB file
@@ -1030,6 +1034,7 @@ def write_namd_conf_file(python_file_directory, path_namd_template, path_namd_ru
 
         new_namd_data = new_namd_data.replace("coor_file", str("NA"))
         new_namd_data = new_namd_data.replace("xsc_file", str("NA"))
+        new_namd_data = new_namd_data.replace("vel_file", str("NA"))
         new_namd_data = new_namd_data.replace("Bool_restart", str("false"))
 
         read_pdb_file = open("{}/{}".format(str(python_file_directory), starting_pdb_box_x_file), 'r').readlines()
@@ -1459,6 +1464,9 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
     new_gomc_data = new_gomc_data.replace("xsc_box_0_file", '{}/namdOut.restart.xsc'
                                                             ''.format(previous_namd_box_0_rel_path)
                                           )
+    new_gomc_data = new_gomc_data.replace("vel_box_0_file", '{}/namdOut.restart.vel'
+                                                            ''.format(previous_namd_box_0_rel_path)
+                                          )
 
     if previous_gomc_dir == 'NA':
         new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", 'false')
@@ -1514,10 +1522,13 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
             if previous_gomc_dir == "NA":
                 for i, line in enumerate(readlines_gomc_template_file):
                     split_line = line.split()
-                    if line.startswith('binCoordinates') is True or line.startswith('extendedSystem') is True:
+                    if line.startswith('binCoordinates') is True or line.startswith('extendedSystem') is True \
+                            or line.startswith('binVelocities') :
                         if split_line[0] == 'binCoordinates' and split_line[1] == '1':
                             new_gomc_data = new_gomc_data.replace(line, '')
                         elif split_line[0] == 'extendedSystem' and split_line[1] == '1':
+                            new_gomc_data = new_gomc_data.replace(line, '')
+                        elif split_line[0] == 'binVelocities' and split_line[1] == '1':
                             new_gomc_data = new_gomc_data.replace(line, '')
 
                 read_pdb_file = open("{}/{}".format(str(python_file_directory),
@@ -1571,6 +1582,9 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
                 new_gomc_data = new_gomc_data.replace("xsc_box_1_file",
                                                       "{}/Output_data_BOX_1_restart.xsc".format(previous_gomc_rel_path)
                                                       )
+                new_gomc_data = new_gomc_data.replace("vel_box_1_file",
+                                                      "{}/Output_data_BOX_1_restart.vel".format(previous_gomc_rel_path)
+                                                      )
 
                 previous_gomc_xsc_box_1_file = "{}/Output_data_BOX_1_restart.xsc".format(previous_gomc_dir)
                 read_previous_gomc_xsc_box_1_file = open(previous_gomc_xsc_box_1_file, 'r').readlines()
@@ -1602,6 +1616,9 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
                                                   '{}/namdOut.restart.coor'.format(previous_namd_box_1_rel_path)
                                                   )
             new_gomc_data = new_gomc_data.replace("xsc_box_1_file", '{}/namdOut.restart.xsc'
+                                                                    ''.format(previous_namd_box_1_rel_path)
+                                                  )
+            new_gomc_data = new_gomc_data.replace("vel_box_1_file", '{}/namdOut.restart.vel'
                                                                     ''.format(previous_namd_box_1_rel_path)
                                                   )
 
