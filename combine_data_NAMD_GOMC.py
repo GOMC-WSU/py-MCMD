@@ -880,9 +880,8 @@ def combine_dcd_files(engine_name,
 
     # the combined final Engine dcd file
     if engine_name == 'GOMC':
-        # take only the last frame from GOMC as it ouputs the from 1 and the last frame
-        # we only want the last frame (i.e., -stride 2)
-        run_engine_dcdcat_box_x_command = "{} -o {}/{} -stride 2 {}/{}" \
+        # take only the last frame from GOMC.  Now GOMC only outputs the last frame so only need (i.e., -stride 1)
+        run_engine_dcdcat_box_x_command = "{} -o {}/{} -stride 1 {}/{}" \
                                                   "".format(str(rel_path_to_combine_binary_catdcd),
                                                             str(path_combined_data_folder),
                                                             engine_dcd_combined_name_str,
