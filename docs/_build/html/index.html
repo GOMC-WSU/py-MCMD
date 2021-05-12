@@ -1,0 +1,278 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>NAMD_GOMC - A Hybrid MD/MC Simulation Software &mdash; NAMD_GOMC 0.0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="#" class="icon icon-home"> NAMD_GOMC
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulation_parameters.html">Simulation Parameters  (pre-simulation)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulation_analysis.html">Simulation Analysis (post-simulation)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_simulation.html">Example Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citing_MDMC_PYTHON.html">Citing the MDMC Python code</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">NAMD_GOMC</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>NAMD_GOMC - A Hybrid MD/MC Simulation Software</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="namd-gomc-a-hybrid-md-mc-simulation-software">
+<h1>NAMD_GOMC - A Hybrid MD/MC Simulation Software<a class="headerlink" href="#namd-gomc-a-hybrid-md-mc-simulation-software" title="Permalink to this headline">¶</a></h1>
+<p>This Python enables hybrid molecular dynamics/Monte Carlo (MD/MC) simulations using <a class="reference external" href="https://www.ks.uiuc.edu/Research/namd/">NAMD</a> and the <a class="reference external" href="http://gomc.eng.wayne.edu">GPU Optimized Monte Carlo (GOMC)</a> software..
+The Python code allows users to switch back and forth between the NAMD and GOMC simulation engines, with one (1) iteration of each NAMD and GOMC consisting of a cycle.  The user programs the number of cycles and the number of NAMD and GOMC steps desired per cycle.  Combining the MD/MC simulations allows the best of both types of simulations while minimizing the downsides, and in some cases, enables simulations that were previously not feasible. This code allows the modification of the NAMD and GOMC control, maximizing user flexibility and functionality.</p>
+<p>This Python code is compatible only with <a class="reference external" href="https://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD">NAMD version 2.13-2.14</a> and <a class="reference external" href="https://github.com/GOMC-WSU/GOMC/tree/development">GOMC-development branch</a>.  The NAMD and GOMC software needs to be installed before using this hybrid python code. Please refer to the NAMD and GOMC software instructions for installing them.</p>
+<p><strong>NOTE:</strong>  GOMC does not currently use improper or Urey—Bradley potentials, so if the hybrid simulations contain impropers or Urey—Bradleys, the NAMD simulation energies will be different.  In a protein simulation, it should be OK not to use impropers or Urey-Bradleys in GOMC and utilize them in NAMD since the protein will not move in the GOMC simulation due to its size.  Each simulation will need to be individually evaluated to determine if not having the impropers or Urey-Bradleys in GOMC is irrelevant or significant to the simulation results.</p>
+<p>This code distribution also contains the <a class="reference external" href="https://www.ks.uiuc.edu/Development/MDTools/catdcd/">Concatenate DCD (CatDCD)</a> software.
+The NAMD_GOMC Python package consists of two (2) different licenses <a class="reference download internal" download="" href="_downloads/3b423627fe21976c3c06e60f78e14ae1/LICENSE"><code class="xref download docutils literal notranslate"><span class="pre">Combined_License</span></code></a>
+or they are available individually:</p>
+<ul>
+<li><p>One (1) license is for the NAMD_GOMC hybrid Python code for the NAMD_GOMC hybrid code.</p>
+<blockquote>
+<div><p>Download as <a class="reference download internal" download="" href="_downloads/5cadced57e7569904f62e36449465c14/NAMD_GOMC_license"><code class="xref download docutils literal notranslate"><span class="pre">NAMD_GOMC_license</span></code></a></p>
+<a class="reference external image-reference" href="www.gnu.org/licenses/gpl-3.0.en.html"><img alt="https://img.shields.io/github/license/bc118/NAMD_GOMC" src="https://img.shields.io/github/license/bc118/NAMD_GOMC" /></a>
+</div></blockquote>
+</li>
+<li><p>One (1) license is for the <a class="reference external" href="https://www.ks.uiuc.edu/Development/MDTools/catdcd/">Concatenate DCD (CatDCD)</a> software which are used to combine the DCD files produced by the NAMD_GOMC Python package.</p>
+<blockquote>
+<div><p>Download as <a class="reference download internal" download="" href="_downloads/4a2ffb8c0e4e2c7a6c5257ae1973367f/CatDCD_license"><code class="xref download docutils literal notranslate"><span class="pre">CatDCD_license</span></code></a></p>
+</div></blockquote>
+</li>
+</ul>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulation_parameters.html">Simulation Parameters  (pre-simulation)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="simulation_parameters.html#namd-and-gomc-configuration-files">NAMD and GOMC configuration files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="simulation_parameters.html#md-mc-hybrid-input">MD/MC Hybrid Input</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="simulation_analysis.html">Simulation Analysis (post-simulation)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="simulation_analysis.html#md-mc-hybrid-data-combining">MD/MC Hybrid Data Combining</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="example_simulation.html">Example Simulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="example_simulation.html#xxxxx">XXXXX</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="citing_MDMC_PYTHON.html">Citing the MDMC Python code</a></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright TBD.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
