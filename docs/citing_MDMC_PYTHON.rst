@@ -25,7 +25,7 @@ If you use this code for your research, please cite `the GitHub repository <http
         url         = "https://github.com/bc118/NAMD_GOMC"
     }
 
-Download as :download:`BibTeX <files/MDMC_Python.bib>` or :download:`RIS <files/MDMC_Python.ris>`
+Download as :download:`BibTeX <_images/MDMC_Python.bib>` or :download:`RIS <_images/MDMC_Python.ris>`
 
 
 We also recommend citing the `Concatenate DCD files (CatDCD) <https://www.ks.uiuc.edu/Development/MDTools/catdcd/>`_ from the Theoretical and Computational Biophysics Group at the University of Illinois at Urbana-Champaign. 

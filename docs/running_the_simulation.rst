@@ -36,12 +36,12 @@ Flags for Running the Hybrid Simulation
 
 The flags for running the *run_NAMD_GOMC.py* file user_input_variables_NAMD_GOMC.json file, or whatever the user names it. 
 	
-	"-f" or "--file" : json file
+	"-f" *or* "--file" : json file
 		Defines the variable inputs file used for the hybrid NAMD/GOMC simulation script.
 		This file (i.e., the user_input_variables_NAMD_GOMC.json file) is required 
 		to run the hybrid simulation.
 
-	-namd_sims_order or --namd_simulation_order : default='series' ('series' or 'parallel')
+	-namd_sims_order *or* --namd_simulation_order : default='series' ('series' or 'parallel')
 		This sets the NAMD simulation to be run in series or parallel. 
 		The data is entered only as series or parallel (default = series). 
                  This is only relevant for the GEMC ensemble when utilizing two (2) NAMD simulation

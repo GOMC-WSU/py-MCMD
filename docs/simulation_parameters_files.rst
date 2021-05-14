@@ -42,7 +42,7 @@ The hybrid simulation requires a **PSF**, **PDB**, and **force field files (i.e.
 
 **NOTE:**  GOMC and NAMD force field files can be slightly different, so please refer to their respective manuals/documentation.  However, unlike NAMD, GOMC handles fixed bonds and angles in its force field file by replacing bond and angle K-constants with *"999999999999"*.  Please also see the image below for this section of the GOMC water force field with fixed bonds and angles.
 
-	.. image:: files/GOMC_fixed_bond_angles.png
+	.. image:: _images/GOMC_fixed_bond_angles.png
    			:width: 350
 
 **NOTE:**  Additionally, the impropers and CMAP parameters need to be removed from the GOMC force field files, or GOMC will fail with an error when reading them.

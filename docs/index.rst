@@ -16,14 +16,14 @@ or they are available individually:
 
 * One (1) license is for the NAMD_GOMC hybrid Python code for the NAMD_GOMC hybrid code.  
 
-		Download as :download:`NAMD_GOMC_license <files/NAMD_GOMC_license>`
+		Download as :download:`NAMD_GOMC_license <_images/NAMD_GOMC_license>`
 
 		.. image:: https://img.shields.io/github/license/bc118/NAMD_GOMC
 			:target: www.gnu.org/licenses/gpl-3.0.en.html
 
 * One (1) license is for the `Concatenate DCD (CatDCD) <https://www.ks.uiuc.edu/Development/MDTools/catdcd/>`_ software which are used to combine the DCD files produced by the NAMD_GOMC Python package.   
 
-		Download as :download:`CatDCD_license <files/CatDCD_license>`
+		Download as :download:`CatDCD_license <_images/CatDCD_license>`
 
 .. toctree::
 	installation

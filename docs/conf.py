@@ -34,7 +34,9 @@ MOCK_MODULES = ['numpy',
                 'scipy.spatial',
                 'scipy.constants',
                 'numpy.linalg',
-                'ele']
+                'sphinxcontrib.video',
+                'ele',
+]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 
@@ -58,6 +60,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.autodoc',
     'sphinxcontrib.inkscapeconverter',
+    'sphinxcontrib.video',
     'sphinx.ext.viewcode',
     'sphinx.ext.intersphinx',
     'sphinx.ext.autosummary',
