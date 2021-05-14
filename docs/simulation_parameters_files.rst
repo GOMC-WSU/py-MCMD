@@ -1,9 +1,65 @@
-## Notes
+Simulation Parameters  (pre-simulation)
+===============
 
-- (1) GOMC does not currently use improper or Urey?Bradley potentials, so if the hybrid simulations contain impropers or Urey?Bradleys, the NAMD simulation energies will be different. In a protein simulation, it should be OK not to use impropers or Urey-Bradleys in GOMC and utilize them in NAMD since the protein will not move in the GOMC simulation due to its size. Each simulation will need to be individually evaluated to determine if not having the impropers or Urey-Bradleys in GOMC is irrelevant or significant to the simulation results.
 
-## TO RUN hybrid simulations
-- (1) Change the variables in the user_input_variables_NAMD_GOMC.json file, or whatever the user names it. 
+NAMD and GOMC configuration files
+---------------
+
+These are slightly modified versions of the standard input files used for the NAMD and GOMC simulation engines. 
+The modifications are to some of the variable entries in the configuration files, which allows the python code to search and replace these variables for the next simulation, so the simulation is started correctly from the previous one.
+Please refer to the `GOMC Manual <https://gomc.eng.wayne.edu/documentation/>`_ and the `NAMD Users Guide <https://www.ks.uiuc.edu/Research/namd/2.14/ug/>`_ for more information on the proper inputs for the simulation engines.  
+
+These files are located in the *"NAMD_GOMC/required_data/config_files"* directory, and **these configurations files are auto-selected based on the user specified ensemble.**
+The NAMD configuration file applies to all the possible ensembles. 
+The provided GOMC configuration files are named and designed for each different ensemble (NPT, NVT, GCMC, or GEMC), which changes the inputs and move frequencies.  
+An experienced user can modify these configuration files by changing or adding variables, time steps, move types, and move frequencies, as long as the variables work smoothly between NAMD and GOMC.
+These changes will **likely** not effect the hybrid python code if the match between NAMD and GOMC and they are hardcoded and not dependent on a variable value in the existing configuration files. 
+**However, the configuration files must maintain their names and locations in the "NAMD_GOMC/required_data/config_files" directory.**
+
+It is also possible to use various configuration files throughout a longer simulation by simply changing the configuration files and restarting the hybrid simulation with the different files in their proper location. For Example, in the grand canonical Monte Carlo (GCMC) ensemble, suppose the first NAMD simulation requires restraining a protein for the first cycle.  In this case, the GCMC simulation can insert molecules into the binding pocket before allowing unrestricted movement of the protein.  The simulation would then be restarted on the second cycle to the Nth cycle with a different NAMD configuration file without restraining the protein.  
+*However, the configuration files must maintain their names and locations.*
+
+
+**NOTE:** A simulation cycle is one (1) NAMD simulation and one (1) GOMC simulation.
+
+**NOTE:**  GOMC and NAMD both support the Shift, Switch, and Buckingham potentials, so they can be implemented in these hybrid simulations without issue.
+
+**NOTE:** These hybrid simulation are currently only designed for orthogonal boxes.
+
+**NOTE:**  GOMC uses the standard Ewald Summation Method, while NAMD utilized the Particle Mesh Ewald (PME) to calculate long-range electrostatics.
+
+An Example GCMC configuration file for the GOMC engine is provided below.  **The configuration sections that should not be modified without a good understanding of the overall code are listed at DO NOT MODIFY in each section.** The same DO NOT MODIFY statements are listing in the NAMD control file to alert the user. 
+
+	.. literalinclude:: ../required_data/config_files/GOMC_GCMC.conf
+
+
+
+Required files for the hybrid simulation 
+---------------
+
+The hybrid simulation requires a **PSF**, **PDB**, and **force field files (i.e., .inp or .par files)** to run the simulation, which are required inputs.  Typically, only a single **PDB** and **PSF** file are required, unless you need a second **PDB** file to fix or restrain the atoms within NAMD, etc.  A single or multiple force field files are required for both the NAMD and GOMC simulation engines, which is dependent on the system, and which force fields are being utilized.  
+
+
+**NOTE:**  GOMC and NAMD force field files can be slightly different, so please refer to their respective manuals/documentation.  However, unlike NAMD, GOMC handles fixed bonds and angles in its force field file by replacing bond and angle K-constants with *"999999999999"*.  Please also see the image below for this section of the GOMC water force field with fixed bonds and angles.
+
+	.. image:: files/GOMC_fixed_bond_angles.png
+   			:width: 350
+
+**NOTE:**  Additionally, the impropers and CMAP parameters need to be removed from the GOMC force field files, or GOMC will fail with an error when reading them.
+
+MD/MC Hybrid Input
+---------------
+
+The MD/MC Hybrid input file is in the `json <https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON>`_ format. An example fo the "user_input_NAMD_GOMC.json" file is provided below, and can be renamed by the user.
+
+	.. literalinclude:: ../user_input_NAMD_GOMC.json
+   		:language: json
+	
+Variable definitions and usage for the user_input_variables_NAMD_GOMC.json file, or whatever the user names it. 
+
+**NOTE:**  The hybrid simulation always starts with NAMD and finishes with GOMC in a cycle. If set by the user, the first NAMD simulation will minimize the structure of the system.
+
+**NOTE:** We assume that the best number of steps for each simulation engine per cycle is the values that, on average, provides two (2) uncorrelated samples for NAMD and two (2) accepted moves for each of the desired GOMC moves.*
 	
 	total_cycles_namd_gomc_sims : integer
 		The total number of simulation cycles, where a cycle is a NAMD and 
@@ -15,12 +71,13 @@
 		Enter zero for intial simualtion start, or non-zero for a restart.
 		A new simulation would be started at zero (0).
 		To restart a simulation, the last full cycle number of the 
-		simulation would be entered.
+		simulation would be entered. The user may need to delete 1 or more
+		of the last simulations if the simulation failed prematurely.
 
 	gomc_use_CPU_or_GPU : string (only 'CPU' or 'GPU')
 		Run the GOMC simulation using the CPU or GPU.
 		Note: For the NAMD simulation, the user will have to provide the 
-		path to the GPU or CPU NAMD version.  (i.e., This function does not
+		path to the GPU or CPU NAMD version (i.e., This function does not
 		set NAMD's CPU or GPU version).  
 
 	simulation_type : string (only 'GEMC', 'GCMC', 'NPT', 'NVT') 
@@ -73,7 +130,7 @@
 		The scalar multiple used to get the number of NAMD minimization steps for this 
 		intitial NAMD simulation.
 		NAMD_minimize steps = namd_run_steps * namd_minimize_mult_scalar
-		
+
 	namd_run_steps : int (>=10)  
 		The number of steps to run each cycle of the NAMD simulation.
 		Needs to be 10 minimum for now, NEEDS TO BE THE SAME AS THE PREVIOUS SIMULATION, IF RESTARTED!
@@ -187,118 +244,5 @@
 		Alternatively, a sybolic link to GOMC file binaries file binary could be there.
 		NOTE: THIS WAS ONLY TESTED ON THE GOMC DEVELOPMENT AFTER VERSION 2.70, 
 		SO IT MAY NOT WORK ON OTHER GOMC VERSIONS WITHOUT SOME CODE MODIFICATION, 
-		AND	SOME ADDITIONAL FUNCTIJONALLITY IS NOT IN PREVIOUS GOMC VERSIONS.
+		AND SOME ADDITIONAL FUNCTIONALLITY IS NOT IN PREVIOUS GOMC VERSIONS.
 		Example: "required_data/bin"
-	
-
-- (2) If you have previous  "NAMD" and  "GOMC" folders in this directory deleted them, so you do not have mixed data in the simulation folders, unless this is desired. 
-If they are not deleted the new data will overwrite the old data. 
- 
-
-- (3) Assuming that you have the packages installed or running anaconda env, if not install them.  Then run the hybrid simulations from its current directory with its json user variable file name (user_input_NAMD_GOMC.json) or whatever the user named it :
-
-python run_NAMD_GOMC.py -f user_input_NAMD_GOMC.json  	or     python run_NAMD_GOMC.py --file user_input_NAMD_GOMC.json
-
-or 
-
-python run_NAMD_GOMC.py -f "user_set_name.json" 	 or     python run_NAMD_GOMC.py --file "user_set_name.json"
-
-
-- (4) The simulation runs are sent to the "NAMD" and  "GOMC" folders, and the hybrid log file is in the same directory as the "run_NAMD_GOMC.py" file.
-
-
-
-
-
-## Run the code to combine the data code (i.e., combine_data_NAMD_GOMC.py)
-
-- (1) This file currently needs to be run from the directory with the "NAMD" and  "GOMC" folders !!!!
-
-
-- (2) Download the The CatDCD - Concatenate DCD files (see reference information below) 
-and put the catdcd-4.0b directory in the relative directory ->  required_data/bin .
-
-
-- (3) Change the variables to the same as the ones used in the code:
-	
-	simulation_type : string (only 'GEMC', 'GCMC', 'NPT', 'NVT') 
-		The simulation type or ensemble to use
-		Note: only GEMC-NVT available currently: 'GEMC' = GEMC-NVT
-
-	only_use_box_0_for_namd_for_gemc : bool (true or false)
-		This chooses if you want to run both simulation boxes in NAMD
-		when running the GEMC ensemble, or just box 0.
-		true = NAMD runs only box 0 for GEMC
-		false = NAMD runs box 0 and 1 for GEMC
-
-	simulation_engine_options : string (only 'Hybrid' or 'GOMC-only') 
-		The type of simulation you are combining.  
-		Hybrid is the hybrid NAMD-GOMC simulations.
-		'GOMC-only' is stand-alone GOMC simulation.
-		'NAMD-only' is stand-alone NAMD simulation.
-		When using the 'GOMC-only', or 'NAMD-only' the dcd combining
-		options and catdcd program and path are not required
-
-	gomc_or_namd_only_log_filename : string
-		The relative path and file name of the log file for the 
-		GOMC-only or NAMD-only simulation,
-		which is used to create the same file format as the
-		hybrid simulation combining files.   
-
-	combine_namd_dcd_file : bool (true or false)
-		This chooses if you want combine all the NAMD dcd files into one
-		file for all the Hybrid NAMD simulations.  
-		This option is only possible for "NVT" and "NPT" simulations. 
-		simulations/ensembles (simulation_type). 
-		true = combine all the NAMD dcd files 
-		false = do not combine all the NAMD dcd files 
-		This is not required for the when only combining the  
-		'GOMC-only', or 'NAMD-only' data.
-
-	combine_gomc_dcd_file : bool (true or false)
-		This chooses if you want combine all the GOMC dcd files into one
-		file for all the Hybrid GOMC simulations.  
-		This option available for all the
-		simulations/ensembles (simulation_type). 
-		true = combine all the GOMC dcd files 
-		false = do not combine all the GOMC dcd files 
-		This is not required for the when only combining the  
-		'GOMC-only', or 'NAMD-only' data.
-
-	rel_path_to_combine_binary_catdcd : string (only 'Hybrid' or 'GOMC-only') 
-		The relative path and file name to the catdcd, which are provided
-		from the Theoretical and Compuational Biopyysisc group (VMD/NAMD development team)
-		(https://www.ks.uiuc.edu/Development/MDTools/catdcd/). 
-		This tool is used to combine the dcd files for the hybrid simulations.
-		This is not required for the when only combining the  
-		'GOMC-only', or 'NAMD-only' data.
-		
-	rel_path_to_NAMD_and_GOMC_folders : string 
-		The relative path to the main NAMD and GOMC folders which contain
-		all the individual simulations.  This is also where the run_NAMD_GOMC.py
-		file is located, as it build the NAMD and GOMC folders in the same 
-		directory.
-
-- (4) Assuming that you have the packages installed or running anaconda env, if not install them.  Then run :
-
-python combine_data_NAMD_GOMC.py -f user_input_combine_data_NAMD_GOMC.json 	 or     python combine_data_NAMD_GOMC.py --file user_input_combine_data_NAMD_GOMC.json      	# runs all the combining file data provided its in its current location
-
-or 
-
-python combine_data_NAMD_GOMC.py -f "user_set_name.json"	  or     python combine_data_NAMD_GOMC.py --file "user_set_name.json"
-
-
-- (5) The combined data is now located in the "combined_data" folder, with the minimization run data removed (i.e., step 0 is the first step after the minimization.)
-
-
-
-
-
-## References
-- (1) The CatDCD - Concatenate DCD files code in this package was taken directly from the
-	Theoretical and Compuational Biopyysisc group (VMD/NAMD development team)
-	(https://www.ks.uiuc.edu/Development/MDTools/catdcd/). 
-	This tool is used to combine the dcd files for the hybrid simulations, using the 
-	rel_path_to_combine_binary_catdcd variable.
-
-

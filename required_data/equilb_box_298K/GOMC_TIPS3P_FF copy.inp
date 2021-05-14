@@ -1,0 +1,69 @@
+*  TIPS3P_box_0 and TIPS3P_reservoir_box_1 - created by mBuild using the on 2021-02-27 15:50:47.100391
+*  parameters from the {'TIP3': 'files/TIPS3P_bonded_Hs.xml', 'WAT': 'files/TIPS3P_bonded_Hs.xml'} force field(s) via MoSDef
+*  1-4 coulombic scaling = {'TIP3': 1.0, 'WAT': 1.0}, and 1-4 LJ scaling = {'TIP3': 1.0, 'WAT': 1.0}
+
+*  19275 atoms
+*  12850 bonds
+*  6425 angles
+*  0 dihedrals
+*  0 impropers
+
+*  4 atom types
+*  2 bond types
+*  2 angle types
+
+
+* masses
+
+! atom_types 	mass 		  atomTypeForceFieldName_ResidueName (i.e., atoms_type_per_utilized_FF)  
+*  O		15.999430	! TIPS3P_O_TIP3
+*  H		1.007947	! TIPS3P_H_TIP3
+
+
+
+
+
+
+
+
+
+BONDS * harmonic
+!
+!V(bond) = Kb(b - b0)**2
+!
+!Kb: kcal/mole/A**2
+!b0: A
+!Kb (kcal/mol) = Kb_K (K) * Boltz. const.;
+!
+!atom_types 	Kb			b0 		
+H	O	999999999999		0.9572	
+
+ANGLES * harmonic
+!
+!V(angle) = Ktheta(Theta - Theta0)**2
+!
+!Ktheta: kcal/mole/rad**2
+!Theta0: degrees
+!
+! Ktheta (kcal/mol) = Ktheta_K (K) * Boltz. const.		
+!
+!  atom_types 	Ktheta			Theta0			
+H	O	H	999999999999		104.52000	
+
+
+
+
+
+
+
+NONBONDED
+!
+!V(Lennard-Jones) = Eps,i,j[(Rmin,i,j/ri,j)**12 - 2(Rmin,i,j/ri,j)**6]
+!
+!atype 	ignored	epsilon 	Rmin/2 		ignored	eps,1-4		Rmin/2,1-4		  atom_type_per_utilized_FF
+C	0.00	-0.152100000	1.76820000000	0.00	-0.152100000	1.76820000000		! TIPS3P_O_TIP3	TIPS3P_O_TIP3
+A	0.00	-0.046000000	0.22450000000	0.00	-0.046000000	0.22450000000		! TIPS3P_H_TIP3	TIPS3P_H_TIP3
+D	0.00	-0.152100000	1.76820000000	0.00	-0.152100000	1.76820000000		! TIPS3P_O_WAT	TIPS3P_O_WAT
+B	0.00	-0.046000000	0.22450000000	0.00	-0.046000000	0.22450000000		! TIPS3P_H_WAT	TIPS3P_H_WAT
+
+END

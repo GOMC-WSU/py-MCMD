@@ -23,7 +23,9 @@ def _get_args():
 
     # get the filename with the user required input
     arg_parser.add_argument("-f", "--file",
-                            help="Defines the variable inputs to the hybrid NAMD/GOMC simulation scipt.",
+                            help="Defines the variable inputs file used for the hybrid NAMD/GOMC simulation script. "
+                                 "This file (i.e., the user_input_variables_NAMD_GOMC.json file) is required "
+                                 "to run the hybrid simulation.",
                             type=str)
 
     arg_parser.add_argument("-namd_sims_order", "--namd_simulation_order",
@@ -36,9 +38,8 @@ def _get_args():
                                  "NAMD simulation box "
                                  "(i.e., only_use_box_0_for_namd_for_gemc = True --> only box 0) "
                                  "are always run in series, since there is nothing to run in parallel."
-                                 "Note: the GPU could be overloaded if running both NAMD simulations in parallel. "
-                                 "Therefore, the user should run in parallel mode with some caution and "
-                                 "understanding of the system. ",
+                                 "Note: this feature was added so the user can minimize the load on the GPU "
+                                 "by running both NAMD simulations in parallel.",
                             type=str)
 
     parser_arguments = arg_parser.parse_args()

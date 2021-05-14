@@ -27,8 +27,11 @@ or they are available individually:
 
 .. toctree::
 	installation
-	simulation_parameters
+	simulation_parameters_files
+	running_the_simulation
+	simulation_output
 	simulation_analysis
+	running_analysis_code
 	example_simulation
 	CatDCD_instructions_license
 	citing_MDMC_PYTHON

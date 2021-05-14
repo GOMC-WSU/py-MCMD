@@ -1,0 +1,23 @@
+name: NAMD_GOMC-docs
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - sphinx
+  - ele
+  - nbsphinx
+  - lark-parser
+  - requests
+  - mock
+  - argparse 
+  - pandas
+  - scipy
+  - bumpy
+  - subprocess32
+  - json-c
+  - glob2
+  - pip:
+    - sphinx_rtd_theme
+    - sphinxcontrib-svg2pdfconverter
+sphinx:
+  fail_on_warning: true
