@@ -7,7 +7,7 @@ The simulation analysis code is run via python and combines all the required dat
 This code is designed to combine the hybrid simulation data into a central location.  However, it can also be used to generate the same file types for a traditional NAMD-only or GOMC-only simulation, so the user can easily compare between the simulations.
 
 
-Running the Combining Data Code
+Executing the Combine Data Analysis
 ---------------
 
 The combine data code is run from its file directory via a terminal window.  
@@ -21,7 +21,7 @@ The combine data code is run from its file directory via a terminal window.
 		python run_NAMD_GOMC.py -f user_input_NAMD_GOMC.json -namd_sims_order parallel
 
 
-Flags for Combining Data Code
+Flags for Combining Data Analysis
 ---------------
 
 	* **-f** or **--file** flag : json file 
