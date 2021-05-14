@@ -24,13 +24,13 @@ The combine data code is run from its file directory via a terminal window.
 Flags for Combining Data Analysis
 ---------------
 
-	* **-f** or **--file** flag : json file 
+	* **-f** *or* **--file** flag : json file 
 		Defines the json file to use for variable inputs to the hybrid NAMD/GOMC, NAMD-only, or GOMC-only combining analysis script.
 
-	* **-w** or **--write_folder_name** flag : str
+	* **-w** *or* **--write_folder_name** flag : str
 		Defines the folder name which is created and contains the all the combined data.
 
-	* **-o** or **--overwrite** flag : bool (True, true, T, t, False, false, F, or f)
+	* **-o** *or* **--overwrite** flag : bool (True, true, T, t, False, false, F, or f)
 		Determines whether to overwrite an exiting combined data folder and data, if they exist.
 
 **NOTE:** If the *"user_input_combine_data_NAMD_GOMC.json"* file variable are not set properly for the type of simulation that was conducted, the output will not work or data will be missing. 

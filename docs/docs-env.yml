@@ -9,6 +9,8 @@ dependencies:
   - lark-parser
   - requests
   - mock
+  - anaconda 
+  - sphinxcontrib
   - pip:
     - sphinx_rtd_theme
     - sphinxcontrib-svg2pdfconverter
