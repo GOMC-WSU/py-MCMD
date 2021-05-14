@@ -1,0 +1,1 @@
+/run/media/brad/raid1/brad_files/WSU/Simulations/NAMD_GOMC/MDMC/NAMD/0000000000_a/FFTW_NAMD_2.14_Linux-x86_64-multicore-CUDA.txt

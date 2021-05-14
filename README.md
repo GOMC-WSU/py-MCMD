@@ -1,13 +1,9 @@
 ## Notes
 
-- (1) GOMC does not currently use impropers, so if the hybrid simulations contain impropers for the
-NAMD simulation the energies will be different.  It should be OK to not use impropers in GOMC
-and using them in NAMD, since the protein will not move in the GOMC simulation due to its size.  
-
+- (1) GOMC does not currently use improper or Urey?Bradley potentials, so if the hybrid simulations contain impropers or Urey?Bradleys, the NAMD simulation energies will be different. In a protein simulation, it should be OK not to use impropers or Urey-Bradleys in GOMC and utilize them in NAMD since the protein will not move in the GOMC simulation due to its size. Each simulation will need to be individually evaluated to determine if not having the impropers or Urey-Bradleys in GOMC is irrelevant or significant to the simulation results.
 
 ## TO RUN hybrid simulations
-- (1) Change the variables in the user_input_variables_NAMD_GOMC.json file.  Note the information about the variables is in the python code. 
-There is some initial setup required to add and rename the GOMC and NAMD binary files and properly place the starting PDB, PDF and force field files.
+- (1) Change the variables in the user_input_variables_NAMD_GOMC.json file, or whatever the user names it. 
 	
 	total_cycles_namd_gomc_sims : integer
 		The total number of simulation cycles, where a cycle is a NAMD and 
@@ -24,7 +20,8 @@ There is some initial setup required to add and rename the GOMC and NAMD binary 
 	gomc_use_CPU_or_GPU : string (only 'CPU' or 'GPU')
 		Run the GOMC simulation using the CPU or GPU.
 		Note: For the NAMD simulation, the user will have to provide the 
-		path to the GPU or CPU NAMD version.  
+		path to the GPU or CPU NAMD version.  (i.e., This function does not
+		set NAMD's CPU or GPU version).  
 
 	simulation_type : string (only 'GEMC', 'GCMC', 'NPT', 'NVT') 
 		The simulation type or ensemble to use
@@ -72,18 +69,18 @@ There is some initial setup required to add and rename the GOMC and NAMD binary 
 		Example Chempot: GCMC_ChemPot_or_Fugacity_dict = {'TIP3': 1000, 'Cl' : -1000, 'Na' : -900}
 		Example Fugacity (values >=0): GCMC_ChemPot_or_Fugacity_dict = {'TIP3': 1000, 'Cl' : 10, 'Na' : 0}
 
-	gomc_run_steps : int (>=10)  
-		The number of steps to run each cycle of the GOMC simulation.
-		Needs to be 10 minimum for now, NEEDS TO BE THE SAME AS THE PREVIOUS SIMULATION, IF RESTARTED!
-
-	namd_run_steps : int (>=10)  
-		The number of steps to run each cycle of the NAMD simulation.
-		Needs to be 10 minimum for now, NEEDS TO BE THE SAME AS THE PREVIOUS SIMULATION, IF RESTARTED!
-
 	namd_minimize_mult_scalar : int (>=0)   
 		The scalar multiple used to get the number of NAMD minimization steps for this 
 		intitial NAMD simulation.
 		NAMD_minimize steps = namd_run_steps * namd_minimize_mult_scalar
+		
+	namd_run_steps : int (>=10)  
+		The number of steps to run each cycle of the NAMD simulation.
+		Needs to be 10 minimum for now, NEEDS TO BE THE SAME AS THE PREVIOUS SIMULATION, IF RESTARTED!
+
+	gomc_run_steps : int (>=10)  
+		The number of steps to run each cycle of the GOMC simulation.
+		Needs to be 10 minimum for now, NEEDS TO BE THE SAME AS THE PREVIOUS SIMULATION, IF RESTARTED!
 
 	set_dims_box_0_list : list or null, [null or float or int (>0), null or float or int (>0), null or float or int (>0)]
 		The x, y, and z-dimensions of length for box 0 in Angstrom units.
@@ -188,12 +185,13 @@ There is some initial setup required to add and rename the GOMC and NAMD binary 
 		The relative path to the directory where the GOMC file binaries are located.
 		This should be in the required_data/bin directory. 
 		Alternatively, a sybolic link to GOMC file binaries file binary could be there.
-		NOTE: THIS WAS ONLY TESTED ON GOMC DEVELOPMENT AFTER VERSION 2.70, 
-		SO IT MAY NOT WORK ON OTHER GOMC VERSIONS WITHOUT SOME CODE MODIFICATION.
+		NOTE: THIS WAS ONLY TESTED ON THE GOMC DEVELOPMENT AFTER VERSION 2.70, 
+		SO IT MAY NOT WORK ON OTHER GOMC VERSIONS WITHOUT SOME CODE MODIFICATION, 
+		AND	SOME ADDITIONAL FUNCTIJONALLITY IS NOT IN PREVIOUS GOMC VERSIONS.
 		Example: "required_data/bin"
 	
 
-- (2) If you have previous  "NAMD" and  "GOMC" folders in this directory deleted them, so you do not have mixed data in the simulation folders. 
+- (2) If you have previous  "NAMD" and  "GOMC" folders in this directory deleted them, so you do not have mixed data in the simulation folders, unless this is desired. 
 If they are not deleted the new data will overwrite the old data. 
  
 
@@ -274,7 +272,12 @@ and put the catdcd-4.0b directory in the relative directory ->  required_data/bi
 		This tool is used to combine the dcd files for the hybrid simulations.
 		This is not required for the when only combining the  
 		'GOMC-only', or 'NAMD-only' data.
-
+		
+	rel_path_to_NAMD_and_GOMC_folders : string 
+		The relative path to the main NAMD and GOMC folders which contain
+		all the individual simulations.  This is also where the run_NAMD_GOMC.py
+		file is located, as it build the NAMD and GOMC folders in the same 
+		directory.
 
 - (4) Assuming that you have the packages installed or running anaconda env, if not install them.  Then run :
 
