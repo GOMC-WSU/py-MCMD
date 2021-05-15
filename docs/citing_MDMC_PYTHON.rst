@@ -5,23 +5,17 @@ If you use this code for your research, please cite `the GitHub repository <http
 
 **ACS**
 
-    Crawford, B. and Potoff J. and TBD and https://github.com/bc118/NAMD_GOMC
+    Crawford, B. and Potoff J. NAMD_GOMC - A Hybrid MD/MC Simulation Software, https://github.com/bc118/NAMD_GOMC, 2021.
 
 **BibTeX**
 
 .. code-block:: bibtex
 
     @Inbook{MDMC_PYTHON_2021,
-        author      = "Crawford, B. and Potoff J. and TBD",
-        editor      = "TBD",
-        title       = "TBD",
-        bookTitle   = "TBD",
+        author      = "Crawford, B. and Potoff J.",
+        title       = "NAMD_GOMC - A Hybrid MD/MC Simulation Software",
         year        = "2021",
-        publisher   = "TBD",
-        address     = "TBD",
-        pages       = "TBD",
-        isbn        = "TBD",
-        doi         = "TBD",
+        publisher   = "GitHub",
         url         = "https://github.com/bc118/NAMD_GOMC"
     }
 
@@ -32,22 +26,16 @@ We also recommend citing the `Concatenate DCD files (CatDCD) <https://www.ks.uiu
 
 **ACS**
 
-    Gullingsrud J. and the Theoretical and Computational Biophysics Group at the University of Illinois at Urbana-Champaign and https://www.ks.uiuc.edu/Development/MDTools/catdcd/
+    Gullingsrud J. and the Theoretical and Computational Biophysics Group at the University of Illinois at Urbana-Champaign. CatDCD - Concatenate DCD files version 4.0, and https://www.ks.uiuc.edu/Development/MDTools/catdcd/, 2009.
 
 **BibTeX**
 
 .. code-block:: bibtex
 
-    @Inbook{MDMC_PYTHON_2021,
-        author      = "Gullingsrud J. and the Theoretical and Computational Biophysics Group at the University of Illinois at Urbana-Champaign and https://www.ks.uiuc.edu/Development/MDTools/catdcd/",
-        editor      = "TBD",
+    @Inbook{CatDCD_2009,
+        author      = "Gullingsrud, J.",
         title       = "CatDCD - Concatenate DCD files version 4.0",
-        bookTitle   = "TBD",
         year        = "2009",
-        publisher   = "TBD",
-        address     = "TBD",
-        pages       = "TBD",
-        isbn        = "TBD",
-        doi         = "TBD",
+	publisher   = "The Theoretical and Computational Biophysics Group at the University of Illinois at Urbana-Champaign",
         url         = "https://www.ks.uiuc.edu/Development/MDTools/catdcd/"
     }

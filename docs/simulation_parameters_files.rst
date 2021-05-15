@@ -2,18 +2,18 @@ Simulation Parameters  (pre-simulation)
 ===============
 
 
-NAMD and GOMC configuration files
+NAMD and GOMC Configuration Files
 ---------------
 
-These are slightly modified versions of the standard input files used for the NAMD and GOMC simulation engines. 
-The modifications are to some of the variable entries in the configuration files, which allows the python code to search and replace these variables for the next simulation, so the simulation is started correctly from the previous one.
+These are slightly modified versions of the standard configuration files used for the NAMD and GOMC simulation engines. 
+Some of the variable entries are modified in the configuration files, which allows the python code to search and replace these variables for the next simulation, so the simulation is started correctly from the previous one.
 Please refer to the `GOMC Manual <https://gomc.eng.wayne.edu/documentation/>`_ and the `NAMD Users Guide <https://www.ks.uiuc.edu/Research/namd/2.14/ug/>`_ for more information on the proper inputs for the simulation engines.  
 
 These files are located in the *"NAMD_GOMC/required_data/config_files"* directory, and **these configurations files are auto-selected based on the user specified ensemble.**
 The NAMD configuration file applies to all the possible ensembles. 
 The provided GOMC configuration files are named and designed for each different ensemble (NPT, NVT, GCMC, or GEMC), which changes the inputs and move frequencies.  
 An experienced user can modify these configuration files by changing or adding variables, time steps, move types, and move frequencies, as long as the variables work smoothly between NAMD and GOMC.
-These changes will **likely** not effect the hybrid python code if the match between NAMD and GOMC and they are hardcoded and not dependent on a variable value in the existing configuration files. 
+These changes will **likely** not effect the hybrid python code if the inputs match between NAMD and GOMC and are hardcoded and not dependent on a variable value in the existing configuration files. 
 **However, the configuration files must maintain their names and locations in the "NAMD_GOMC/required_data/config_files" directory.**
 
 It is also possible to use various configuration files throughout a longer simulation by simply changing the configuration files and restarting the hybrid simulation with the different files in their proper location. For Example, in the grand canonical Monte Carlo (GCMC) ensemble, suppose the first NAMD simulation requires restraining a protein for the first cycle.  In this case, the GCMC simulation can insert molecules into the binding pocket before allowing unrestricted movement of the protein.  The simulation would then be restarted on the second cycle to the Nth cycle with a different NAMD configuration file without restraining the protein.  
@@ -28,16 +28,16 @@ It is also possible to use various configuration files throughout a longer simul
 
 **NOTE:**  GOMC uses the standard Ewald Summation Method, while NAMD utilized the Particle Mesh Ewald (PME) to calculate long-range electrostatics.
 
-An Example GCMC configuration file for the GOMC engine is provided below.  **The configuration sections that should not be modified without a good understanding of the overall code are listed at DO NOT MODIFY in each section.** The same DO NOT MODIFY statements are listing in the NAMD control file to alert the user. 
+An Example GCMC configuration file for the GOMC engine is provided below.  **The configuration file sections that should not be modified without a good understanding of the overall code are listed at DO NOT MODIFY in each section.** The same DO NOT MODIFY statements are listing in the NAMD control file to alert the user. 
 
 	.. literalinclude:: ../required_data/config_files/GOMC_GCMC.conf
 
 
 
-Required files for the hybrid simulation 
+Required Files for the Hybrid Simulation 
 ---------------
 
-The hybrid simulation requires a **PSF**, **PDB**, and **force field files (i.e., .inp or .par files)** to run the simulation, which are required inputs.  Typically, only a single **PDB** and **PSF** file are required, unless you need a second **PDB** file to fix or restrain the atoms within NAMD, etc.  A single or multiple force field files are required for both the NAMD and GOMC simulation engines, which is dependent on the system, and which force fields are being utilized.  
+The hybrid simulation requires a **PSF**, **PDB**, and **force field files (i.e., .inp or .par files)** to run the simulation, which are required inputs.  Typically, only a single **PDB** and **PSF** file are required per simulation box, unless you need a second **PDB** file to fix or restrain the atoms within NAMD, etc.  A single or multiple force field files are required for both the NAMD and GOMC simulation engines, which is dependent on the system, and which force fields are being utilized.  
 
 
 **NOTE:**  GOMC and NAMD force field files can be slightly different, so please refer to their respective manuals/documentation.  However, unlike NAMD, GOMC handles fixed bonds and angles in its force field file by replacing bond and angle K-constants with *"999999999999"*.  Please also see the image below for this section of the GOMC water force field with fixed bonds and angles.
@@ -54,13 +54,16 @@ The MD/MC Hybrid input file is in the `json <https://developer.mozilla.org/en-US
 
 	.. literalinclude:: ../user_input_NAMD_GOMC.json
    		:language: json
-	
-Variable definitions and usage for the user_input_variables_NAMD_GOMC.json file, or whatever the user names it. 
+
 
 **NOTE:**  The hybrid simulation always starts with NAMD and finishes with GOMC in a cycle. If set by the user, the first NAMD simulation will minimize the structure of the system.
 
-**NOTE:** We assume that the best number of steps for each simulation engine per cycle is the values that, on average, provides two (2) uncorrelated samples for NAMD and two (2) accepted moves for each of the desired GOMC moves.*
+**NOTE:** We assume that the best number of steps for each simulation engine per cycle is the values that, on average, provides two (2) uncorrelated samples for NAMD and two (2) accepted moves for each of the desired GOMC moves.
+
+
 	
+**Variable definitions** and usage for the *"user_input_variables_NAMD_GOMC.json"* file, or whatever the user names it are provided below:
+
 	total_cycles_namd_gomc_sims : integer
 		The total number of simulation cycles, where a cycle is a NAMD and 
 		GOMC simulation. 		
