@@ -15,7 +15,6 @@ If you use this code for your research, please cite `the GitHub repository <http
         author      = "Crawford, B. and Potoff J.",
         title       = "NAMD_GOMC - A Hybrid MD/MC Simulation Software",
         year        = "2021",
-        publisher   = "GitHub",
         url         = "https://github.com/bc118/NAMD_GOMC"
     }
 
@@ -26,7 +25,7 @@ We also recommend citing the `Concatenate DCD files (CatDCD) <https://www.ks.uiu
 
 **ACS**
 
-    Gullingsrud J. and the Theoretical and Computational Biophysics Group at the University of Illinois at Urbana-Champaign. CatDCD - Concatenate DCD files version 4.0, and https://www.ks.uiuc.edu/Development/MDTools/catdcd/, 2009.
+    Gullingsrud J. CatDCD - Concatenate DCD files version 4.0, https://www.ks.uiuc.edu/Development/MDTools/catdcd, 2009.
 
 **BibTeX**
 
@@ -36,6 +35,5 @@ We also recommend citing the `Concatenate DCD files (CatDCD) <https://www.ks.uiu
         author      = "Gullingsrud, J.",
         title       = "CatDCD - Concatenate DCD files version 4.0",
         year        = "2009",
-	publisher   = "The Theoretical and Computational Biophysics Group at the University of Illinois at Urbana-Champaign",
         url         = "https://www.ks.uiuc.edu/Development/MDTools/catdcd/"
     }
