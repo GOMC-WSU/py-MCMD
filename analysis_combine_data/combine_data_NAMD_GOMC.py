@@ -22,13 +22,13 @@ def _get_args():
     # get the filename with the user required input
     arg_parser.add_argument("-f", "--file",
                             help="json file Defines the json file to use for variable inputs to the "
-                                 "hybrid NAMD/GOMC, NAMD-only, or GOMC-only combining analysis script.",
+                                 "hybrid NAMD/GOMC, NAMD-only, or GOMC-only combining code.",
                             type=str)
 
     # name the file folder in which the data will be combined.
     arg_parser.add_argument("-w", "--write_folder_name",
                             help="str. Defines the folder name which is created and contains the all "
-                                 "the combined data.",
+                                 "the combined data files.",
                             type=str)
 
     # name the file folder in which the data will be combined.

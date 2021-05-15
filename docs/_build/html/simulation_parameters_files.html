@@ -1,0 +1,650 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Simulation Parameters (pre-simulation) &mdash; NAMD_GOMC 0.0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Running the Simulation" href="running_the_simulation.html" />
+    <link rel="prev" title="Installation and Other Required Files" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> NAMD_GOMC
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation and Other Required Files</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Simulation Parameters  (pre-simulation)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#namd-and-gomc-configuration-files">NAMD and GOMC Configuration Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#required-files-for-the-hybrid-simulation">Required Files for the Hybrid Simulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#md-mc-hybrid-input">MD/MC Hybrid Input</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="running_the_simulation.html">Running the Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulation_output.html">Simulation Output</a></li>
+<li class="toctree-l1"><a class="reference internal" href="simulation_analysis.html">Simulation Analysis (post-simulation)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="running_analysis_code.html">Running the Combining Data Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_simulation.html">Example Simulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="generating_systems.html">Generating Systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="citing_MDMC_PYTHON.html">Citing the MDMC Python code</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">NAMD_GOMC</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Simulation Parameters  (pre-simulation)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/simulation_parameters_files.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="simulation-parameters-pre-simulation">
+<h1>Simulation Parameters  (pre-simulation)<a class="headerlink" href="#simulation-parameters-pre-simulation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="namd-and-gomc-configuration-files">
+<h2>NAMD and GOMC Configuration Files<a class="headerlink" href="#namd-and-gomc-configuration-files" title="Permalink to this headline">¶</a></h2>
+<p>These are slightly modified versions of the standard configuration files used for the NAMD and GOMC simulation engines.
+Some of the variable entries are modified in the configuration files, which allows the python code to search and replace these variables for the next simulation, so the simulation is started correctly from the previous one.
+Please refer to the <a class="reference external" href="https://gomc.eng.wayne.edu/documentation/">GOMC Manual</a> and the <a class="reference external" href="https://www.ks.uiuc.edu/Research/namd/2.14/ug/">NAMD Users Guide</a> for more information on the proper inputs for the simulation engines.</p>
+<p>These files are located in the <em>“NAMD_GOMC/required_data/config_files”</em> directory, and <strong>these configurations files are auto-selected based on the user specified ensemble.</strong>
+The NAMD configuration file applies to all the possible ensembles.
+The provided GOMC configuration files are named and designed for each different ensemble (NPT, NVT, GCMC, or GEMC), which changes the inputs and move frequencies.
+An experienced user can modify these configuration files by changing or adding variables, time steps, move types, and move frequencies, as long as the variables work smoothly between NAMD and GOMC.
+These changes will <strong>likely</strong> not effect the hybrid python code if the inputs match between NAMD and GOMC and are hardcoded and not dependent on a variable value in the existing configuration files.
+<strong>However, the configuration files must maintain their names and locations in the “NAMD_GOMC/required_data/config_files” directory.</strong></p>
+<p>It is also possible to use various configuration files throughout a longer simulation by simply changing the configuration files and restarting the hybrid simulation with the different files in their proper location. For Example, in the grand canonical Monte Carlo (GCMC) ensemble, suppose the first NAMD simulation requires restraining a protein for the first cycle.  In this case, the GCMC simulation can insert molecules into the binding pocket before allowing unrestricted movement of the protein.  The simulation would then be restarted on the second cycle to the Nth cycle with a different NAMD configuration file without restraining the protein.
+<em>However, the configuration files must maintain their names and locations.</em></p>
+<p><strong>NOTE:</strong> A simulation cycle is one (1) NAMD simulation and one (1) GOMC simulation.</p>
+<p><strong>NOTE:</strong>  GOMC and NAMD both support the Shift, Switch, and Buckingham potentials, so they can be implemented in these hybrid simulations without issue.</p>
+<p><strong>NOTE:</strong> These hybrid simulation are currently only designed for orthogonal boxes.</p>
+<p><strong>NOTE:</strong>  GOMC uses the standard Ewald Summation Method, while NAMD utilized the Particle Mesh Ewald (PME) to calculate long-range electrostatics.</p>
+<p>An Example GCMC configuration file for the GOMC engine is provided below.  <strong>The configuration file sections that should not be modified without a good understanding of the overall code are listed at DO NOT MODIFY in each section.</strong> The same DO NOT MODIFY statements are listing in the NAMD control file to alert the user.</p>
+<blockquote>
+<div><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">########################</span>
+<span class="c1">#Control file for GOMC_GCMC</span>
+<span class="c1">########################</span>
+
+<span class="c1">############################################################################</span>
+<span class="c1">#  ========-------------------- INPUT --------------------------===========</span>
+<span class="c1">############################################################################</span>
+
+<span class="c1">#########################</span>
+<span class="c1"># enable, step  (DO NOT MODIFY or the hybrid simulation and combine files may not work) </span>
+<span class="c1">#########################</span>
+<span class="n">Restart</span>			<span class="n">restart_true_or_false</span>  
+ 
+<span class="n">RestartCheckpoint</span> 	<span class="n">Restart_Checkpoint_file</span>
+<span class="c1">####################################</span>
+<span class="c1"># kind {RESTART, RANDOM, INTSEED}  (DO NOT MODIFY or the hybrid simulation and combine files may not work) </span>
+<span class="c1">####################################</span>
+<span class="n">PRNG</span>		<span class="n">RANDOM</span>
+
+<span class="c1">####################################</span>
+<span class="c1"># FORCE FIELD  (DO NOT MODIFY or the hybrid simulation and combine files may not work) </span>
+<span class="c1">####################################</span>
+<span class="n">ParaTypeCHARMM</span>	<span class="n">true</span>
+
+<span class="n">all_parameter_files</span>
+<span class="c1">####################################</span>
+<span class="c1"># INPUT PDB FILES  (DO NOT MODIFY or the hybrid simulation and combine files may not work) </span>
+<span class="c1">####################################</span>
+<span class="n">Coordinates</span> <span class="mi">0</span>	<span class="n">pdb_file_box_0_file</span>
+<span class="n">Coordinates</span> <span class="mi">1</span>	<span class="n">pdb_file_box_1_file</span>
+
+<span class="c1">####################################</span>
+<span class="c1"># INPUT PSF FILES  (DO NOT MODIFY or the hybrid simulation and combine files may not work) </span>
+<span class="c1">####################################</span>
+<span class="n">Structure</span> <span class="mi">0</span>	<span class="n">psf_file_box_0_file</span>
+<span class="n">Structure</span> <span class="mi">1</span>	<span class="n">psf_file_box_1_file</span>
+
+<span class="c1">####################################</span>
+<span class="c1"># INPUT BINARY coodinatd, XSC, velocity files  (DO NOT MODIFY or the hybrid simulation and combine files may not work) </span>
+<span class="c1">####################################</span>
+
+<span class="n">binCoordinates</span>	<span class="mi">0</span>	<span class="n">coor_box_0_file</span>
+<span class="n">extendedSystem</span>	<span class="mi">0</span>	<span class="n">xsc_box_0_file</span>
+<span class="n">binVelocities</span>	<span class="mi">0</span> 	<span class="n">vel_box_0_file</span>
+
+<span class="n">binCoordinates</span>	<span class="mi">1</span> 	<span class="n">coor_box_1_file</span>
+<span class="n">extendedSystem</span>	<span class="mi">1</span>	<span class="n">xsc_box_1_file</span>
+<span class="n">binVelocities</span>	<span class="mi">1</span>	<span class="n">vel_box_1_file</span>
+
+
+<span class="c1">############################################################################</span>
+<span class="c1">#  =======--------------------- SYSTEM --------------------------===========</span>
+<span class="c1">############################################################################</span>
+<span class="c1">##################################</span>
+<span class="c1"># Temp, and ChemPots or Fugacities  (DO NOT MODIFY or the hybrid simulation and combine files may not work) </span>
+<span class="c1">##################################</span>
+<span class="n">mu_ChemPot_K_or_P_Fugacitiy_bar_all</span>
+<span class="n">Temperature</span>	<span class="n">System_temp_set</span>
+
+<span class="c1">#############################</span>
+<span class="c1"># SIMULATION CONDITION   </span>
+<span class="c1">#############################</span>
+<span class="n">Potential</span>	<span class="n">SWITCH</span> 
+<span class="n">Rswitch</span>		<span class="mf">10.0</span>
+<span class="n">LRC</span>		<span class="n">false</span>
+<span class="n">Rcut</span>		<span class="mi">12</span>
+<span class="n">RcutLow</span>		<span class="mf">1.0</span>   
+<span class="n">Exclude</span>		<span class="mi">1</span><span class="o">-</span><span class="mi">3</span> 
+<span class="mi">1</span><span class="o">-</span><span class="mi">4</span><span class="n">scaling</span>	<span class="mf">1.0</span>
+
+
+<span class="c1">#############################</span>
+<span class="c1"># ELECTROSTATIC   </span>
+<span class="c1">#############################</span>
+<span class="n">Ewald</span>		<span class="n">true</span>
+<span class="n">ElectroStatic</span>	<span class="n">true</span>
+<span class="n">CachedFourier</span>	<span class="n">false</span>
+<span class="n">Tolerance</span>	<span class="mf">0.00001</span>
+
+
+<span class="c1">###############################                                                </span>
+<span class="c1"># PRESSURE CALCULATION    (DO NOT MODIFY or the hybrid simulation and combine files may not work)                                                      </span>
+<span class="c1">################################                                               </span>
+<span class="n">PressureCalc</span>	<span class="n">true</span>	<span class="n">GOMC_console_BLKavg_Hist_Steps</span>
+
+<span class="c1">################################</span>
+<span class="c1"># STEPS   (DO NOT MODIFY or the hybrid simulation and combine files may not work) </span>
+<span class="c1">################################</span>
+<span class="n">RunSteps</span>		<span class="n">GOMC_Run_Steps</span>
+<span class="n">EqSteps</span>			<span class="n">GOMC_Equilb_Steps</span>
+<span class="n">AdjSteps</span>		<span class="n">GOMC_Adj_Steps</span> 
+  
+    
+
+<span class="c1">################################</span>
+<span class="c1"># MOVE FREQUENCY              </span>
+<span class="c1">################################</span>
+
+<span class="n">SwapFreq</span>		<span class="mf">1.00</span>	
+<span class="n">DisFreq</span>			<span class="mf">0.00</span>
+<span class="n">RotFreq</span>			<span class="mf">0.00</span>
+<span class="n">RegrowthFreq</span>		<span class="mf">0.00</span>
+<span class="n">IntraSwapFreq</span>		<span class="mf">0.00</span>
+<span class="n">TargetedSwapFreq</span>     	<span class="mf">0.00</span>
+
+<span class="c1">################################</span>
+<span class="c1"># BOX DIMENSION #, X, Y, Z  (DO NOT MODIFY or the hybrid simulation and combine files may not work) </span>
+<span class="c1">################################</span>
+<span class="n">CellBasisVector1</span>  <span class="mi">0</span>   <span class="n">x_dim_box_0</span>  	<span class="mf">0.00</span>  		<span class="mf">0.00</span>
+<span class="n">CellBasisVector2</span>  <span class="mi">0</span>   <span class="mf">0.00</span>  		<span class="n">y_dim_box_0</span>  	<span class="mf">0.00</span>
+<span class="n">CellBasisVector3</span>  <span class="mi">0</span>   <span class="mf">0.00</span>  		<span class="mf">0.00</span>  		<span class="n">z_dim_box_0</span>
+
+<span class="n">CellBasisVector1</span>  <span class="mi">1</span>   <span class="n">x_dim_box_1</span>  	<span class="mf">0.00</span>  		<span class="mf">0.00</span>
+<span class="n">CellBasisVector2</span>  <span class="mi">1</span>   <span class="mf">0.00</span>  		<span class="n">y_dim_box_1</span>  	<span class="mf">0.00</span>
+<span class="n">CellBasisVector3</span>  <span class="mi">1</span>   <span class="mf">0.00</span>  		<span class="mf">0.00</span>  		<span class="n">z_dim_box_1</span>
+
+
+
+<span class="c1">##############################</span>
+<span class="c1"># CBMC TRIALS</span>
+<span class="c1">##############################</span>
+<span class="n">CBMC_First</span>		<span class="mi">16</span>    
+<span class="n">CBMC_Nth</span>		<span class="mi">8</span>
+<span class="n">CBMC_Ang</span>		<span class="mi">50</span>
+<span class="n">CBMC_Dih</span>		<span class="mi">50</span>
+
+
+<span class="c1">############################################################################</span>
+<span class="c1">#  =======-------------------- OUTPUT (DO NOT MODIFY or the hybrid simulation and combine files may not work) --------------------------===========</span>
+<span class="c1">############################################################################</span>
+
+
+<span class="c1">##########################</span>
+<span class="c1"># statistics filename add (DO NOT MODIFY or the hybrid simulation and combine files may not work)</span>
+<span class="c1">##########################</span>
+<span class="n">OutputName</span> <span class="n">Output_data</span>
+
+<span class="c1">#####################################</span>
+<span class="c1"># enable, frequency   (DO NOT MODIFY or the hybrid simulation and combine files may not work)          </span>
+<span class="c1">#####################################</span>
+<span class="n">RestartFreq</span>		<span class="n">true</span>	<span class="n">GOMC_RST_Coor_CKpoint_Steps</span>
+<span class="n">CheckpointFreq</span>		<span class="n">true</span>	<span class="n">GOMC_RST_Coor_CKpoint_Steps</span>
+<span class="n">CoordinatesFreq</span>		<span class="n">false</span>	<span class="n">GOMC_RST_Coor_CKpoint_Steps</span>
+<span class="n">ConsoleFreq</span>		<span class="n">true</span>	<span class="n">GOMC_console_BLKavg_Hist_Steps</span>
+<span class="n">BlockAverageFreq</span>	<span class="n">true</span>	<span class="n">GOMC_console_BLKavg_Hist_Steps</span>
+<span class="n">HistogramFreq</span>		<span class="n">true</span>	<span class="n">GOMC_console_BLKavg_Hist_Steps</span>
+<span class="n">DCDFreq</span>			<span class="n">true</span>	<span class="n">GOMC_RST_Coor_CKpoint_Steps</span>
+
+<span class="c1">################################</span>
+<span class="c1"># OutHistSettings  (DO NOT MODIFY or the hybrid simulation and combine files may not work) </span>
+<span class="c1">################################</span>
+<span class="n">DistName</span>		<span class="n">dis</span>
+<span class="n">HistName</span>		<span class="n">his</span>
+<span class="n">RunNumber</span>		<span class="mi">1</span>
+<span class="n">RunLetter</span>		<span class="n">a</span>
+<span class="n">SampleFreq</span>		<span class="n">GOMC_Hist_sample_Steps</span>
+
+<span class="c1">##################################</span>
+<span class="c1"># enable: blk avg., fluct.  (DO NOT MODIFY or the hybrid simulation and combine files may not work) </span>
+<span class="c1">##################################</span>
+<span class="n">OutEnergy</span>		<span class="n">true</span>	<span class="n">true</span>   
+<span class="n">OutPressure</span>		<span class="n">true</span>	<span class="n">true</span>  
+<span class="n">OutMolNum</span>		<span class="n">true</span>	<span class="n">true</span>   
+<span class="n">OutDensity</span>		<span class="n">true</span>	<span class="n">true</span>
+<span class="n">OutVolume</span>		<span class="n">true</span>	<span class="n">true</span>
+<span class="n">OutSurfaceTention</span>	<span class="n">false</span>	<span class="n">false</span>
+
+</pre></div>
+</div>
+</div></blockquote>
+</div>
+<div class="section" id="required-files-for-the-hybrid-simulation">
+<h2>Required Files for the Hybrid Simulation<a class="headerlink" href="#required-files-for-the-hybrid-simulation" title="Permalink to this headline">¶</a></h2>
+<p>The hybrid simulation requires a <strong>PSF</strong>, <strong>PDB</strong>, and <strong>force field files (i.e., .inp or .par files)</strong> to run the simulation, which are required inputs.  Typically, only a single <strong>PDB</strong> and <strong>PSF</strong> file are required per simulation box, unless you need a second <strong>PDB</strong> file to fix or restrain the atoms within NAMD, etc.  A single or multiple force field files are required for both the NAMD and GOMC simulation engines, which is dependent on the system, and which force fields are being utilized.</p>
+<p><strong>NOTE:</strong>  GOMC and NAMD force field files can be slightly different, so please refer to their respective manuals/documentation.  However, unlike NAMD, GOMC handles fixed bonds and angles in its force field file by replacing bond and angle K-constants with <em>“999999999999”</em>.  Please also see the image below for this section of the GOMC water force field with fixed bonds and angles.</p>
+<blockquote>
+<div><img alt="_images/GOMC_fixed_bond_angles.png" src="_images/GOMC_fixed_bond_angles.png" style="width: 350px;" />
+</div></blockquote>
+<p><strong>NOTE:</strong>  Additionally, the impropers and CMAP parameters need to be removed from the GOMC force field files, or GOMC will fail with an error when reading them.</p>
+</div>
+<div class="section" id="md-mc-hybrid-input">
+<h2>MD/MC Hybrid Input<a class="headerlink" href="#md-mc-hybrid-input" title="Permalink to this headline">¶</a></h2>
+<p>The MD/MC Hybrid input file is in the <a class="reference external" href="https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON">json</a> format. An example fo the “user_input_NAMD_GOMC.json” file is provided below, and can be renamed by the user.</p>
+<blockquote>
+<div><div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;total_cycles_namd_gomc_sims&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+<span class="nt">&quot;starting_at_cycle_namd_gomc_sims&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+<span class="nt">&quot;gomc_use_CPU_or_GPU&quot;</span><span class="p">:</span> <span class="s2">&quot;GPU&quot;</span> <span class="p">,</span>
+<span class="nt">&quot;simulation_type&quot;</span><span class="p">:</span> <span class="s2">&quot;GCMC&quot;</span><span class="p">,</span>
+<span class="nt">&quot;only_use_box_0_for_namd_for_gemc&quot;</span><span class="p">:</span> <span class="kc">false</span><span class="p">,</span>
+<span class="nt">&quot;no_core_box_0&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+<span class="nt">&quot;no_core_box_1&quot;</span> <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+<span class="nt">&quot;simulation_temp_k&quot;</span><span class="p">:</span> <span class="mi">298</span><span class="p">,</span>
+<span class="nt">&quot;simulation_pressure_bar&quot;</span><span class="p">:</span> <span class="mf">1.01325</span><span class="p">,</span>
+<span class="nt">&quot;GCMC_ChemPot_or_Fugacity&quot;</span><span class="p">:</span> <span class="s2">&quot;ChemPot&quot;</span><span class="p">,</span>
+<span class="nt">&quot;GCMC_ChemPot_or_Fugacity_dict&quot;</span><span class="p">:</span> <span class="p">{</span><span class="nt">&quot;TIP3&quot;</span><span class="p">:</span> <span class="mi">-1000</span><span class="p">,</span> <span class="nt">&quot;WAT&quot;</span><span class="p">:</span> <span class="mi">-2000</span><span class="p">},</span>
+<span class="nt">&quot;namd_minimize_mult_scalar&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<span class="nt">&quot;namd_run_steps&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span>
+<span class="nt">&quot;gomc_run_steps&quot;</span><span class="p">:</span> <span class="mi">500</span><span class="p">,</span>
+<span class="nt">&quot;set_dims_box_0_list&quot;</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+<span class="nt">&quot;set_dims_box_1_list&quot;</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+<span class="nt">&quot;set_angle_box_0_list&quot;</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+<span class="nt">&quot;set_angle_box_1_list&quot;</span><span class="p">:</span> <span class="kc">null</span><span class="p">,</span>
+<span class="nt">&quot;starting_ff_file_list_gomc&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;required_data/equilb_box_298K/GOMC_TIPS3P_FF.inp&quot;</span><span class="p">],</span>
+<span class="nt">&quot;starting_ff_file_list_namd&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;required_data/equilb_box_298K/NAMD_TIPS3P_FF.inp&quot;</span><span class="p">],</span>
+<span class="nt">&quot;starting_pdb_box_0_file&quot;</span><span class="p">:</span> <span class="s2">&quot;required_data/equilb_box_298K/TIPS3P_box_0.pdb&quot;</span><span class="p">,</span>
+<span class="nt">&quot;starting_psf_box_0_file&quot;</span><span class="p">:</span> <span class="s2">&quot;required_data/equilb_box_298K/TIPS3P_box_0.psf&quot;</span><span class="p">,</span>
+<span class="nt">&quot;starting_pdb_box_1_file&quot;</span><span class="p">:</span> <span class="s2">&quot;required_data/equilb_box_298K/TIPS3P_reservoir_box_1.pdb&quot;</span><span class="p">,</span>
+<span class="nt">&quot;starting_psf_box_1_file&quot;</span><span class="p">:</span> <span class="s2">&quot;required_data/equilb_box_298K/TIPS3P_reservoir_box_1.psf&quot;</span><span class="p">,</span>
+<span class="nt">&quot;namd2_bin_directory&quot;</span><span class="p">:</span> <span class="s2">&quot;required_data/bin/NAMD_CPU&quot;</span><span class="p">,</span>
+<span class="nt">&quot;gomc_bin_directory&quot;</span><span class="p">:</span> <span class="s2">&quot;required_data/bin&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p><strong>NOTE:</strong>  The hybrid simulation always starts with NAMD and finishes with GOMC in a cycle. If set by the user, the first NAMD simulation will minimize the structure of the system.</p>
+<p><strong>NOTE:</strong> We assume that the best number of steps for each simulation engine per cycle is the values that, on average, provides two (2) uncorrelated samples for NAMD and two (2) accepted moves for each of the desired GOMC moves.</p>
+<p><strong>Variable definitions</strong> and usage for the <em>“user_input_variables_NAMD_GOMC.json”</em> file, or whatever the user names it are provided below:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>total_cycles_namd_gomc_sims<span class="classifier">integer</span></dt><dd><p>The total number of simulation cycles, where a cycle is a NAMD and
+GOMC simulation.
+total_cycles_namd_gomc_sims = (NAMD_simulations + GOMC_simulations)/2</p>
+</dd>
+<dt>starting_at_cycle_namd_gomc_sims<span class="classifier">integer</span></dt><dd><p>The cycle number to start the simulations at.
+Enter zero for intial simualtion start, or non-zero for a restart.
+A new simulation would be started at zero (0).
+To restart a simulation, the last full cycle number of the
+simulation would be entered. The user may need to delete 1 or more
+of the last simulations if the simulation failed prematurely.</p>
+</dd>
+<dt>gomc_use_CPU_or_GPU<span class="classifier">string (only ‘CPU’ or ‘GPU’)</span></dt><dd><p>Run the GOMC simulation using the CPU or GPU.
+Note: For the NAMD simulation, the user will have to provide the
+path to the GPU or CPU NAMD version (i.e., This function does not
+set NAMD’s CPU or GPU version).</p>
+</dd>
+<dt>simulation_type<span class="classifier">string (only ‘GEMC’, ‘GCMC’, ‘NPT’, ‘NVT’)</span></dt><dd><p>The simulation type or ensemble to use
+Note: only GEMC-NVT available currently: ‘GEMC’ = GEMC-NVT</p>
+</dd>
+<dt>only_use_box_0_for_namd_for_gemc<span class="classifier">bool (true or false)</span></dt><dd><p>This chooses if you want to run both simulation boxes in NAMD
+when running the GEMC ensemble, or just box 0.
+true = NAMD runs only box 0 for GEMC
+false = NAMD runs box 0 and 1 for GEMC</p>
+</dd>
+<dt>no_core_box_0<span class="classifier">integer (&gt; 0)</span></dt><dd><p>Number of CPU cores to use for box 0.  This is the ONLY place to enter CPU cores for
+‘GCMC’, ‘NPT’, ‘NVT’, and  ‘GEMC’ and only_use_box_0_for_namd_for_gemc = True
+Note: The total simulation core = no_core_box_0 + no_core_box_1, when using the
+(GEMC’ and only_use_box_0_for_namd_for_gemc = False) values.
+Note: If using the ‘GCMC’, ‘NPT’, ‘NVT’, or
+(GEMC’ and only_use_box_0_for_namd_for_gemc = True) ensembles,
+the total simulation cores = no_core_box_0, regardless of the no_core_box_1 value.</p>
+</dd>
+<dt>no_core_box_1<span class="classifier">integer (&gt;= 0)</span></dt><dd><p>Number or CPU cores to use in box 1.  This always ZERO for ‘GCMC’, ‘NPT’, ‘NVT’ (&gt;= 0).
+Only use when ‘GEMC’ and only_use_box_0_for_namd_for_gemc = True (&gt; 0)
+Note: The total simulation core = no_core_box_0 + no_core_box_1, when using the
+(GEMC’ and only_use_box_0_for_namd_for_gemc = False) values.
+Note: If using the ‘GCMC’, ‘NPT’, ‘NVT’, or
+(GEMC’ and only_use_box_0_for_namd_for_gemc = True) ensembles,
+the total simulation cores = no_core_box_0, regardless of the no_core_box_1 value.</p>
+</dd>
+<dt>simulation_temp_k<span class="classifier">float or integer</span></dt><dd><p>GOMC and NAMD units of temperature are in Kelvin.</p>
+</dd>
+<dt>simulation_pressure_bar<span class="classifier">float or integer</span></dt><dd><p>GOMC and NAMD units of pressure are in bar (1.01325 bar = 1 atm).</p>
+</dd>
+<dt>GCMC_ChemPot_or_Fugacity<span class="classifier">None or string (only stings are ‘ChemPot’ or ‘Fugacity’)</span></dt><dd><p>GCMC ensemble only: The variable used in the to control the GCMC ensemble.
+Choose either None, ‘ChemPot’ or ‘Fugacity’</p>
+</dd>
+<dt>GCMC_ChemPot_or_Fugacity_dict = {str (residue name up to 4 characters): int or float (see below)}</dt><dd><p>GCMC ensemble only: The selected residue, which is a molecule, its
+chemical potential (ChemPot) or fugacity (Fugacity).
+GCMC_ChemPot_or_Fugacity_dict = {str (Residue name): int or float
+(ChemPots in unit GOMC K units or Fugacity in unit bar)}
+Example Chempot: GCMC_ChemPot_or_Fugacity_dict = {‘TIP3’: 1000, ‘Cl’ : -1000, ‘Na’ : -900}
+Example Fugacity (values &gt;=0): GCMC_ChemPot_or_Fugacity_dict = {‘TIP3’: 1000, ‘Cl’ : 10, ‘Na’ : 0}</p>
+</dd>
+<dt>namd_minimize_mult_scalar<span class="classifier">int (&gt;=0)</span></dt><dd><p>The scalar multiple used to get the number of NAMD minimization steps for this
+intitial NAMD simulation.
+NAMD_minimize steps = namd_run_steps * namd_minimize_mult_scalar</p>
+</dd>
+<dt>namd_run_steps<span class="classifier">int (&gt;=10)</span></dt><dd><p>The number of steps to run each cycle of the NAMD simulation.
+Needs to be 10 minimum for now, NEEDS TO BE THE SAME AS THE PREVIOUS SIMULATION, IF RESTARTED!</p>
+</dd>
+<dt>gomc_run_steps<span class="classifier">int (&gt;=10)</span></dt><dd><p>The number of steps to run each cycle of the GOMC simulation.
+Needs to be 10 minimum for now, NEEDS TO BE THE SAME AS THE PREVIOUS SIMULATION, IF RESTARTED!</p>
+</dd>
+<dt>set_dims_box_0_list<span class="classifier">list or null, [null or float or int (&gt;0), null or float or int (&gt;0), null or float or int (&gt;0)]</span></dt><dd><p>The x, y, and z-dimensions of length for box 0 in Angstrom units.
+This is a list of 3, which can contain a null, float or int (&gt;0).
+The length is auto read from the PDB files CRYST1 line, if it is containted there.
+This command overrides the PDB value(s), and is needed for the simulation if
+the data is not in the pdb file.
+Note: if null is used instead of a list the PDB values will be used.
+Note: if null is used instead of the x, y, or z-dimension, the
+PDB file will be used for the null dimensions. Example: [10, null, null],
+the x dimension would use 10 and the y and z dimensions would be the PDB
+file values.</p>
+</dd>
+<dt>set_dims_box_1_list<span class="classifier">list or null, [null or float or int (&gt;0), null or float or int (&gt;0), null or float or int (&gt;0)]</span></dt><dd><p>The x, y, and z-dimensions of length for box 1 in Angstrom units.
+This is a list of 3, which can contain a null, float or int (&gt;0).
+The length is auto read from the PDB files CRYST1 line, if it is containted there.
+This command overrides the PDB value(s), and is needed for the simulation if
+the data is not in the pdb file.
+Note: if null is used instead of a list the PDB values will be used.
+Note: if null is used instead of the x, y, or z-dimension, the
+PDB file will be used for the null dimensions. Example: [10, null, null],
+the x dimension would use 10 and the y and z dimensions would be the PDB
+file values.</p>
+</dd>
+<dt>set_angle_box_0_list<span class="classifier">list or null, [null or float or int, null or float or int, null or float or int]</span></dt><dd><p>The alpha, beta, and gamma angles for box 0 in degrees.
+This is a list of 3, which can contain a null, float or int.
+The angles are auto read from the PDB files CRYST1 line, if it is containted there.
+This command overrides the PDB value(s), and is needed for the simulation if
+the data is not in the pdb file.
+Note: if null is used instead of a list the PDB values will be used.
+Note: if null is used instead of the alpha, beta, and gamma angles, the
+PDB file will be used for the null dimensions. Example: [10, null, null],
+the alpha angle would use 10 and the beta and gamma angles would be the PDB
+file values.
+NOTE: CURRENTLY ONLY ORTHOGONAL BOXES ARE AVAILABLE, SO ONLY NULL OR 90
+WILL BE ACCEPTED. NULL WILL AUTO DEFAUT TO 90.</p>
+</dd>
+<dt>set_angle_box_1_list<span class="classifier">list or null, [null or float or int, null or float or int, null or float or int]</span></dt><dd><p>The alpha, beta, and gamma angles for box 1 in degrees.
+This is a list of 3, which can contain a null, float or int.
+The angles are auto read from the PDB files CRYST1 line, if it is containted there.
+This command overrides the PDB value(s), and is needed for the simulation if
+the data is not in the pdb file.
+Note: if null is used instead of a list the PDB values will be used.
+Note: if null is used instead of the alpha, beta, and gamma angles, the
+PDB file will be used for the null dimensions. Example: [10, null, null],
+the alpha angle would use 10 and the beta and gamma angles would be the PDB
+file values.
+NOTE: CURRENTLY ONLY ORTHOGONAL BOXES ARE AVAILABLE, SO ONLY NULL OR 90
+WILL BE ACCEPTED. NULL WILL AUTO DEFAUT TO 90.</p>
+</dd>
+<dt>starting_ff_file_list_gomc<span class="classifier">list of strings</span></dt><dd><p>All the force fields for the GOMC simulation.
+The strings in the list must be the relative path and file name to the force field(s)
+Example : [“required_data/equilb_box_298K/GOMC_TIPS3P_FF.inp”, “required_data/equilb_box_298K/GOMC_NaCl_FF.inp”]</p>
+</dd>
+<dt>starting_ff_file_list_namd<span class="classifier">list of strings</span></dt><dd><p>All the force fields for the NAMD simulation.
+The strings in the list must be the relative path and file name to the force field(s)
+Example : [“required_data/equilb_box_298K/NAMD_TIPS3P_FF.inp”, “required_data/equilb_box_298K/NAMD_NaCl_FF.inp”]</p>
+</dd>
+<dt>starting_pdb_box_0_file<span class="classifier">string</span></dt><dd><p>The relative path and filename to the starting PDB file for box 0,
+which is initally fed to the NAMD simulation since it starts first.
+The string in the list must be the relative path to the force fields and the file name
+Example : “required_data/equilb_box_298K/TIPS3P_box_0.pdb”</p>
+</dd>
+<dt>starting_psf_box_0_file<span class="classifier">string</span></dt><dd><p>The relative path and filename to the starting PSF file box 0,
+which is initally fed to the NAMD simulation since it starts first.
+The string in the list must be the relative path to the force fields and the file name
+Example : “required_data/equilb_box_298K/TIPS3P_box_0.psf</p>
+</dd>
+<dt>starting_pdb_box_1_file<span class="classifier">string</span></dt><dd><p>The relative path and filename to the starting PDB file for box 1,
+which is initally fed to the NAMD simulation since it starts first.
+The string in the list must be the relative path to the force fields and the file name
+Note: this is only needed for the “GCMC” and “GEMC” ensembles/simulation types
+Example : “required_data/equilb_box_298K/TIPS3P_box_1.pdb”</p>
+</dd>
+<dt>starting_psf_box_1_file<span class="classifier">string</span></dt><dd><p>The relative path and filename to the starting PSF file box 1,
+which is initally fed to the NAMD simulation since it starts first.
+The string in the list must be the relative path to the force fields and the file name
+Note: this is only needed for the “GCMC” and “GEMC” ensembles/simulation types
+Example : “required_data/equilb_box_298K/TIPS3P_box_1.psf</p>
+</dd>
+<dt>namd_bin_file<span class="classifier">string</span></dt><dd><p>The relative path to the directory where the namd2 file binary is located.
+This should be in the required_data/bin/NAMD212, or required_data/bin/NAMD212
+or required_data/bin directory.
+IMPORTANT MANUAL MODIFICATION: To use the GPU and CPU or either version of namd,
+the copied files in this directory must be renamed namd2_CPU and namd2_GPU.
+NOTE: THIS WAS ONLY TESTED ON NAMD VERSION 2.14, SO IT MAY NOT WORK ON OTHER
+NAMD VERSIONS WITHOUT SOME CODE MODIFICATION.
+Alternatively, a sybolic link to namd2 file binary could be there.
+Example:  “required_data/bin/NAMD212”</p>
+</dd>
+<dt>gomc_bin_file<span class="classifier">string</span></dt><dd><p>The relative path to the directory where the GOMC file binaries are located.
+This should be in the required_data/bin directory.
+Alternatively, a sybolic link to GOMC file binaries file binary could be there.
+NOTE: THIS WAS ONLY TESTED ON THE GOMC DEVELOPMENT AFTER VERSION 2.70,
+SO IT MAY NOT WORK ON OTHER GOMC VERSIONS WITHOUT SOME CODE MODIFICATION,
+AND SOME ADDITIONAL FUNCTIONALLITY IS NOT IN PREVIOUS GOMC VERSIONS.
+Example: “required_data/bin”</p>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="running_the_simulation.html" class="btn btn-neutral float-right" title="Running the Simulation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation and Other Required Files" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright TBD.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
