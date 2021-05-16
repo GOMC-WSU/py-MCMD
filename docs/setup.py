@@ -66,7 +66,7 @@ if __name__ == '__main__':
                                  ]},
         package_dir={'NAMD_GOMC': 'NAMD_GOMC'},
         include_package_data=True,
-        license="MIT",
+        license="GPL-3.0",
         zip_safe=False,
         keywords='NAMD_GOMC',
         classifiers=[
@@ -78,10 +78,7 @@ if __name__ == '__main__':
             'Programming Language :: Python',
             'Programming Language :: Python :: 3',
             'Topic :: Scientific/Engineering :: Chemistry',
-            'Operating System :: Microsoft :: Windows',
-            'Operating System :: POSIX',
             'Operating System :: Unix',
-            'Operating System :: MacOS',
         ],
     )
 
