@@ -1,4 +1,4 @@
-name: NAMD_GOMC-docs
+name: NAMD_GOMC-code
 channels:
   - conda-forge
 dependencies:
