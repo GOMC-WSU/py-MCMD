@@ -10,7 +10,7 @@ The **MoSDeF** tools permit simulation reproducibility across a variety of simul
 removing the requirement of expert knowledge in all the engines to repeat, continue, or advance the existing research. 
 Additionally, the **MoSDeF** software permits the auto-generation of numerous and distinct systems, allowing large-scale screening of materials and chemicals via `Signac <https://signac.io>`_ to manage the simulations and data.
 
-The `MoSDeF <https://mosdef.org>`_ software is comprised the following packages:
+The `MoSDeF <https://mosdef.org>`_ software ecosystem contains the following packages:
     	* `mBuild <https://mbuild.mosdef.org/en/stable/>`_ -- A hierarchical, component based molecule builder
 
     	* `foyer <https://foyer.mosdef.org/en/stable/>`_ -- A package for atom-typing as well as applying and disseminating forcefields
