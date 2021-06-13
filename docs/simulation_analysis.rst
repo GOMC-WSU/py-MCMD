@@ -124,6 +124,17 @@ The variables below are contained in the *"user_input_combine_data_NAMD_GOMC.jso
 		This is required when combining the  
 		'GOMC-only', or 'NAMD-only' data, but is not used.
 
+	get_initial_gomc_dcdbool (true or false)
+		true = This chooses whether to add the initial GOMC dcd trajectory to the combined GOMC dcd files, based on the existing ‘GOMC’ 
+		directory (i.e., the 1st GOMC dcd trajectory in the 1st GOMC individual simulation which are currently in ‘GOMC’ directory).
+
+		false = It will not add the initial dcd file from the first GOMC folder to the combined dcd file. Example: It may be useful to not
+		include the first folders initial dcd trajectory when users are conducting the piecemeal simulations, deleting the individual simulation
+		folders as they go. In this example, the user would need to combine the separate dcd files that are created this way outside of this program.
+
+		Note: NAMD does not allow this option; however, when NAMD dcd file are able to be combined (NPT and NVT ensembles). For NAMD, the simulations 
+		starting PDB file can be loaded into the trajectory in VMD or other software, which will allow user to access all the data.
+
 	rel_path_to_combine_binary_catdcd : string 
 		The relative path and file name to the catdcd, which are provided
 		from the Theoretical and Compuational Biopyysisc group (VMD/NAMD development team)
