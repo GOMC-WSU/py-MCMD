@@ -158,13 +158,19 @@ else:
         raise TypeError("The combine_dcd_files_cycle_freq values must be an integer "
                         "greater than or equal to zero (>=1.\n")
 
+# get the get_initial_gomc_dcd variable from the json file
+if "get_initial_gomc_dcd" not in json_file_data_keys_list:
+    raise TypeError("The get_initial_gomc_dcd key is not provided.\n")
+get_initial_gomc_dcd = json_file_data["get_initial_gomc_dcd"]
+if get_initial_gomc_dcd is not True and get_initial_gomc_dcd is not False:
+    raise TypeError("The get_initial_gomc_dcd not true or false in the json file.\n")
+
 # get the rel_path_to_combine_binary_catdcd variable from the json file
 if "rel_path_to_combine_binary_catdcd" not in json_file_data_keys_list:
     raise TypeError("The rel_path_to_combine_binary_catdcd key is not provided.\n")
 rel_path_to_combine_binary_catdcd = json_file_data["rel_path_to_combine_binary_catdcd"]
 if not isinstance(rel_path_to_combine_binary_catdcd, str):
     raise TypeError('The rel_path_to_combine_binary_catdcd must be entered as a string in the json file.\n')
-
 
 warn('If the combining file fails without a set reason/error, please check the '
      '"simulation_engine_options", "out.dat", and the "rel_path_to_combine_binary_catdcd" variables. '
@@ -829,7 +835,6 @@ def combine_dcd_files(engine_name,
         nested_list_engine_dcd_filenames.append(dcd_cat_engine_box_x_filename_str)
 
         if q == (engine_dcd_cat_iterations - 1):
-
             # need to only read the last frame in each cycle as GOMC prints the an intial (step 1) and last frame
             engine_final_iter_dcdcat_command = "{} -o {}/{} {} {}" \
                                                "".format(str(rel_path_to_combine_binary_catdcd),
@@ -880,16 +885,70 @@ def combine_dcd_files(engine_name,
 
     # the combined final Engine dcd file
     if engine_name == 'GOMC':
-        # take only the last frame from GOMC.  Now GOMC only outputs the last frame so only need (i.e., -stride 1)
-        run_engine_dcdcat_box_x_command = "{} -o {}/{} -stride 1 {}/{}" \
-                                                  "".format(str(rel_path_to_combine_binary_catdcd),
-                                                            str(path_combined_data_folder),
-                                                            engine_dcd_combined_name_str,
-                                                            str(path_combined_data_folder),
-                                                            engine_dcd_combined_for_mod_name_str
-                                                            )
 
-        print('run_engine_dcdcat_box_x_command =  ' + str(run_engine_dcdcat_box_x_command))
+        if get_initial_gomc_dcd == True:
+            # take only the last frame from GOMC.  Now GOMC only outputs the last frame so only need (i.e., -stride 1)
+            initial_engine_dcd_combined_for_mod_name_str = 'initial_box_for_mod_{}_{}_dcd_files.dcd' \
+                                                           ''.format(str(box_no),
+                                                                     str(engine_name)
+                                                                     )
+            mod_engine_dcd_combined_for_mod_name_str = 'mod_box_for_mod_{}_{}_dcd_files.dcd' \
+                                                       ''.format(str(box_no),
+                                                                 str(engine_name)
+                                                                 )
+
+            run_initial_engine_dcdcat_box_x_command = "{} -o {}/{} -first 1 -last 1 {}/{}/{}" \
+                                                      "".format(str(rel_path_to_combine_binary_catdcd),
+                                                                str(path_combined_data_folder),
+                                                                initial_engine_dcd_combined_for_mod_name_str,
+                                                                str(engine_name),
+                                                                str(engine_directory_list[0]),
+                                                                str('Output_data_BOX_0.dcd')
+                                                                )
+
+            print("run_initial_engine_dcdcat_box_x_command = " +str(run_initial_engine_dcdcat_box_x_command ))
+            print("nested_list_engine_dcd_filenames " + str(nested_list_engine_dcd_filenames))
+            print("engine_directory_list = " + str(engine_directory_list))
+
+            exec_run_initial_engine_dcdcat_box_x_command = subprocess.Popen(run_initial_engine_dcdcat_box_x_command,
+                                                                    shell=True,
+                                                                    stderr=subprocess.STDOUT)
+
+            os.waitpid(exec_run_initial_engine_dcdcat_box_x_command.pid, os.WSTOPPED)
+
+            run_mod_engine_dcdcat_box_x_command = "{} -o {}/{} -first 2 -stride 2 {}/{}" \
+                                                      "".format(str(rel_path_to_combine_binary_catdcd),
+                                                                str(path_combined_data_folder),
+                                                                mod_engine_dcd_combined_for_mod_name_str,
+                                                                str(path_combined_data_folder),
+                                                                engine_dcd_combined_for_mod_name_str
+                                                                )
+
+            exec_run_mod_engine_dcdcat_box_x_command = subprocess.Popen(run_mod_engine_dcdcat_box_x_command,
+                                                                           shell=True,
+                                                                           stderr=subprocess.STDOUT)
+
+            os.waitpid(exec_run_mod_engine_dcdcat_box_x_command.pid, os.WSTOPPED)
+
+            run_engine_dcdcat_box_x_command = "{} -o {}/{} {}/{} {}/{}" \
+                                              "".format(str(rel_path_to_combine_binary_catdcd),
+                                                        str(path_combined_data_folder),
+                                                        engine_dcd_combined_name_str,
+                                                        str(path_combined_data_folder),
+                                                        str(initial_engine_dcd_combined_for_mod_name_str),
+                                                        str(path_combined_data_folder),
+                                                        str(mod_engine_dcd_combined_for_mod_name_str)
+                                                        )
+
+        else:
+            # take only the last frame from GOMC.  Now GOMC only outputs the last frame so only need (i.e., -stride 1)
+            run_engine_dcdcat_box_x_command = "{} -o {}/{} -first 2 -stride 2 {}/{}" \
+                                                      "".format(str(rel_path_to_combine_binary_catdcd),
+                                                                str(path_combined_data_folder),
+                                                                engine_dcd_combined_name_str,
+                                                                str(path_combined_data_folder),
+                                                                engine_dcd_combined_for_mod_name_str
+                                                                )
 
     # take only the last frame from NAMD.  NAMD only outputs the last frame so only need (i.e., -stride 1)
     elif engine_name == 'NAMD':
@@ -949,6 +1008,25 @@ def combine_dcd_files(engine_name,
     exec_cp_gomc_box_x_psf_command = subprocess.Popen(run_cp_gomc_box_x_psf_command,
                                                       shell=True, stderr=subprocess.STDOUT)
     os.waitpid(exec_cp_gomc_box_x_psf_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
+
+    # remove the initial and mod (ever run not the start of run dcd) files
+    run_initial_engine_rm_dcd = "rm {}/{}".format(str(path_combined_data_folder),
+                                                  str(initial_engine_dcd_combined_for_mod_name_str)
+                                                  )
+    exec_initial_engine_rm_dcd_command = subprocess.Popen(run_initial_engine_rm_dcd,
+                                                          shell=True,
+                                                          stderr=subprocess.STDOUT
+                                                          )
+    os.waitpid(exec_initial_engine_rm_dcd_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
+
+    run_mod_engine_rm_dcd = "rm {}/{}".format(str(path_combined_data_folder),
+                                              str(mod_engine_dcd_combined_for_mod_name_str)
+                                              )
+    exec_mod_engine_rm_dcd_command = subprocess.Popen(run_mod_engine_rm_dcd,
+                                                      shell=True,
+                                                      stderr=subprocess.STDOUT
+                                                      )
+    os.waitpid(exec_mod_engine_rm_dcd_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
 
     print('INFO: Finished the dcd combining for box {} the {} simulation '.format(str(box_no), str(path_engine_runs)))
 
