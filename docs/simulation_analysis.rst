@@ -124,7 +124,7 @@ The variables below are contained in the *"user_input_combine_data_NAMD_GOMC.jso
 		This is required when combining the  
 		'GOMC-only', or 'NAMD-only' data, but is not used.
 
-	get_initial_gomc_dcdbool (true or false)
+	get_initial_gomc_dcd : bool (true or false)
 		true = This chooses whether to add the initial GOMC dcd trajectory to the combined GOMC dcd files, based on the existing ‘GOMC’ 
 		directory (i.e., the 1st GOMC dcd trajectory in the 1st GOMC individual simulation which are currently in ‘GOMC’ directory).
 
