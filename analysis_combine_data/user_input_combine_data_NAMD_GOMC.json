@@ -5,5 +5,5 @@
 "combine_namd_dcd_file": true,
 "combine_gomc_dcd_file": true,
 "combine_dcd_files_cycle_freq": 1,
-"rel_path_to_combine_binary_catdcd": "../required_data/bin/catdcd-4.0b/LINUXAMD64/bin/catdcd4.0/catdcd",
-"rel_path_to_NAMD_and_GOMC_folders": "../"}
+"get_initial_gomc_dcd": true,
+"rel_path_to_combine_binary_catdcd": "required_data/bin/catdcd-4.0b/LINUXAMD64/bin/catdcd4.0/catdcd"}
