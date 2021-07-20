@@ -1,5 +1,5 @@
 
-NAMD_GOMC - A Hybrid MD/MC Simulation Software
+py-MCMD: A Python Library for Performing  Hybrid Monte Carlo - Molecular Dynamics Simulations with GOMC and NAMD
 --------
 
 This Python code enables hybrid molecular dynamics/Monte Carlo (MD/MC) simulations using `NAMD <https://www.ks.uiuc.edu/Research/namd/>`_ and the `GPU Optimized Monte Carlo (GOMC) <http://gomc.eng.wayne.edu>`_ software.
