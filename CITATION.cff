@@ -7,6 +7,6 @@ authors:
   - family-names: Potoff 
     given-names: Jeffrey
     orcid: https://orcid.org/0000-0002-4421-8787
-title: bc118/py-MCMD: py-MCMD: A Python Library for Performing Hybrid Monte Carlo - Molecular Dynamics Simulations with GOMC and NAMD
+title: py-MCMD: A Python Library for Performing Hybrid Monte Carlo - Molecular Dynamics Simulations with GOMC and NAMD
 version: 0.0.1
 date-released: 2021-7-28
