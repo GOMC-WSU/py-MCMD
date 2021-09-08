@@ -1010,23 +1010,25 @@ def combine_dcd_files(engine_name,
     os.waitpid(exec_cp_gomc_box_x_psf_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
 
     # remove the initial and mod (ever run not the start of run dcd) files
-    run_initial_engine_rm_dcd = "rm {}/{}".format(str(path_combined_data_folder),
-                                                  str(initial_engine_dcd_combined_for_mod_name_str)
-                                                  )
-    exec_initial_engine_rm_dcd_command = subprocess.Popen(run_initial_engine_rm_dcd,
-                                                          shell=True,
-                                                          stderr=subprocess.STDOUT
+    if engine_name == 'GOMC':
+        if get_initial_gomc_dcd == True:
+            run_initial_engine_rm_dcd = "rm {}/{}".format(str(path_combined_data_folder),
+                                                          str(initial_engine_dcd_combined_for_mod_name_str)
                                                           )
-    os.waitpid(exec_initial_engine_rm_dcd_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
+            exec_initial_engine_rm_dcd_command = subprocess.Popen(run_initial_engine_rm_dcd,
+                                                                  shell=True,
+                                                                  stderr=subprocess.STDOUT
+                                                                  )
+            os.waitpid(exec_initial_engine_rm_dcd_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
 
-    run_mod_engine_rm_dcd = "rm {}/{}".format(str(path_combined_data_folder),
-                                              str(mod_engine_dcd_combined_for_mod_name_str)
-                                              )
-    exec_mod_engine_rm_dcd_command = subprocess.Popen(run_mod_engine_rm_dcd,
-                                                      shell=True,
-                                                      stderr=subprocess.STDOUT
+            run_mod_engine_rm_dcd = "rm {}/{}".format(str(path_combined_data_folder),
+                                                      str(mod_engine_dcd_combined_for_mod_name_str)
                                                       )
-    os.waitpid(exec_mod_engine_rm_dcd_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
+            exec_mod_engine_rm_dcd_command = subprocess.Popen(run_mod_engine_rm_dcd,
+                                                              shell=True,
+                                                              stderr=subprocess.STDOUT
+                                                              )
+            os.waitpid(exec_mod_engine_rm_dcd_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
 
     print('INFO: Finished the dcd combining for box {} the {} simulation '.format(str(box_no), str(path_engine_runs)))
 
