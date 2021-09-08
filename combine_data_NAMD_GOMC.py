@@ -306,7 +306,7 @@ elif simulation_engine_options in ['GOMC-only']:
     combined_box_1_filename_only = 'combined_GOMC_data_box_1.txt'
 elif simulation_engine_options in ['NAMD-only']:
     combined_box_0_filename_only = 'combined_NAMD_data_box_0.txt'
-    combined_box_1_filename_only = 'combined_NAMDC_data_box_1.txt'
+    combined_box_1_filename_only = 'combined_NAMD_data_box_1.txt'
 
 combined_box_0_data_filename = "{}/{}".format(full_path_to_combined_data_folder,
                                               combined_box_0_filename_only)
@@ -1346,6 +1346,7 @@ if simulation_engine_options == 'Hybrid':
                                                                  float(e_values_density_namd_box_1_TOTAL_ELECT_list[k_i])
                                                                  for k_i in range(0, len(e_values_density_namd_box_1_TOTAL_VDW_list))]
         e_values_density_namd_box_1_PRESSURE_list = e_values_density_namd_box_1_df.loc[:, 'PRESSURE'].tolist()
+        e_values_density_namd_box_1_PRESSURE_list = e_values_density_namd_box_1_df.loc[:, 'PRESSURE'].tolist()
         e_values_density_namd_box_1_VOLUME_list = e_values_density_namd_box_1_df.loc[:, 'VOLUME'].tolist()
         e_values_density_namd_box_1_DENSITY_list = e_values_density_namd_box_1_df.loc[:, 'DENSITY'].tolist()
 
@@ -1361,7 +1362,12 @@ if simulation_engine_options == 'Hybrid':
     e_values_density_gomc_box_0_ENGINE_list = ["GOMC" for i in e_values_density_gomc_box_0_STEP_list]
     e_values_density_gomc_box_0_TOTAL_POT_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'TOTAL'].tolist()
     e_values_density_gomc_box_0_TOTAL_ELECT_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'TOTAL_ELECT'].tolist()
-    e_values_density_gomc_box_0_PRESSURE_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'PRESSURE'].tolist()
+    try:
+        e_values_density_gomc_box_0_PRESSURE_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'PRESSURE'].tolist()
+    except:
+        e_values_density_gomc_box_0_PRESSURE_list = ['NA'
+                                                     for k_i in
+                                                     range(0, len(e_values_density_gomc_box_0_STEP_list))]
 
     if simulation_type in ["GCMC", 'NVT']:
         # use NAMD volume for GCMC and NVT since GOMC is not outputting it
@@ -1403,10 +1409,16 @@ if simulation_engine_options == 'Hybrid':
         e_values_density_gomc_box_1_TOTAL_POT_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'TOTAL'].tolist()
         e_values_density_gomc_box_1_TOTAL_ELECT_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'TOTAL_ELECT'].tolist()
         e_values_density_gomc_box_1_PRESSURE_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'PRESSURE'].tolist()
+        try:
+            e_values_density_gomc_box_1_PRESSURE_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'PRESSURE'].tolist()
+        except:
+            e_values_density_gomc_box_1_PRESSURE_list = ['NA'
+                                                         for k_i in
+                                                         range(0, len(e_values_density_gomc_box_1_STEP_list))]
 
         if simulation_type in ["GCMC", 'NVT']:
             # use NAMD volume for GCMC and NVT since GOMC is not outputting it
-            NAMD_Volume_for_NVT_or_GCMC = e_values_density_namd_box_1_VOLUME_list[0]
+            NAMD_Volume_for_NVT_or_GCMC_box_1 = e_values_density_namd_box_1_VOLUME_list[0]
             e_values_density_gomc_box_1_VOLUME_list = [NAMD_Volume_for_NVT_or_GCMC_box_1
                                                        for i in e_values_density_gomc_box_1_STEP_list]
         else:
@@ -1462,7 +1474,6 @@ if simulation_engine_options == 'Hybrid':
     combined_data_sorted_box_0_df = combined_data_box_0_df.sort_values(by=["MOD_STEP"], axis=0, ascending=True)
     combined_data_sorted_box_0_df.drop("MOD_STEP", axis=1, inplace=True)
     combined_data_sorted_box_0_df.to_csv(combined_box_0_data_filename, sep="	", index=False)
-
     # ****************************************
     # write the combined NAMD and GOMC data for box 0  (Start)
     # ****************************************
