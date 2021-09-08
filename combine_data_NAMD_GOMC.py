@@ -1552,7 +1552,7 @@ if simulation_engine_options == 'Hybrid':
     # ****************************************
     # write the combined NAMD and GOMC data  (end)
     # ****************************************
-    print("INFO: finished all data combined for the NAMD-GOMC hybrid simulationsand "
+    print("INFO: Finished all data combined for the NAMD-GOMC hybrid simulations and "
           "exported into muliple files and types")
 
     # ****************************************
