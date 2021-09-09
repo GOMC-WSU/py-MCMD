@@ -547,7 +547,7 @@ print(str(write_log_data))
 
 write_log_data = "*************************************************\n" + \
                  "gomc_bin_file = {} \n" \
-                 "************************************************* \n".format(str(namd_bin_file))
+                 "************************************************* \n".format(str(gomc_bin_file))
 log_template_file.write(str(write_log_data))
 print(str(write_log_data))
 
@@ -2129,6 +2129,9 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
                                                                             str(namd_bin_file),
                                                                             str(int(total_no_cores))
                                                                             )
+            print('999999999999999')
+            print('run_box_0_command = ' +str(run_box_0_command))
+            print('999999999999999')
 
         elif simulation_type in ['GEMC'] and only_use_box_0_for_namd_for_gemc is False \
                 and namd_sim_order == 'parallel':
