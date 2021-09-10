@@ -306,7 +306,7 @@ elif simulation_engine_options in ['GOMC-only']:
     combined_box_1_filename_only = 'combined_GOMC_data_box_1.txt'
 elif simulation_engine_options in ['NAMD-only']:
     combined_box_0_filename_only = 'combined_NAMD_data_box_0.txt'
-    combined_box_1_filename_only = 'combined_NAMDC_data_box_1.txt'
+    combined_box_1_filename_only = 'combined_NAMD_data_box_1.txt'
 
 combined_box_0_data_filename = "{}/{}".format(full_path_to_combined_data_folder,
                                               combined_box_0_filename_only)
@@ -1010,23 +1010,25 @@ def combine_dcd_files(engine_name,
     os.waitpid(exec_cp_gomc_box_x_psf_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
 
     # remove the initial and mod (ever run not the start of run dcd) files
-    run_initial_engine_rm_dcd = "rm {}/{}".format(str(path_combined_data_folder),
-                                                  str(initial_engine_dcd_combined_for_mod_name_str)
-                                                  )
-    exec_initial_engine_rm_dcd_command = subprocess.Popen(run_initial_engine_rm_dcd,
-                                                          shell=True,
-                                                          stderr=subprocess.STDOUT
+    if engine_name == 'GOMC':
+        if get_initial_gomc_dcd == True:
+            run_initial_engine_rm_dcd = "rm {}/{}".format(str(path_combined_data_folder),
+                                                          str(initial_engine_dcd_combined_for_mod_name_str)
                                                           )
-    os.waitpid(exec_initial_engine_rm_dcd_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
+            exec_initial_engine_rm_dcd_command = subprocess.Popen(run_initial_engine_rm_dcd,
+                                                                  shell=True,
+                                                                  stderr=subprocess.STDOUT
+                                                                  )
+            os.waitpid(exec_initial_engine_rm_dcd_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
 
-    run_mod_engine_rm_dcd = "rm {}/{}".format(str(path_combined_data_folder),
-                                              str(mod_engine_dcd_combined_for_mod_name_str)
-                                              )
-    exec_mod_engine_rm_dcd_command = subprocess.Popen(run_mod_engine_rm_dcd,
-                                                      shell=True,
-                                                      stderr=subprocess.STDOUT
+            run_mod_engine_rm_dcd = "rm {}/{}".format(str(path_combined_data_folder),
+                                                      str(mod_engine_dcd_combined_for_mod_name_str)
                                                       )
-    os.waitpid(exec_mod_engine_rm_dcd_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
+            exec_mod_engine_rm_dcd_command = subprocess.Popen(run_mod_engine_rm_dcd,
+                                                              shell=True,
+                                                              stderr=subprocess.STDOUT
+                                                              )
+            os.waitpid(exec_mod_engine_rm_dcd_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
 
     print('INFO: Finished the dcd combining for box {} the {} simulation '.format(str(box_no), str(path_engine_runs)))
 
@@ -1344,6 +1346,7 @@ if simulation_engine_options == 'Hybrid':
                                                                  float(e_values_density_namd_box_1_TOTAL_ELECT_list[k_i])
                                                                  for k_i in range(0, len(e_values_density_namd_box_1_TOTAL_VDW_list))]
         e_values_density_namd_box_1_PRESSURE_list = e_values_density_namd_box_1_df.loc[:, 'PRESSURE'].tolist()
+        e_values_density_namd_box_1_PRESSURE_list = e_values_density_namd_box_1_df.loc[:, 'PRESSURE'].tolist()
         e_values_density_namd_box_1_VOLUME_list = e_values_density_namd_box_1_df.loc[:, 'VOLUME'].tolist()
         e_values_density_namd_box_1_DENSITY_list = e_values_density_namd_box_1_df.loc[:, 'DENSITY'].tolist()
 
@@ -1359,7 +1362,12 @@ if simulation_engine_options == 'Hybrid':
     e_values_density_gomc_box_0_ENGINE_list = ["GOMC" for i in e_values_density_gomc_box_0_STEP_list]
     e_values_density_gomc_box_0_TOTAL_POT_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'TOTAL'].tolist()
     e_values_density_gomc_box_0_TOTAL_ELECT_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'TOTAL_ELECT'].tolist()
-    e_values_density_gomc_box_0_PRESSURE_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'PRESSURE'].tolist()
+    try:
+        e_values_density_gomc_box_0_PRESSURE_list = e_stat_kcal_per_mol_gomc_box_0_df.loc[:, 'PRESSURE'].tolist()
+    except:
+        e_values_density_gomc_box_0_PRESSURE_list = ['NA'
+                                                     for k_i in
+                                                     range(0, len(e_values_density_gomc_box_0_STEP_list))]
 
     if simulation_type in ["GCMC", 'NVT']:
         # use NAMD volume for GCMC and NVT since GOMC is not outputting it
@@ -1401,10 +1409,16 @@ if simulation_engine_options == 'Hybrid':
         e_values_density_gomc_box_1_TOTAL_POT_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'TOTAL'].tolist()
         e_values_density_gomc_box_1_TOTAL_ELECT_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'TOTAL_ELECT'].tolist()
         e_values_density_gomc_box_1_PRESSURE_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'PRESSURE'].tolist()
+        try:
+            e_values_density_gomc_box_1_PRESSURE_list = e_stat_kcal_per_mol_gomc_box_1_df.loc[:, 'PRESSURE'].tolist()
+        except:
+            e_values_density_gomc_box_1_PRESSURE_list = ['NA'
+                                                         for k_i in
+                                                         range(0, len(e_values_density_gomc_box_1_STEP_list))]
 
         if simulation_type in ["GCMC", 'NVT']:
             # use NAMD volume for GCMC and NVT since GOMC is not outputting it
-            NAMD_Volume_for_NVT_or_GCMC = e_values_density_namd_box_1_VOLUME_list[0]
+            NAMD_Volume_for_NVT_or_GCMC_box_1 = e_values_density_namd_box_1_VOLUME_list[0]
             e_values_density_gomc_box_1_VOLUME_list = [NAMD_Volume_for_NVT_or_GCMC_box_1
                                                        for i in e_values_density_gomc_box_1_STEP_list]
         else:
@@ -1460,7 +1474,6 @@ if simulation_engine_options == 'Hybrid':
     combined_data_sorted_box_0_df = combined_data_box_0_df.sort_values(by=["MOD_STEP"], axis=0, ascending=True)
     combined_data_sorted_box_0_df.drop("MOD_STEP", axis=1, inplace=True)
     combined_data_sorted_box_0_df.to_csv(combined_box_0_data_filename, sep="	", index=False)
-
     # ****************************************
     # write the combined NAMD and GOMC data for box 0  (Start)
     # ****************************************
@@ -1539,7 +1552,7 @@ if simulation_engine_options == 'Hybrid':
     # ****************************************
     # write the combined NAMD and GOMC data  (end)
     # ****************************************
-    print("INFO: finished all data combined for the NAMD-GOMC hybrid simulationsand "
+    print("INFO: Finished all data combined for the NAMD-GOMC hybrid simulations and "
           "exported into muliple files and types")
 
     # ****************************************

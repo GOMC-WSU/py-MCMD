@@ -18,7 +18,7 @@ The combine data code is run from its file directory via a terminal window.
 
    		cd "directory_containing_run_NAMD_GOMC.py"
 
-		python run_NAMD_GOMC.py -f user_input_combine_data_NAMD_GOMC.json -w combined_data -o False
+		python combine_data_NAMD_GOMC.py -f user_input_combine_data_NAMD_GOMC.json -w combined_data -o False
 
 
 Flags for Combining Data Code
