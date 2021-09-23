@@ -1493,6 +1493,9 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
         new_gomc_data = new_gomc_data.replace("psf_file_box_0_file",
                                               '{}/Output_data_BOX_0_restart.psf'.format(previous_gomc_rel_path)
                                               )
+        new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file",
+                                              '{}/Output_restart.chk'.format(previous_gomc_rel_path)
+                                              )
 
     # Read the angles from the intial/starting PDB file
     namd_xsc_box_0_file = "{}/namdOut.restart.xsc".format(namd_box_0_newdir)
@@ -1749,6 +1752,10 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
             new_gomc_data = new_gomc_data.replace("psf_file_box_1_file",
                                                   "{}/Output_data_BOX_1_restart.psf".format(previous_gomc_rel_path)
                                                   )
+            
+            new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file",
+                                                  "{}/Output_restart.chk".format(previous_gomc_rel_path)
+                                                  )
 
     else:
         if previous_gomc_dir == 'NA':
@@ -1756,16 +1763,17 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
             new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", 'false')
 
     # make checkpoint true and restart
-    new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", str(use_gomc_checkpoint))
+    
+    new_gomc_data = new_gomc_data.replace("{}/Output_restart.chk".format(previous_gomc_rel_path), str(use_gomc_checkpoint))
 
-    run_gomc_copy_ckpt_new_dir_command = "ln -sf {}/{} {}".format(str(previous_gomc_dir),
-                                                                  "checkpoint.dat", str(gomc_newdir)
-                                                                  )
+    #run_gomc_copy_ckpt_new_dir_command = "ln -sf {}/{} {}".format(str(previous_gomc_dir),
+    #                                                              "checkpoint.dat", str(gomc_newdir)
+    #                                                              )
 
-    exec_gomc_copy_ckpt_new_dir_command = subprocess.Popen(run_gomc_copy_ckpt_new_dir_command,
-                                                           shell=True, stderr=subprocess.STDOUT)
+    #exec_gomc_copy_ckpt_new_dir_command = subprocess.Popen(run_gomc_copy_ckpt_new_dir_command,
+    #                                                       shell=True, stderr=subprocess.STDOUT)
 
-    os.waitpid(exec_gomc_copy_ckpt_new_dir_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
+    #os.waitpid(exec_gomc_copy_ckpt_new_dir_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
 
     generate_gomc_file.write(new_gomc_data)
     generate_gomc_file.close()
