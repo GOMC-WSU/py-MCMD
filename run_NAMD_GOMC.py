@@ -1470,7 +1470,7 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
                                           )
 
     if previous_gomc_dir == 'NA':
-        new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", 'false')
+        new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", '')
 
         gomc_starting_pdb_rel_path_box_0 = os.path.relpath("{}/{}".format(str(python_file_directory),
                                                                           starting_pdb_box_0_file),
@@ -1729,7 +1729,7 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
     if simulation_type in ["GEMC", "GCMC"]:
         if previous_gomc_dir == 'NA':
             # marked as "Restart_Checkpoint_file", 'false' for now until checkpoint is setup
-            new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", 'false')
+            new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", '')
 
             gomc_starting_pdb_rel_path_box_1 = os.path.relpath("{}/{}".format(str(python_file_directory),
                                                                               starting_pdb_box_1_file),
@@ -1760,7 +1760,7 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
     else:
         if previous_gomc_dir == 'NA':
             # marked as "Restart_Checkpoint_file", 'false' for now until checkpoint is setup
-            new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", 'false')
+            new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", '')
 
     # make checkpoint true and restart
     
