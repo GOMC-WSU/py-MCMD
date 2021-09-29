@@ -1254,12 +1254,10 @@ def get_namd_energy_data(read_namd_box_x_energy_file, e_default_namd_titles):
     namd_e_vdw_box_x = namd_energy_data_box_x_df.loc[:, 'VDW']
     namd_e_vdw_box_x_initial_value = float(namd_e_vdw_box_x.values.tolist()[0])
     namd_e_vdw_box_x_final_value = float(namd_e_vdw_box_x.values.tolist()[-1])
-    print('namd_e_vdw_box_x')
-    print(namd_e_vdw_box_x)
+
     namd_e_vdw_plus_elec_box_x = [float(namd_e_vdw_box_x[k_i]) + float(namd_e_electro_box_x[k_i])
                                   for k_i in range(0, len(namd_e_vdw_box_x))]
-    print('namd_e_vdw_plus_elec_box_x')
-    print(namd_e_vdw_plus_elec_box_x)
+
     namd_e_vdw_plus_elec_box_x_initial_value = float(namd_e_vdw_plus_elec_box_x[0])
     namd_e_vdw_plus_elec_box_x_final_value = float(namd_e_vdw_plus_elec_box_x[-1])
 
@@ -2127,9 +2125,6 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
                                                                             str(namd_bin_file),
                                                                             str(int(total_no_cores))
                                                                             )
-            print('999999999999999')
-            print('run_box_0_command = ' +str(run_box_0_command))
-            print('999999999999999')
 
         elif simulation_type in ['GEMC'] and only_use_box_0_for_namd_for_gemc is False \
                 and namd_sim_order == 'parallel':
