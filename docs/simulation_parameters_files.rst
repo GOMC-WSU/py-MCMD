@@ -126,8 +126,19 @@ The MD/MC Hybrid input file is in the `json <https://developer.mozilla.org/en-US
 		chemical potential (ChemPot) or fugacity (Fugacity).
 		GCMC_ChemPot_or_Fugacity_dict = {str (Residue name): int or float 
 		(ChemPots in unit GOMC K units or Fugacity in unit bar)}
+		NOTE: For a protein, the general residue name of 'PROTA' should be used, which accounts for the whole protein.
+		NOTE: For a residue that should not be removed, the residue should have the beta value in the PDB file set to 2, 
+		and have the ChemPot set to be -99999999999999999999999999999999999999.
 		Example Chempot: GCMC_ChemPot_or_Fugacity_dict = {'TIP3': 1000, 'Cl' : -1000, 'Na' : -900}
 		Example Fugacity (values >=0): GCMC_ChemPot_or_Fugacity_dict = {'TIP3': 1000, 'Cl' : 10, 'Na' : 0}
+		Example Chempot with a protein: GCMC_ChemPot_or_Fugacity_dict = 
+		{
+		"TIP3": -4166, 		
+		"PROTA":-99999999999999999999999999999999999999, 
+		"POPC":-99999999999999999999999999999999999999, 
+		"POT":-99999999999999999999999999999999999999, 
+		"CLA":-99999999999999999999999999999999999999
+		}
 
 	namd_minimize_mult_scalar : int (>=0)   
 		The scalar multiple used to get the number of NAMD minimization steps for this 
