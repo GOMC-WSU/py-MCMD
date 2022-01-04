@@ -82,9 +82,9 @@ manual_testing_filename_input_override = False
 if json_filename is None and manual_testing_filename_input_override is True:
     json_filename = "user_input_NAMD_GOMC.json"
 
-json_file_data = json.load(open(json_filename))
-#json_file_data = json.load(open("user_input_NAMD_GOMC.json"))
+json_file_data = json.load(open(json_filename)) # standard name is "user_input_NAMD_GOMC.json"
 json_file_data_keys_list = json_file_data.keys()
+
 # get the total_cycles_namd_gomc_sims variable from the json file
 if "total_cycles_namd_gomc_sims" not in json_file_data_keys_list:
     raise TypeError("The total_cycles_namd_gomc_sims key is not provided.\n")
