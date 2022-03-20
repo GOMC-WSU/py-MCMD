@@ -3,6 +3,7 @@ Running the Simulation
 
 The hybrid NAMD/GOMC simulation can be conducted once the *"user_input_NAMD_GOMC.json"* file is properly filled out to the user's specifications, including generating or obtaining the proper PSF, PDB, and force field (.inp or .par files) and specifying their proper paths.  
 
+**WARNING:** Any hybrid simulation that encounters a NAMD simulation with zero atoms or non-fixed atoms will fail.  This failure will likely appear as a seg-fault in GOMC.  Currently, these types of simulations are not possible with this software.
 
 Example # 1: GEMC Ensemble
 ---------------

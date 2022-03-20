@@ -82,9 +82,9 @@ manual_testing_filename_input_override = False
 if json_filename is None and manual_testing_filename_input_override is True:
     json_filename = "user_input_NAMD_GOMC.json"
 
-json_file_data = json.load(open(json_filename))
-#json_file_data = json.load(open("user_input_NAMD_GOMC.json"))
+json_file_data = json.load(open(json_filename)) # standard name is "user_input_NAMD_GOMC.json"
 json_file_data_keys_list = json_file_data.keys()
+
 # get the total_cycles_namd_gomc_sims variable from the json file
 if "total_cycles_namd_gomc_sims" not in json_file_data_keys_list:
     raise TypeError("The total_cycles_namd_gomc_sims key is not provided.\n")
@@ -433,8 +433,6 @@ elif gomc_run_steps/10 <= 500:
 
 namd_rst_dcd_xst_steps = int(namd_run_steps)
 namd_console_blkavg_e_and_p_steps = int(namd_run_steps)
-
-use_gomc_checkpoint = 'true'
 
 # *************************************************
 # Potential changable variables in the future (end)
@@ -1256,12 +1254,10 @@ def get_namd_energy_data(read_namd_box_x_energy_file, e_default_namd_titles):
     namd_e_vdw_box_x = namd_energy_data_box_x_df.loc[:, 'VDW']
     namd_e_vdw_box_x_initial_value = float(namd_e_vdw_box_x.values.tolist()[0])
     namd_e_vdw_box_x_final_value = float(namd_e_vdw_box_x.values.tolist()[-1])
-    print('namd_e_vdw_box_x')
-    print(namd_e_vdw_box_x)
+
     namd_e_vdw_plus_elec_box_x = [float(namd_e_vdw_box_x[k_i]) + float(namd_e_electro_box_x[k_i])
                                   for k_i in range(0, len(namd_e_vdw_box_x))]
-    print('namd_e_vdw_plus_elec_box_x')
-    print(namd_e_vdw_plus_elec_box_x)
+
     namd_e_vdw_plus_elec_box_x_initial_value = float(namd_e_vdw_plus_elec_box_x[0])
     namd_e_vdw_plus_elec_box_x_final_value = float(namd_e_vdw_plus_elec_box_x[-1])
 
@@ -1470,7 +1466,9 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
                                           )
 
     if previous_gomc_dir == 'NA':
-        new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", 'false')
+        new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file",
+                                              "false {}"
+                                              "".format("Output_data_restart.chk"))
 
         gomc_starting_pdb_rel_path_box_0 = os.path.relpath("{}/{}".format(str(python_file_directory),
                                                                           starting_pdb_box_0_file),
@@ -1726,7 +1724,9 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
     if simulation_type in ["GEMC", "GCMC"]:
         if previous_gomc_dir == 'NA':
             # marked as "Restart_Checkpoint_file", 'false' for now until checkpoint is setup
-            new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", 'false')
+            new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file",
+                                                  "false {}"
+                                                  "".format("Output_data_restart.chk"))
 
             gomc_starting_pdb_rel_path_box_1 = os.path.relpath("{}/{}".format(str(python_file_directory),
                                                                               starting_pdb_box_1_file),
@@ -1753,19 +1753,15 @@ def write_gomc_conf_file(python_file_directory, path_gomc_runs, run_no, gomc_run
     else:
         if previous_gomc_dir == 'NA':
             # marked as "Restart_Checkpoint_file", 'false' for now until checkpoint is setup
-            new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", 'false')
+            new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file",
+                                                  "false {}"
+                                                  "".format("Output_data_restart.chk"))
 
     # make checkpoint true and restart
-    new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file", str(use_gomc_checkpoint))
-
-    run_gomc_copy_ckpt_new_dir_command = "ln -sf {}/{} {}".format(str(previous_gomc_dir),
-                                                                  "checkpoint.dat", str(gomc_newdir)
-                                                                  )
-
-    exec_gomc_copy_ckpt_new_dir_command = subprocess.Popen(run_gomc_copy_ckpt_new_dir_command,
-                                                           shell=True, stderr=subprocess.STDOUT)
-
-    os.waitpid(exec_gomc_copy_ckpt_new_dir_command.pid, os.WSTOPPED)  # pauses python until GOMC sim done
+    if previous_gomc_dir != 'NA':
+        new_gomc_data = new_gomc_data.replace("Restart_Checkpoint_file",
+                                              "true {}/{}"
+                                              "".format(str(previous_gomc_rel_path), "Output_data_restart.chk"))
 
     generate_gomc_file.write(new_gomc_data)
     generate_gomc_file.close()
@@ -2129,9 +2125,6 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
                                                                             str(namd_bin_file),
                                                                             str(int(total_no_cores))
                                                                             )
-            print('999999999999999')
-            print('run_box_0_command = ' +str(run_box_0_command))
-            print('999999999999999')
 
         elif simulation_type in ['GEMC'] and only_use_box_0_for_namd_for_gemc is False \
                 and namd_sim_order == 'parallel':
