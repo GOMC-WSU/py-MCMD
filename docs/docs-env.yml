@@ -9,7 +9,7 @@ dependencies:
   - lark-parser
   - requests
   - mock
-  - anaconda 
+  - anaconda
   - sphinxcontrib
   - pip:
     - sphinx_rtd_theme

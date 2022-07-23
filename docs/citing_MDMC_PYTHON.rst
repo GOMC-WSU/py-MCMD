@@ -39,7 +39,7 @@ Download as :download:`BibTeX <_images/MDMC_Python.bib>` or :download:`RIS <_ima
 Download as :download:`BibTeX <_images/MDMC_Python.bib>` or :download:`RIS <_images/MDMC_Python.ris>`
 
 
-We also recommend citing the `Concatenate DCD files (CatDCD) <https://www.ks.uiuc.edu/Development/MDTools/catdcd/>`_ from the Theoretical and Computational Biophysics Group at the University of Illinois at Urbana-Champaign. 
+We also recommend citing the `Concatenate DCD files (CatDCD) <https://www.ks.uiuc.edu/Development/MDTools/catdcd/>`_ from the Theoretical and Computational Biophysics Group at the University of Illinois at Urbana-Champaign.
 
 **ACS**
 

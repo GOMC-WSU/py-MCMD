@@ -1,4 +1,4 @@
-Note: There are 2 different licenses, one (1) for NAMD_GOMC and 
+Note: There are 2 different licenses, one (1) for NAMD_GOMC and
 one (1) the CatDCD - Concatenate DCD files
 
 NAMD_GOMC LICENSE:
@@ -677,5 +677,3 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <https://www.gnu.org/licenses/why-not-lgpl.html>.
-
-

@@ -10,9 +10,9 @@ This code is designed to combine the hybrid simulation data into a central locat
 Executing the Combine Data Code
 ---------------
 
-The combine data code is run from its file directory via a terminal window.  
+The combine data code is run from its file directory via a terminal window.
 
-**NOTE:** If the *"user_input_combine_data_NAMD_GOMC.json"* file variables are not set properly for the type of simulation that was conducted, the output will not work, or data will be missing. 
+**NOTE:** If the *"user_input_combine_data_NAMD_GOMC.json"* file variables are not set properly for the type of simulation that was conducted, the output will not work, or data will be missing.
 
 	.. code:: ipython3
 
@@ -24,7 +24,7 @@ The combine data code is run from its file directory via a terminal window.
 Flags for Combining Data Code
 ---------------
 
-	* **-f** *or* **--file** flag : json file 
+	* **-f** *or* **--file** flag : json file
 		Defines the json file to use for variable inputs to the hybrid NAMD/GOMC, NAMD-only, or GOMC-only combining code.
 
 	* **-w** *or* **--write_folder_name** flag : str
@@ -32,5 +32,3 @@ Flags for Combining Data Code
 
 	* **-o** *or* **--overwrite** flag : (True, true, T, t, False, false, F, or f), default = False
 		Determines whether to overwrite an exiting combined data folder and data, if they exist.
-
-
