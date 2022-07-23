@@ -154,3 +154,4 @@ The variables below are contained in the *"user_input_combine_data_NAMD_GOMC.jso
 		This input is used when combining the 'Hybrid' data.
 		This is required when combining the
 		'GOMC-only', or 'NAMD-only' data, but is not used.
+

@@ -36,7 +36,7 @@ Download as :download:`BibTeX <_images/pyMDMC_ZENODO_2021.bib>` or :download:`RI
         url         = "https://github.com/GOMC-WSU/py-MCMD"
     }
 
-Download as :download:`BibTeX <_images/pyMDMC_GITHUB_2021.bib>` or :download:`RIS <_images/pyMDMC_GITHUB_2021n.ris>`
+Download as :download:`BibTeX <_images/pyMDMC_GITHUB_2021.bib>` or :download:`RIS <_images/pyMDMC_GITHUB_2021.ris>`
 
 **ACS**
 
@@ -73,3 +73,4 @@ We also recommend citing the `Concatenate DCD files (CatDCD) <https://www.ks.uiu
         year        = "2009",
         url         = "https://www.ks.uiuc.edu/Development/MDTools/catdcd/"
     }
+
