@@ -44,4 +44,3 @@ The flags for running the *run_NAMD_GOMC.py* file user_input_variables_NAMD_GOMC
 
 	-namd_sims_order *or* --namd_simulation_order : default='series',  (options: 'series' or 'parallel')
 		This sets the NAMD simulation to be run in series or parallel. The data is entered only as series or parallel (default = series). This is only relevant for the GEMC ensemble when utilizing two (2) NAMD simulation boxes (i.e., only_use_box_0_for_namd_for_gemc = False  --> both box 0 and box 1). The GCMC, NVT, NPT, or the GEMC ensembles when using only one (1) NAMD simulation box (i.e., only_use_box_0_for_namd_for_gemc = True --> only box 0) are always run in series, since there is nothing to run in parallel. Note: This feature was added so the user can minimize the load on the GPU by running both NAMD simulations in parallel.
-
