@@ -19,7 +19,7 @@ If you use this code for your research, please cite `the GitHub repository <http
 	doi	    = "10.5281/zenodo.5142483"
     }
 
-Download as :download:`BibTeX <_images/MDMC_Python.bib>` or :download:`RIS <_images/MDMC_Python.ris>`
+Download as :download:`BibTeX <_images/pyMDMC_ZENODO_2021.bib>` or :download:`RIS <_images/pyMDMC_ZENODO_2021.ris>`
 
 **ACS**
 
@@ -36,7 +36,7 @@ Download as :download:`BibTeX <_images/MDMC_Python.bib>` or :download:`RIS <_ima
         url         = "https://github.com/GOMC-WSU/py-MCMD"
     }
 
-Download as :download:`BibTeX <_images/MDMC_Python.bib>` or :download:`RIS <_images/MDMC_Python.ris>`
+Download as :download:`BibTeX <_images/pyMDMC_GITHUB_2021.bib>` or :download:`RIS <_images/pyMDMC_GITHUB_2021n.ris>`
 
 **ACS**
 
@@ -54,7 +54,7 @@ Download as :download:`BibTeX <_images/MDMC_Python.bib>` or :download:`RIS <_ima
         url         = "https://pubs.acs.org/doi/10.1021/acs.jctc.1c00911"
     }
 
-Download as :download:`BibTeX <_images/MDMC_Python.bib>` or :download:`RIS <_images/MDMC_Python.ris>`
+Download as :download:`BibTeX <_images/pyMDMC_PAPER_2022.bib>` or :download:`RIS <_images/pyMDMC_PAPER_2022.ris>`
 
 
 We also recommend citing the `Concatenate DCD files (CatDCD) <https://www.ks.uiuc.edu/Development/MDTools/catdcd/>`_ from the Theoretical and Computational Biophysics Group at the University of Illinois at Urbana-Champaign.
