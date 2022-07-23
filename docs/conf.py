@@ -13,8 +13,8 @@
 # serve to show the default.
 
 import os
-import sys
 import pathlib
+import sys
 
 import mock
 
@@ -22,30 +22,31 @@ import mock
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 
-MOCK_MODULES = ['numpy',
-                'mdtraj',
-                'mdtraj.core.element',
-                'nglview',
-                'oset',
-                'parmed',
-                'parmed.parameters',
-                'parmed.periodic_table',
-                'scipy',
-                'scipy.spatial',
-                'scipy.constants',
-                'numpy.linalg',
-                'sphinxcontrib.video',
-                'ele',
+MOCK_MODULES = [
+    "numpy",
+    "mdtraj",
+    "mdtraj.core.element",
+    "nglview",
+    "oset",
+    "parmed",
+    "parmed.parameters",
+    "parmed.periodic_table",
+    "scipy",
+    "scipy.spatial",
+    "scipy.constants",
+    "numpy.linalg",
+    "sphinxcontrib.video",
+    "ele",
 ]
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.Mock()
 
 
-sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath(".."))
 # sys.path.insert(0, os.path.abspath('sphinxext'))
 
 base_path = pathlib.Path(__file__).parent
-os.system('python {} --name'.format((base_path / '../setup.py').resolve()))
+os.system("python {} --name".format((base_path / "../setup.py").resolve()))
 
 # -- General configuration ------git ------------------------------------------
 
@@ -56,24 +57,23 @@ os.system('python {} --name'.format((base_path / '../setup.py').resolve()))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'nbsphinx',
-    'sphinx.ext.mathjax',
-    'sphinx.ext.autodoc',
-    'sphinxcontrib.inkscapeconverter',
-    'sphinxcontrib.video',
-    'sphinx.ext.viewcode',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.autosummary',
-    'numpydoc',
+    "nbsphinx",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.autodoc",
+    "sphinxcontrib.inkscapeconverter",
+    "sphinxcontrib.video",
+    "sphinx.ext.viewcode",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.autosummary",
+    "numpydoc",
 ]
 
 # nbsphinx specific configuration
-nbsphinx_execute = 'never'
-nbsphinx_input_prompt = '%s'
+nbsphinx_execute = "never"
+nbsphinx_input_prompt = "%s"
 nbsphinx_prompt_width = 1.1
 html_scaled_image_link = False
 nbsphinx_allow_errors = False
-
 
 
 # Prolog: Displayed on top of the notebook
@@ -84,9 +84,9 @@ nbsphinx_prolog = r"""
 
   <div class="admonition note">
       <p>This page was generated from
-        <a class="reference external" href="https://github.com/bc118/NAMD_GOMC/blob/{{ env.config.release|e }}/{{ docname|e }}">{{ docname|e }}</a>.
+        <a class="reference external" href="https://github.com/GOMC-WSU/py-MCMD/blob/{{ env.config.release|e }}/{{ docname|e }}">{{ docname|e }}</a>.
         <br>Interactive online version:
-        <a href="https://mybinder.org/v2/gh/bc118/NAMD_GOMC/master?filepath={{ docname|e }}"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg" style="vertical-align:text-bottom"></a>.
+        <a href="https://mybinder.org/v2/gh/GOMC-WSU/py-MCMD/master?filepath={{ docname|e }}"><img alt="Binder badge" src="https://mybinder.org/badge_logo.svg" style="vertical-align:text-bottom"></a>.
       </p>
     </div>
 
@@ -110,46 +110,48 @@ nbsphinx_epilog = r"""
 """
 
 autosummary_generate = True
-autodoc_default_flags = ['members', ]
+autodoc_default_flags = [
+    "members",
+]
 numpydoc_class_members_toctree = False
 
 # stackoverflow.com/questions/12206334
 numpydoc_show_class_members = False
 numpydoc_show_inherited_class_members = False
 
-_python_doc_base = 'http://docs.python.org/3.9'
+_python_doc_base = "http://docs.python.org/3.9"
 
 intersphinx_mapping = {
     _python_doc_base: None,
-    'http://docs.scipy.org/doc/numpy': None,
-    'http://docs.scipy.org/doc/scipy/reference': None,
-    'http://scikit-learn.org/stable': None
+    "http://docs.scipy.org/doc/numpy": None,
+    "http://docs.scipy.org/doc/scipy/reference": None,
+    "http://scikit-learn.org/stable": None,
 }
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+templates_path = ["_templates"]
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General information about the project.
-project = 'NAMD_GOMC'
-author = 'Crawford, B. and Potoff J.'
-copyright = u'2021'
+project = "py-MCMD"
+author = "Crawford, B. and Potoff J."
+copyright = "2021"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 
-version = '0.0.1'
-release = '0.0.1'
+version = "0.0.2"
+release = "0.0.2"
 
 
 # The language for content autogenerated by Sphinx. Refer to documentation
@@ -164,7 +166,7 @@ release = '0.0.1'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
-exclude_patterns = ['_build', '**.ipynb_checkpoints']
+exclude_patterns = ["_build", "**.ipynb_checkpoints"]
 
 # The reST default role (used for this markup: `text`) to use for all
 # documents.
@@ -182,7 +184,7 @@ exclude_patterns = ['_build', '**.ipynb_checkpoints']
 # show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 # A list of ignored prefixes for module index sorting.
 # modindex_common_prefix = []
@@ -198,10 +200,8 @@ pygments_style = 'sphinx'
 # html_theme = 'default'
 import sphinx_rtd_theme
 
-html_theme = 'sphinx_rtd_theme'
-hhtml_theme_path = [
-    sphinx_rtd_theme.get_html_theme_path()
-]
+html_theme = "sphinx_rtd_theme"
+hhtml_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -230,7 +230,7 @@ hhtml_theme_path = [
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
@@ -247,7 +247,13 @@ html_static_path = ['_static']
 
 # Custom sidebar templates, maps document names to template names.
 html_sidebars = {
-    '**': ['globaltoc.html', 'sourcelink.html', 'searchbox.html', 'relations.html', 'sourcelink.html'],
+    "**": [
+        "globaltoc.html",
+        "sourcelink.html",
+        "searchbox.html",
+        "relations.html",
+        "sourcelink.html",
+    ],
 }
 
 # Additional templates that should be rendered to pages, maps page names to
@@ -281,4 +287,4 @@ html_split_index = False
 # html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'NAMD_GOMC_doc'
+htmlhelp_basename = "py-MCMD_doc"

@@ -15,7 +15,7 @@
 
 * masses
 
-! atom_types 	mass 		  atomTypeForceFieldName_ResidueName (i.e., atoms_type_per_utilized_FF)  
+! atom_types 	mass 		  atomTypeForceFieldName_ResidueName (i.e., atoms_type_per_utilized_FF)
 *  C		15.999430	! TIPS3P_O_TIP3
 *  A		1.007947	! TIPS3P_H_TIP3
 *  D		15.999430	! TIPS3P_O_WAT
@@ -40,7 +40,7 @@ ANGLES * harmonic
 !Ktheta: kcal/mole/rad**2
 !Theta0: degrees
 !
-! Ktheta (kcal/mol) = Ktheta_K (K) * Boltz. const.		
+! Ktheta (kcal/mol) = Ktheta_K (K) * Boltz. const.
 !
 !atom_types 		Ktheta		Theta0			  atoms_types_per_utilized_FF
 A	C	A	999999999999		104.52000		! TIPS3P_H_TIP3	TIPS3P_O_TIP3	TIPS3P_H_TIP3

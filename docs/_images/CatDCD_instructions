@@ -1,5 +1,5 @@
 ============
-Instructions 
+Instructions
 ============
 
 CatDCD - Concatenate DCD software
@@ -63,16 +63,16 @@ is present (see below).
 
 -num: When present, no output file will be written.  Instead, CatDCD prints
 the number of frames in each file, then exits.
- 
+
 -i <indexfile>
 indexfile should contain the (zero-based) indices of the atoms in the
 dcd files whose coordinates are to appear in the output file.  The indices
 should be ASCII text, separated by whitespace.
 
--first first: Specify the first frame to be written to the output file.  
+-first first: Specify the first frame to be written to the output file.
 Default is 1 (write starting from the first frame read).
 
--last last: Specify the last frame to write.  Default is the last frame in 
+-last last: Specify the last frame to write.  Default is the last frame in
 the last file.
 
 -stride stride: Specify how many frames to skip when writing.  Default is 1
@@ -83,7 +83,7 @@ the last file.
 The input files may be any combination of charmm or xplor format, and big-
 or little-endianness.  However, they must all have the same number of atoms.
 
-The code uses only standard C library commands and should thus be portable to 
+The code uses only standard C library commands and should thus be portable to
 pretty much anywhere, including non-Unix platforms (I haven't tested this ;-)
 
 * EXAMPLES *
@@ -97,18 +97,18 @@ catdcd -o eq_all.dcd eq01.dcd eq02.dcd eq03.dcd
 
 	Combines eq01.dcd, eq02.dcd, and eq03.dcd into eq_all.dcd.
 
-catdcd -o eq_pro.dcd -i protein.ind eq01.dcd 
+catdcd -o eq_pro.dcd -i protein.ind eq01.dcd
 
-	Takes only the coordinates corresponding to the indices in 
+	Takes only the coordinates corresponding to the indices in
 	'protein.ind' from eq01.dcd and writes them to eq_pro.dcd
 
 catdcd -o eq_first.dcd -first 1000 -last 2000 -stride 10 eq01.dcd eq02.dcd
-	
-	After skipping 999 frames, writes the 1000 frame and every 10th
-	subsequent frame to eq_first.dcd, until a total of 2000 frames 
-	have been read.  	
 
-* Installation * 
+	After skipping 999 frames, writes the 1000 frame and every 10th
+	subsequent frame to eq_first.dcd, until a total of 2000 frames
+	have been read.
+
+* Installation *
 Unpack the distribution package.  A directory named catdcd will be created.
 Enter that directory and type "make".  To use a different compiler or compile
 flags, edit the first three definitions in the Makefile.
@@ -121,9 +121,9 @@ New in version 3.0:
         * Now uses the VMD plugins for file reading.  This makes it very easy
           to adapt the program to handle other file formats.
         * Use of VMD file readers means fixed atoms are handled automatically.
-  
+
 New in version 2.0:
-	* New command line interface: The -o option is now required for 
+	* New command line interface: The -o option is now required for
 	  setting the output file.
 	* New -num option to print the number of frames in each file, as well
 	  as the total.
@@ -136,7 +136,7 @@ New in Version 1.3:
 	* Fixed bug in reading of opposite-endian Charmm-format dcd files.
 
 New in Version 1.2:
-	* Fixed serious bug that appeared in 1.1; only frames from the first 
+	* Fixed serious bug that appeared in 1.1; only frames from the first
 	  input file were being written to the output file.
 
 New in Version 1.1:
@@ -146,7 +146,7 @@ New in Version 1.1:
 
 
 
-Note: There are 2 different licenses, one (1) for NAMD_GOMC and 
+Note: There are 2 different licenses, one (1) for NAMD_GOMC and
 one (1) the CatDCD - Concatenate DCD files
 
 

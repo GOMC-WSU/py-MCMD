@@ -9,7 +9,7 @@ dependencies:
   - lark-parser
   - requests
   - mock
-  - argparse 
+  - argparse
   - pandas
   - scipy
   - bumpy
