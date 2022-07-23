@@ -32,5 +32,3 @@ The py-MCMD Python package consists of two (2) different licenses (:download:`Co
 	CatDCD_instructions_license
 	generating_systems
 	citing_MDMC_PYTHON
-
-
