@@ -260,3 +260,4 @@ The MD/MC Hybrid input file is in the `json <https://developer.mozilla.org/en-US
 		SO IT MAY NOT WORK ON OTHER GOMC VERSIONS WITHOUT SOME CODE MODIFICATION,
 		AND SOME ADDITIONAL FUNCTIONALLITY IS NOT IN PREVIOUS GOMC VERSIONS.
 		Example: "required_data/bin"
+

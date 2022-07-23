@@ -11,7 +11,7 @@ If you use this code for your research, please cite `the GitHub repository <http
 
 .. code-block:: bibtex
 
-    @Inbook{pyMDMC_PYTHON_2021,
+    @Inbook{pyMDMC_ZENODO_2021,
         author      = "Crawford, B. and Potoff J.",
         title       = "py-MCMD: Initial Release",
         year        = "2021",
@@ -29,7 +29,7 @@ Download as :download:`BibTeX <_images/MDMC_Python.bib>` or :download:`RIS <_ima
 
 .. code-block:: bibtex
 
-    @Inbook{pyMDMC_PYTHON_2021,
+    @Inbook{pyMDMC_GITHUB_2021,
         author      = "Crawford, B. and Potoff J.",
         title       = "py-MCMD: A Python Library for Performing Hybrid Monte Carlo - Molecular Dynamics Simulations with GOMC and NAMD",
         year        = "2021",
@@ -46,7 +46,7 @@ Download as :download:`BibTeX <_images/MDMC_Python.bib>` or :download:`RIS <_ima
 
 .. code-block:: bibtex
 
-    @Inbook{pyMDMC_PYTHON_2021,
+    @Inbook{pyMDMC_PAPER_2021,
         author      = " Soroush Barhaghi, M. and Crawford, B. and Schwing, G. and Hardy D.J. and Stone, J.E. and  Schwiebert L. and Potoff J. and and Tajkhorshid E.",
         title       = "py-MCMD: A Python Library for Performing Hybrid Monte Carlo - Molecular Dynamics Simulations with GOMC and NAMD",
         year        = "2022",
@@ -73,3 +73,4 @@ We also recommend citing the `Concatenate DCD files (CatDCD) <https://www.ks.uiu
         year        = "2009",
         url         = "https://www.ks.uiuc.edu/Development/MDTools/catdcd/"
     }
+

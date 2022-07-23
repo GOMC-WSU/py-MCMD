@@ -26,3 +26,4 @@ Non-Traditional Chemical Engineering Systems
 -------
 
 Non-Traditional chemical engineering systems are proteins or other molecules requiring multiple residue names per molecule. Currently, the GOMC-MoSDeF software is not compatible with these systems.  Therefore, these systems should be constructed using different software, such as `Visual Molecular Dynamics (VMD) <https://www.ks.uiuc.edu/Research/vmd/>`_, or other similar software.
+

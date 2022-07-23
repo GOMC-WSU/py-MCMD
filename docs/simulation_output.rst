@@ -26,3 +26,4 @@ The hybrid simulation Python code outputs the main NAMD and GOMC folders, each c
 
 
 Retaining all the individual simulation runs can add up to considerable storage requirements. Therefore, we recommended optimizing the number of steps and moves for each simulation engine and calculating the entire run's storage requirements before starting the production runs. *In the future, we plan on programming an auto-cleanup and that will combine all the individual runs on the fly and minimize the storage requirement.*
+
