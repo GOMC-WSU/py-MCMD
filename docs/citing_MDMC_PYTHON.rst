@@ -55,3 +55,4 @@ We also recommend citing the `Concatenate DCD files (CatDCD) <https://www.ks.uiu
         year        = "2009",
         url         = "https://www.ks.uiuc.edu/Development/MDTools/catdcd/"
     }
+

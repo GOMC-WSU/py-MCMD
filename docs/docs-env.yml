@@ -16,3 +16,4 @@ dependencies:
     - sphinxcontrib-svg2pdfconverter
 sphinx:
   fail_on_warning: true
+

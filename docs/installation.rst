@@ -30,3 +30,5 @@ This Python code is currently compatible only with `NAMD version 2.14 <https://w
 **NOTE: ONLY run NAMD in the NVT ensemble, as running NAMD in the NPT ensemble will cause errors in the box positioning since NAMD and GOMC have different box centering algorithms when centering the box during box size changes.**
 
 **NOTE:**  GOMC does not currently use improper or Urey—Bradley potentials, so if the hybrid simulations contain impropers or Urey—Bradleys, the NAMD simulation energies will be different.  In a protein simulation, it should be OK not to use impropers or Urey-Bradleys in GOMC and utilize them in NAMD since the protein will not move in the GOMC simulation due to its size.  Each simulation will need to be individually evaluated to determine if not having the impropers or Urey-Bradleys in GOMC is irrelevant or significant to the simulation results.**
+
+
