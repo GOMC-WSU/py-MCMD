@@ -1,7 +1,7 @@
 Installation and Other Required Files
 ============
 
-The hybrid NAMD_GOMC Python code can be downloaded or cloned from the `NAMD_GOMC GitHub repository <https://github.com/bc118/NAMD_GOMC>`_.  This hybrid NAMD_GOMC Python code does not require any setup, but does require the proper files as input, which are listed below:
+The hybrid py-MCMD Python code can be downloaded or cloned from the `py-MCMD GitHub repository <https://github.com/GOMC-WSU/py-MCMD>`_.  This hybrid NAMD_GOMC Python code does not require any setup, but does require the proper files as input, which are listed below:
 
 * **PSF** and **PDB** files.  *NOTE:  One (1) PSF and PDB file are required for the NPT and NVT ensembles, while two (2) PSF and PDB files are required for the GCMC and GEMC ensembles.*
 

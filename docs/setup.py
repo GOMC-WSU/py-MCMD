@@ -8,8 +8,8 @@ from setuptools import setup, find_packages
 from distutils.spawn import find_executable
 
 #####################################
-NAME = 'NAMD_GOMC'
-VERSION = "0.0.01"
+NAME = 'py-MCMD'
+VERSION = "0.0.2"
 ISRELEASED = True
 if ISRELEASED:
     __version__ = VERSION
@@ -42,8 +42,8 @@ def proto_procedure():
 
 
 def compile_proto(protoc):
-    protoc_command = [protoc, '-I=NAMD_GOMC/formats/',
-            '--python_out=NAMD_GOMC/formats/', 'compound.proto']
+    protoc_command = [protoc, '-I=py-MCMD/formats/',
+            '--python_out=py-MCMD/formats/', 'compound.proto']
     subprocess.call(protoc_command)
 
 
@@ -58,17 +58,17 @@ if __name__ == '__main__':
         long_description=__doc__,
         author='',
         author_email='',
-        url='https://github.com/bc118/NAMD_GOMC',
-        download_url='https://github.com/bc118/NAMD_GOMC/tarball/{}'.format(__version__),
+        url='https://github.com/GOMC-WSU/py-MCMD',
+        download_url='https://github.com/GOMC-WSU/py-MCMD/tarball/{}'.format(__version__),
         packages=find_packages(),
         package_data={'NAMD_GOMC': ['utils/reference/*.{pdb,mol2}',
                                  'lib/*.{pdb,mol2}',
                                  ]},
-        package_dir={'NAMD_GOMC': 'NAMD_GOMC'},
+        package_dir={'py-MCMD': 'py-MCMD'},
         include_package_data=True,
         license="GPL-3.0",
         zip_safe=False,
-        keywords='NAMD_GOMC',
+        keywords='py-MCMD',
         classifiers=[
             'Development Status :: 0 - Beta',
             'Intended Audience :: Science/Research',

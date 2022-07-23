@@ -1,4 +1,4 @@
-name: NAMD_GOMC-docs
+name: py-MDMD-docs
 channels:
   - conda-forge
 dependencies:

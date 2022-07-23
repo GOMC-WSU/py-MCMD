@@ -71,7 +71,7 @@ Hybrid, GOMC-only, or NAMD-only Combining Data Input Variables
 
 These variables are used when running combining the data code for the hybrid MD/MC simulations.  However, they can also be used for the traditional GOMC-only or NAMD-only simulations, allowing the user to easily compare between the simulations.  The selected variables will determine how the data combining code functions and thus how the data is output. Therefore, the user should ensure that the selected variables are in-line with the simulation which was conducted, or the output data will be lacking or fail to be generated.
 
-The variables below are contained in the *"user_input_combine_data_NAMD_GOMC.json"* file, which is the in the *"NAMD_GOMC/analysis_combine_data"* directory.  When the variables are not used for the particular simulation type ('Hybrid', 'GOMC-only', 'NAMD-only'), the inputs still need to be supplied. However, the only requirement for the unused variables is that a string, boolean, or allowable types and values its requests is provided. The combining file will start and run correctly, provided all the required variables are correct.
+The variables below are contained in the *"user_input_combine_data_NAMD_GOMC.json"* file, which is the in the *"py-MCMD/analysis_combine_data"* directory.  When the variables are not used for the particular simulation type ('Hybrid', 'GOMC-only', 'NAMD-only'), the inputs still need to be supplied. However, the only requirement for the unused variables is that a string, boolean, or allowable types and values its requests is provided. The combining file will start and run correctly, provided all the required variables are correct.
 
 
 	simulation_type : string (only 'GEMC', 'GCMC', 'NPT', 'NVT') 

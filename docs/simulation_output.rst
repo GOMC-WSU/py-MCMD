@@ -1,7 +1,7 @@
 Simulation Output
 ============
 
-The hybrid `NAMD_GOMC <https://github.com/bc118/NAMD_GOMC>`_ Python code generates a few data outputs, which include:
+The hybrid `py-MCMD <https://github.com/GOMC-WSU/py-MCMD>`_ Python code generates a few data outputs, which include:
 
 * A log file for each simulation start/restart.  Additionally, one (1) NAMD and one (1) GOMC simulation folder and their output files per cycle, regardless of the number of restarts.  Please also see the image below.
 

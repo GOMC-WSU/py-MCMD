@@ -9,12 +9,12 @@ These are slightly modified versions of the standard configuration files used fo
 Some of the variable entries are modified in the configuration files, which allows the python code to search and replace these variables for the next simulation, so the simulation is started correctly from the previous one.
 Please refer to the `GOMC Manual <https://gomc.eng.wayne.edu/documentation/>`_ and the `NAMD Users Guide <https://www.ks.uiuc.edu/Research/namd/2.14/ug/>`_ for more information on the proper inputs for the simulation engines.  
 
-These files are located in the *"NAMD_GOMC/required_data/config_files"* directory, and **these configurations files are auto-selected based on the user specified ensemble.**
+These files are located in the *"py-MCMD/required_data/config_files"* directory, and **these configurations files are auto-selected based on the user specified ensemble.**
 The NAMD configuration file applies to all the possible ensembles. 
 The provided GOMC configuration files are named and designed for each different ensemble (NPT, NVT, GCMC, or GEMC), which changes the inputs and move frequencies.  
 An experienced user can modify these configuration files by changing or adding variables, time steps, move types, and move frequencies, as long as the variables work smoothly between NAMD and GOMC.
 These changes will **likely** not effect the hybrid python code if the inputs match between NAMD and GOMC and are hardcoded and not dependent on a variable value in the existing configuration files. 
-**However, the configuration files must maintain their names and locations in the "NAMD_GOMC/required_data/config_files" directory.**
+**However, the configuration files must maintain their names and locations in the "py-MCMD/required_data/config_files" directory.**
 
 It is also possible to use various configuration files throughout a longer simulation by simply changing the configuration files and restarting the hybrid simulation with the different files in their proper location. For Example, in the grand canonical Monte Carlo (GCMC) ensemble, suppose the first NAMD simulation requires restraining a protein for the first cycle.  In this case, the GCMC simulation can insert molecules into the binding pocket before allowing unrestricted movement of the protein.  The simulation would then be restarted on the second cycle to the Nth cycle with a different NAMD configuration file without restraining the protein.  
 *However, the configuration files must maintain their names and locations.*

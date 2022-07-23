@@ -1,14 +1,14 @@
 Running the Simulation
 ===============
 
-The hybrid NAMD/GOMC simulation can be conducted once the *"user_input_NAMD_GOMC.json"* file is properly filled out to the user's specifications, including generating or obtaining the proper PSF, PDB, and force field (.inp or .par files) and specifying their proper paths.  
+The hybrid py-MCMD simulation can be conducted once the *"user_input_NAMD_GOMC.json"* file is properly filled out to the user's specifications, including generating or obtaining the proper PSF, PDB, and force field (.inp or .par files) and specifying their proper paths.  
 
 **WARNING:** Any hybrid simulation that encounters a NAMD simulation with zero atoms or non-fixed atoms will fail.  This failure will likely appear as a seg-fault in GOMC.  Currently, these types of simulations are not possible with this software.
 
 Example # 1: GEMC Ensemble
 ---------------
 
-Use a terminal window and move to the directory which contains the *run_NAMD_GOMC.py* file. Then run hybrid NAMD/GOMC simulations with the NAMD simulations for box 0 and box 1 executed in parallel (assuming both boxes are being simulated in NAMD per the *“user_input_NAMD_GOMC.json”* file).
+Use a terminal window and move to the directory which contains the *run_NAMD_GOMC.py* file. Then run hybrid py-MCMD simulations with the NAMD simulations for box 0 and box 1 executed in parallel (assuming both boxes are being simulated in NAMD per the *“user_input_NAMD_GOMC.json”* file).
 
 	.. code:: ipython3
 
@@ -21,7 +21,7 @@ Use a terminal window and move to the directory which contains the *run_NAMD_GOM
 Example # 2: GCMC Ensemble
 ---------------
 
-Use a terminal window and move to the directory which contains the *run_NAMD_GOMC.py* file. Then run hybrid NAMD/GOMC simulations.  
+Use a terminal window and move to the directory which contains the *run_NAMD_GOMC.py* file. Then run hybrid py-MCMD simulations.  
 
 **NOTE:** The NAMD simulations default too in series, but it does not matter since the GCMC simulations box 1 is solely used as a reservoir without the need to evaluate the box's dynamics.  
 

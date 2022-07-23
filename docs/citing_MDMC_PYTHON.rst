@@ -1,21 +1,39 @@
-Citing the MDMC Python code
+Citing the py-MDMC Python code
 =============
 
-If you use this code for your research, please cite `the GitHub repository <https://github.com/bc118/NAMD_GOMC>`_:
+If you use this code for your research, please cite `the GitHub repository <https://github.com/GOMC-WSU/py-MCMD>`_ and the zenodo DOI (<https://doi.org/10.5281/zenodo.5142483>`_):
 
 **ACS**
 
-    Crawford, B. and Potoff J. NAMD_GOMC - A Hybrid MD/MC Simulation Software, https://github.com/bc118/NAMD_GOMC, 2021.
+    Crawford, B. and Potoff J. py-MCMD: Initial Release, <https://doi.org/10.5281/zenodo.5142483>`_, 2021.
 
 **BibTeX**
 
 .. code-block:: bibtex
 
-    @Inbook{MDMC_PYTHON_2021,
+    @Inbook{pyMDMC_PYTHON_2021,
         author      = "Crawford, B. and Potoff J.",
-        title       = "NAMD_GOMC - A Hybrid MD/MC Simulation Software",
+        title       = "py-MCMD: Initial Release",
         year        = "2021",
-        url         = "https://github.com/bc118/NAMD_GOMC"
+        url         = "https://doi.org/10.5281/zenodo.5142483"
+	doi	    = "10.5281/zenodo.5142483"
+    }
+
+Download as :download:`BibTeX <_images/MDMC_Python.bib>` or :download:`RIS <_images/MDMC_Python.ris>`
+
+**ACS**
+
+    Crawford, B. and Potoff J. py-MCMD: A Python Library for Performing Hybrid Monte Carlo - Molecular Dynamics Simulations with GOMC and NAMD, <https://github.com/GOMC-WSU/py-MCMD>`_, 2021.
+
+**BibTeX**
+
+.. code-block:: bibtex
+
+    @Inbook{pyMDMC_PYTHON_2021,
+        author      = "Crawford, B. and Potoff J.",
+        title       = "py-MCMD: A Python Library for Performing Hybrid Monte Carlo - Molecular Dynamics Simulations with GOMC and NAMD",
+        year        = "2021",
+        url         = "https://github.com/GOMC-WSU/py-MCMD"
     }
 
 Download as :download:`BibTeX <_images/MDMC_Python.bib>` or :download:`RIS <_images/MDMC_Python.ris>`
