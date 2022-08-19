@@ -1,12 +1,14 @@
-cff-version: 1.1.0
+cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
   - family-names: Crawford
     given-names: Brad
     orcid: https://orcid.org/0000-0003-0638-7333
-  - family-names: Potoff 
+  - family-names: Potoff
     given-names: Jeffrey
     orcid: https://orcid.org/0000-0002-4421-8787
 title: py-MCMD: A Python Library for Performing Hybrid Monte Carlo - Molecular Dynamics Simulations with GOMC and NAMD
-version: 0.0.1
+        url: https://doi.org/10.5281/zenodo.5142483
+	doi: 10.5281/zenodo.5142483
+version: 0.0.2
 date-released: 2021-7-28

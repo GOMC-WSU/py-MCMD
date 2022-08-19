@@ -1,4 +1,4 @@
-name: NAMD_GOMC-docs
+name: py-MDMD-docs
 channels:
   - conda-forge
 dependencies:
@@ -9,7 +9,7 @@ dependencies:
   - lark-parser
   - requests
   - mock
-  - anaconda 
+  - anaconda
   - sphinxcontrib
   - pip:
     - sphinx_rtd_theme
