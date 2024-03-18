@@ -13,6 +13,7 @@ import scipy as sp
 # combines the data from the MD/MC simulations (NAMD/GOMC) for the NPT, NVT, GEMC, and GCMC ensembles
 # or just combines the log files for the NAMD-only or GOMC-only simulations.
 
+
 # *************************************************
 # The python arguments that need to be selected to run the simulations (start)
 # *************************************************
@@ -949,9 +950,7 @@ def get_gomc_log_data(
                 )
                 if stat_titles_box_x_iteration[z] == "TOT_DENSITY":
                     e_stat_values_gomc_kcal_per_mol_box_x_iteration_list.append(
-                        str(
-                            float(stat_values_box_x_iteration_list[z]) / 10**3
-                        )
+                        str(float(stat_values_box_x_iteration_list[z]) / 10**3)
                     )
                 else:
                     e_stat_values_gomc_kcal_per_mol_box_x_iteration_list.append(
@@ -1000,10 +999,14 @@ def get_gomc_log_data(
             str(e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0][0])
             != "#"
         ):
-            e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[
-                0
-            ] = "#{}".format(
-                str(e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0])
+            e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[0] = (
+                "#{}".format(
+                    str(
+                        e_titles_kcal_per_mol_stat_titles_gomc_box_x_iter_list[
+                            0
+                        ]
+                    )
+                )
             )
 
     try:
