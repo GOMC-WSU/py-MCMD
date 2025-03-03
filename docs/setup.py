@@ -1,6 +1,4 @@
-"""NAMD_GOMC - A Hybrid MD/MC Simulation Software
-
-"""
+"""NAMD_GOMC - A Hybrid MD/MC Simulation Software"""
 
 import os
 import subprocess
