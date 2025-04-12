@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 import sys
-from warnings import warn
+from warnings import warn 
 
 import numpy as np
 import pandas as pd
@@ -2569,15 +2569,24 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
     gomc_e_potential_box_x_final_value_kcal_mol : float
         The final potential energy as a float, as extracted from the
         the GOMC run data ('TOTAL').
+    gomc_e_lrc_box_x_kcal_per_mol : float
+        The list of LRC energy as a float, as extracted from the
+        the GOMC run data ('LRC').
+    gomc_e_lrc_box_x_initial_value_kcal_per_mol : float
+        The initial LRC energy as a float, as extracted from the
+        the GOMC run data ('LRC').
+    gomc_e_lrc_box_x_final_value_kcal_per_mol  : float
+        The final LRC energy as a float, as extracted from the
+        the GOMC run data ('LRC').
     gomc_e_vdw_plus_elec_box_x_kcal_per_mol : str
         The list of VDW + electrostatic energies as strings, as extracted from the
-        the GOMC run data ('INTRA(NB)' + 'INTER(LJ)' + 'TOTAL_ELECT').
+        the GOMC run data ('INTRA(NB)' + 'INTER(LJ)' + 'TOTAL_ELECT' + 'LRC').
     gomc_e_vdw_plus_elec_box_x_initial_value_kcal_per_mol : float
         The intitial VDW + electrostatic energy as a float, as extracted from the
-        the GOMC run data ('INTRA(NB)' + 'INTER(LJ)' + 'TOTAL_ELECT').
+        the GOMC run data ('INTRA(NB)' + 'INTER(LJ)' + 'TOTAL_ELECT' + 'LRC').
     gomc_e_vdw_plus_elec_box_x_initial_value_kcal_per_mol : float
         The final VDW + electrostatic energy as a float, as extracted from the
-        the GOMC run data ('INTRA(NB)' + 'INTER(LJ)' + 'TOTAL_ELECT').
+        the GOMC run data ('INTRA(NB)' + 'INTER(LJ)' + 'TOTAL_ELECT' + 'LRC').
         Generated the energy and system file data for specified
         box number.
 
@@ -2585,7 +2594,6 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
     ---------
     GOMC energy units are in kcal/mol
     """
-
     gomc_e_electro_box_x_kcal_per_mol = gomc_energy_data_box_x_df.loc[
         :, "TOTAL_ELECT"
     ].tolist()
@@ -2626,12 +2634,23 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
         gomc_e_inter_lj_box_x_kcal_per_mol[-1]
     )
 
+    gomc_e_lrc_box_x_kcal_per_mol = gomc_energy_data_box_x_df.loc[
+        :, "LRC"
+    ].tolist()
+    gomc_e_lrc_box_x_initial_value_kcal_per_mol = float(
+        gomc_e_lrc_box_x_kcal_per_mol[0]
+    )
+    gomc_e_lrc_box_x_final_value_kcal_per_mol = float(
+        gomc_e_lrc_box_x_kcal_per_mol[-1]
+    )
+
     gomc_e_vdw_plus_elec_box_x_kcal_per_mol = []
     for vwd_elec_i in range(0, len(gomc_e_intra_nb_box_x_kcal_per_mol)):
         gomc_e_vdw_plus_elec_box_x_kcal_per_mol.append(
             float(gomc_e_intra_nb_box_x_kcal_per_mol[vwd_elec_i])
             + float(gomc_e_inter_lj_box_x_kcal_per_mol[vwd_elec_i])
             + float(gomc_e_electro_box_x_kcal_per_mol[vwd_elec_i])
+            + float(gomc_e_lrc_box_x_kcal_per_mol[vwd_elec_i])
         )
     gomc_e_vdw_plus_elec_box_x_initial_value_kcal_mol = float(
         gomc_e_vdw_plus_elec_box_x_kcal_per_mol[0]
@@ -2647,11 +2666,13 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
         gomc_e_potential_box_x_kcal_per_mol,
         gomc_e_potential_box_x_initial_value_kcal_mol,
         gomc_e_potential_box_x_final_value_kcal_mol,
+        gomc_e_lrc_box_x_kcal_per_mol,
+        gomc_e_lrc_box_x_initial_value_kcal_per_mol,
+        gomc_e_lrc_box_x_final_value_kcal_per_mol,
         gomc_e_vdw_plus_elec_box_x_kcal_per_mol,
         gomc_e_vdw_plus_elec_box_x_initial_value_kcal_mol,
-        gomc_e_vdw_plus_elec_box_x_final_value_kcal_mol,
+        gomc_e_vdw_plus_elec_box_x_final_value_kcal_mol
     )
-
 
 for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
     # *************************************************
@@ -3294,9 +3315,12 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
             gomc_e_potential_box_0_kcal_per_mol,
             gomc_e_potential_box_0_initial_value,
             gomc_e_potential_box_0_final_value,
+            gomc_e_lrc_box_0_kcal_per_mol,
+            gomc_e_lrc_box_0_initial_value_kcal_per_mol,
+            gomc_e_lrc_box_0_final_value_kcal_per_mol,
             gomc_e_vdw_plus_elec_box_0_kcal_per_mol,
             gomc_e_vdw_plus_elec_box_0_initial_value,
-            gomc_e_vdw_plus_elec_box_0_final_value,
+            gomc_e_vdw_plus_elec_box_0_final_value
         ) = get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_0_df)
 
         # retrieve energy data from the printed file for the first and last points for box 1s
@@ -3309,9 +3333,12 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
                 gomc_e_potential_box_1_kcal_per_mol,
                 gomc_e_potential_box_1_initial_value,
                 gomc_e_potential_box_1_final_value,
+                gomc_e_lrc_box_1_kcal_per_mol,
+                gomc_e_lrc_box_1_initial_value_kcal_per_mol,
+                gomc_e_lrc_box_1_final_value_kcal_per_mol,
                 gomc_e_vdw_plus_elec_box_1_kcal_per_mol,
                 gomc_e_vdw_plus_elec_box_1_initial_value,
-                gomc_e_vdw_plus_elec_box_1_final_value,
+                gomc_e_vdw_plus_elec_box_1_final_value
             ) = get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_1_df)
 
         # *******************************************************
