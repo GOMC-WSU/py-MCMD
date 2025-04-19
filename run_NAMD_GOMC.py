@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 import sys
-from warnings import warn 
+from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -2671,8 +2671,9 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
         gomc_e_lrc_box_x_final_value_kcal_per_mol,
         gomc_e_vdw_plus_elec_box_x_kcal_per_mol,
         gomc_e_vdw_plus_elec_box_x_initial_value_kcal_mol,
-        gomc_e_vdw_plus_elec_box_x_final_value_kcal_mol
+        gomc_e_vdw_plus_elec_box_x_final_value_kcal_mol,
     )
+
 
 for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
     # *************************************************
@@ -2922,9 +2923,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
                 shell=True,
                 stderr=subprocess.STDOUT,
             )
-            os.wait4(
-                exec_namd_box_0_cp_fft_run_0_new_dir_cmd.pid, os.WSTOPPED
-            )
+            os.wait4(exec_namd_box_0_cp_fft_run_0_new_dir_cmd.pid, os.WSTOPPED)
         if (
             simulation_type in ["GEMC"]
             and only_use_box_0_for_namd_for_gemc is False
@@ -3320,7 +3319,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
             gomc_e_lrc_box_0_final_value_kcal_per_mol,
             gomc_e_vdw_plus_elec_box_0_kcal_per_mol,
             gomc_e_vdw_plus_elec_box_0_initial_value,
-            gomc_e_vdw_plus_elec_box_0_final_value
+            gomc_e_vdw_plus_elec_box_0_final_value,
         ) = get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_0_df)
 
         # retrieve energy data from the printed file for the first and last points for box 1s
@@ -3338,7 +3337,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
                 gomc_e_lrc_box_1_final_value_kcal_per_mol,
                 gomc_e_vdw_plus_elec_box_1_kcal_per_mol,
                 gomc_e_vdw_plus_elec_box_1_initial_value,
-                gomc_e_vdw_plus_elec_box_1_final_value
+                gomc_e_vdw_plus_elec_box_1_final_value,
             ) = get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_1_df)
 
         # *******************************************************
