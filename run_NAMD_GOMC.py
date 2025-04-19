@@ -1074,7 +1074,7 @@ def delete_namd_run_0_fft_file(box_number):
         exec_rm_namd_fft_box_0_command = subprocess.Popen(
             rm_namd_fft_box_0_command, shell=True, stderr=subprocess.STDOUT
         )
-        os.waitpid(exec_rm_namd_fft_box_0_command.pid, os.WSTOPPED)
+        os.wait4(exec_rm_namd_fft_box_0_command.pid, os.WSTOPPED)
 
         log_template_file.write(str(write_log_data))
         print(str(write_log_data))
@@ -2922,7 +2922,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
                 shell=True,
                 stderr=subprocess.STDOUT,
             )
-            os.waitpid(
+            os.wait4(
                 exec_namd_box_0_cp_fft_run_0_new_dir_cmd.pid, os.WSTOPPED
             )
         if (
@@ -2946,7 +2946,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
                     shell=True,
                     stderr=subprocess.STDOUT,
                 )
-                os.waitpid(
+                os.wait4(
                     exec_namd_box1_cp_fft_run_0_new_dir_cmd.pid, os.WSTOPPED
                 )
 
@@ -2986,7 +2986,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
             log_template_file.write(str(write_log_data))
             print(str(write_log_data))
 
-            os.waitpid(
+            os.wait4(
                 exec_run_box_0_command.pid, os.WSTOPPED
             )  # pauses python until box 0 sim done
             namd_box_0_exec_end_time = datetime.datetime.today()
@@ -3014,7 +3014,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
                 run_box_1_command, shell=True, stderr=subprocess.STDOUT
             )
             if namd_sim_order == "series":
-                os.waitpid(
+                os.wait4(
                     exec_run_box_1_command.pid, os.WSTOPPED
                 )  # pauses python until box 1 sim done
                 namd_box_1_exec_end_time = datetime.datetime.today()
@@ -3024,7 +3024,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
             log_template_file.write(str(write_log_data))
             print(str(write_log_data))
 
-            os.waitpid(
+            os.wait4(
                 exec_run_box_0_command.pid, os.WSTOPPED
             )  # pauses python until box 0 sim done
             namd_box_0_exec_end_time = datetime.datetime.today()
@@ -3033,7 +3033,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
                 simulation_type in ["GEMC"]
                 and only_use_box_0_for_namd_for_gemc is False
             ):
-                os.waitpid(
+                os.wait4(
                     exec_run_box_1_command.pid, os.WSTOPPED
                 )  # pauses python until box 1 sim done
                 namd_box_1_exec_end_time = datetime.datetime.today()
@@ -3268,7 +3268,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
         write_log_data = "Waiting for initial GOMC simulation to finish."
         log_template_file.write(str(write_log_data))
         print(str(write_log_data))
-        os.waitpid(
+        os.wait4(
             exec_gomc_run_command.pid, os.WSTOPPED
         )  # pauses python until box 0 sim done
         gomc_exec_end_time = datetime.datetime.today()
