@@ -15,13 +15,13 @@ repos:
     - id: end-of-file-fixer
     - id: trailing-whitespace
       exclude: setup.cfg
-- repo: https://github.com/psf/black
-  rev: 25.1.0
+- repo: https://github.com/psf/black-pre-commit-mirror
+  rev: 26.1.0
   hooks:
     - id: black
       args: [--line-length=80]
 - repo: https://github.com/pycqa/isort
-  rev: 6.0.1
+  rev: 7.0.0
   hooks:
     - id: isort
       name: isort (python)
