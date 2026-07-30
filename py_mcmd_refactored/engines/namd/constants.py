@@ -1,5 +1,5 @@
 # Keep an immutable canonical tuple, and (optionally) a list view if callers expect a list.
-DEFAULT_NAMD_E_TITLES  = [
+DEFAULT_NAMD_E_TITLES = [
     "ETITLE:",
     "TS",
     "BOND",

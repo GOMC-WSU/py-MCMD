@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
-import pytest
 
+import pytest
 from config.models import SimulationConfig
 from engines.gomc_engine import GomcEngine
-from orchestrator.state import RunState, PmeDims
+from orchestrator.state import PmeDims, RunState
 
 
 def _cfg(tmp_path: Path, **kw) -> SimulationConfig:
@@ -92,7 +92,9 @@ def monkeypatch_writer(monkeypatch):
     return True
 
 
-def test_gomc_run_segment_updates_step_and_sets_dir(tmp_path: Path, monkeypatch_writer):
+def test_gomc_run_segment_updates_step_and_sets_dir(
+    tmp_path: Path, monkeypatch_writer
+):
     cfg = _cfg(tmp_path)
     eng = GomcEngine(cfg, dry_run=True)
     st = _state(tmp_path)
@@ -104,7 +106,9 @@ def test_gomc_run_segment_updates_step_and_sets_dir(tmp_path: Path, monkeypatch_
     assert (Path(res["gomc_dir"]) / "out.dat").exists()
 
 
-def test_gomc_run_segment_calls_compare_when_values_exist(tmp_path: Path, monkeypatch, monkeypatch_writer):
+def test_gomc_run_segment_calls_compare_when_values_exist(
+    tmp_path: Path, monkeypatch, monkeypatch_writer
+):
     cfg = _cfg(tmp_path)
     eng = GomcEngine(cfg, dry_run=True)
     st = _state(tmp_path)
@@ -116,8 +120,12 @@ def test_gomc_run_segment_calls_compare_when_values_exist(tmp_path: Path, monkey
     calls = []
     import engines.gomc_engine as ge
 
-    def fake_compare(cfg_, namd_pot_f, gomc_pot_i, namd_vpe_f, gomc_vpe_i, run_no, box_number):
-        calls.append((namd_pot_f, gomc_pot_i, namd_vpe_f, gomc_vpe_i, run_no, box_number))
+    def fake_compare(
+        cfg_, namd_pot_f, gomc_pot_i, namd_vpe_f, gomc_vpe_i, run_no, box_number
+    ):
+        calls.append(
+            (namd_pot_f, gomc_pot_i, namd_vpe_f, gomc_vpe_i, run_no, box_number)
+        )
 
     monkeypatch.setattr(ge, "compare_namd_gomc_energies", fake_compare)
 
@@ -130,7 +138,20 @@ def test_gomc_run_segment_calls_compare_when_values_exist(tmp_path: Path, monkey
     monkeypatch.setattr(
         ge,
         "get_gomc_energy_data_kcal_per_mol",
-        lambda df: (None, None, None, None, 100.0, 101.0, None, None, None, None, 200.0, 201.0),
+        lambda df: (
+            None,
+            None,
+            None,
+            None,
+            100.0,
+            101.0,
+            None,
+            None,
+            None,
+            None,
+            200.0,
+            201.0,
+        ),
     )
 
     eng.run_segment(run_no=1, state=st)
@@ -139,7 +160,9 @@ def test_gomc_run_segment_calls_compare_when_values_exist(tmp_path: Path, monkey
     assert calls[0][-2:] == (1, 0)
 
 
-def test_gomc_run_segment_two_box_gemc_parses_box1(tmp_path: Path, monkeypatch, monkeypatch_writer):
+def test_gomc_run_segment_two_box_gemc_parses_box1(
+    tmp_path: Path, monkeypatch, monkeypatch_writer
+):
     cfg = _cfg(tmp_path, simulation_type="GEMC")
     eng = GomcEngine(cfg, dry_run=True)
     st = _state(tmp_path, two_box=True)
@@ -151,14 +174,38 @@ def test_gomc_run_segment_two_box_gemc_parses_box1(tmp_path: Path, monkeypatch, 
         ge,
         "get_gomc_energy_data",
         lambda cfg, lines, box_number: box_number,
-        )
-
-    
+    )
 
     def fake_metrics(df):
         if df == 0:
-            return (None, None, None, None, 10.0, 11.0, None, None, None, None, 20.0, 21.0)
-        return (None, None, None, None, 30.0, 31.0, None, None, None, None, 40.0, 41.0)
+            return (
+                None,
+                None,
+                None,
+                None,
+                10.0,
+                11.0,
+                None,
+                None,
+                None,
+                None,
+                20.0,
+                21.0,
+            )
+        return (
+            None,
+            None,
+            None,
+            None,
+            30.0,
+            31.0,
+            None,
+            None,
+            None,
+            None,
+            40.0,
+            41.0,
+        )
 
     monkeypatch.setattr(ge, "get_gomc_energy_data_kcal_per_mol", fake_metrics)
 
@@ -188,6 +235,7 @@ def test_gomc_exec_name_uses_ensemble(tmp_path):
     assert eng.exec_name == "GOMC_CPU_NPT"
     assert eng.exec_path.endswith("GOMC_CPU_NPT")
 
+
 def test_gomc_run_segment_calls_energy_parser_with_cfg(monkeypatch, tmp_path):
     called = {}
 
@@ -195,6 +243,7 @@ def test_gomc_run_segment_calls_energy_parser_with_cfg(monkeypatch, tmp_path):
         called["cfg"] = cfg
         called["box_number"] = box_number
         import pandas as pd
+
         return pd.DataFrame(columns=["STEP", "TOTAL", "INTRA(B)"])
 
     monkeypatch.setattr(

@@ -1,16 +1,20 @@
 # py-MCMD
-# Author: Haydar Mehryar 
+# Author: Haydar Mehryar
 # Copyright (c) 2025
 # SPDX-License-Identifier: MIT
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Iterable, List, Tuple
 
+
 @dataclass(frozen=True)
 class NamdEnergyData:
-    titles: Tuple[str, ...]                      # column names (includes 'ETITLE:' first)
-    raw_rows: Tuple[Tuple[float, ...], ...]      # numeric rows; index 0 is NaN placeholder
+    titles: Tuple[str, ...]  # column names (includes 'ETITLE:' first)
+    raw_rows: Tuple[
+        Tuple[float, ...], ...
+    ]  # numeric rows; index 0 is NaN placeholder
     elect: List[float]
     potential: List[float]
     vdw: List[float]
@@ -23,16 +27,20 @@ class NamdEnergyData:
     vdw_plus_elec_last: float
 
 
-from typing import List, Iterable, Tuple
 import math
+from typing import Iterable, List, Tuple
 
-def _normalize_titles(titles: List[str], default_titles: Iterable[str]) -> List[str]:
+
+def _normalize_titles(
+    titles: List[str], default_titles: Iterable[str]
+) -> List[str]:
     """Use defaults if missing and ensure first token slot aligns with ENERGY."""
     if not titles:
         titles = list(default_titles)
     if titles and titles[0] != "ETITLE:":
         titles = ["ETITLE:"] + titles
     return titles
+
 
 def _extract_titles_and_rows(
     lines: Iterable[str],
@@ -74,7 +82,9 @@ def _extract_titles_and_rows(
 
     return titles, norm_rows
 
+
 from typing import Dict, List
+
 
 def _column_indices(
     titles: List[str],
@@ -89,17 +99,21 @@ def _column_indices(
         try:
             idx[name] = titles.index(name)
         except ValueError as e:
-            raise KeyError(f"Required column '{name}' not found in titles: {titles}") from e
+            raise KeyError(
+                f"Required column '{name}' not found in titles: {titles}"
+            ) from e
     return idx
 
 
 from typing import List
+
 
 def _col(rows: List[List[float]], idx: int) -> List[float]:
     """
     Return the column at index `idx` as a list[float] from `rows`.
     """
     return [float(r[idx]) for r in rows]
+
 
 def parse_namd_energy_lines(
     lines: Iterable[str],
@@ -136,7 +150,9 @@ def parse_namd_energy_lines(
         vdw_plus_elec_last=vdw_plus_elec[-1],
     )
 
+
 from typing import Iterable
+
 
 def get_namd_energy_data(
     read_namd_box_x_energy_file: Iterable[str],
@@ -149,7 +165,9 @@ def get_namd_energy_data(
        vdw_plus_elec_series, vdw_plus_elec_first, vdw_plus_elec_last)
     Series are lists of floats (pandas-free).
     """
-    data = parse_namd_energy_lines(read_namd_box_x_energy_file, e_default_namd_titles)
+    data = parse_namd_energy_lines(
+        read_namd_box_x_energy_file, e_default_namd_titles
+    )
     return (
         data.elect,
         data.elect_first,
@@ -161,4 +179,3 @@ def get_namd_energy_data(
         data.vdw_plus_elec_first,
         data.vdw_plus_elec_last,
     )
-

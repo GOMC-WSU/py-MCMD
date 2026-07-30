@@ -17,8 +17,8 @@ from pathlib import Path
 
 def _ensure_project_on_syspath() -> None:
     tests_dir = Path(__file__).resolve().parent
-    project_root = tests_dir.parent          # <repo>/py_mcmd_refactored
-    repo_root = project_root.parent          # <repo>
+    project_root = tests_dir.parent  # <repo>/py_mcmd_refactored
+    repo_root = project_root.parent  # <repo>
 
     for p in (str(repo_root), str(project_root)):
         if p not in sys.path:

@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 from pathlib import Path
-import pytest
 
 import orchestrator.manager as mgr
+import pytest
 from config.models import SimulationConfig
 
 
 def _cfg(tmp_path: Path, **overrides) -> SimulationConfig:
     base = dict(
-        total_cycles_namd_gomc_sims=2,          # 2 cycles => run_no 0..3
+        total_cycles_namd_gomc_sims=2,  # 2 cycles => run_no 0..3
         starting_at_cycle_namd_gomc_sims=0,
         gomc_use_CPU_or_GPU="CPU",
         simulation_type="NPT",
@@ -107,13 +107,9 @@ def test_integration_dry_run_two_cycles(tmp_path: Path, monkeypatch):
     # ---------------------------
     # Patch GOMC writer to create per-run dirs + in.conf
     # ---------------------------
-    import engines.gomc_engine as ge
-
-    
-
-
-    import engines.gomc_engine as ge
     from pathlib import Path
+
+    import engines.gomc_engine as ge
 
     def fake_write_gomc_conf_file(cfg, io, run_no, sim, starts, **kwargs):
         root = Path(io.path_gomc_runs)
@@ -147,7 +143,20 @@ def test_integration_dry_run_two_cycles(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         ge,
         "get_gomc_energy_data_kcal_per_mol",
-        lambda df: (None, None, None, None, 100.0, 101.0, None, None, None, None, 200.0, 201.0),
+        lambda df: (
+            None,
+            None,
+            None,
+            None,
+            100.0,
+            101.0,
+            None,
+            None,
+            None,
+            None,
+            200.0,
+            201.0,
+        ),
     )
 
     # ---------------------------
@@ -158,26 +167,33 @@ def test_integration_dry_run_two_cycles(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         ne,
         "compare_namd_gomc_energies",
-        lambda *args, **kwargs: compare_calls.append(("GOMC->NAMD", args[-2], args[-1])),
+        lambda *args, **kwargs: compare_calls.append(
+            ("GOMC->NAMD", args[-2], args[-1])
+        ),
     )
     monkeypatch.setattr(
         ge,
         "compare_namd_gomc_energies",
-        lambda *args, **kwargs: compare_calls.append(("NAMD->GOMC", args[-2], args[-1])),
+        lambda *args, **kwargs: compare_calls.append(
+            ("NAMD->GOMC", args[-2], args[-1])
+        ),
     )
 
     # ---------------------------
     # Patch FFT run0 lookup so nonzero run_no does not require real run0 dirs
     # (Return (None, <some_dir>) so linking is skipped cleanly.)
     # ---------------------------
-    monkeypatch.setattr(ne.NamdEngine, "get_run0_fft_filename", lambda self, bn: (None, str(tmp_path / "NAMD" / "00000000_a")))
+    monkeypatch.setattr(
+        ne.NamdEngine,
+        "get_run0_fft_filename",
+        lambda self, bn: (None, str(tmp_path / "NAMD" / "00000000_a")),
+    )
 
     # ---------------------------
     # Wrap engines to record call order while still using real run_segment logic
     # ---------------------------
     RealNamd = ne.NamdEngine
     RealGomc = ge.GomcEngine
-
 
     class TrackedNamd(RealNamd):
         def run_segment(self, *, run_no: int, state, fifo_resources=None):
@@ -188,7 +204,6 @@ def test_integration_dry_run_two_cycles(tmp_path: Path, monkeypatch):
                 state=state,
                 fifo_resources=fifo_resources,
             )
-
 
     class TrackedGomc(RealGomc):
         def run_segment(self, *, run_no: int, state, fifo_resources=None):
@@ -216,9 +231,9 @@ def test_integration_dry_run_two_cycles(tmp_path: Path, monkeypatch):
     # Verify step increments (legacy)
     expected_step = (
         (cfg.namd_run_steps + cfg.namd_minimize_steps)  # run_no=0
-        + cfg.gomc_run_steps                            # run_no=1
-        + cfg.namd_run_steps                            # run_no=2
-        + cfg.gomc_run_steps                            # run_no=3
+        + cfg.gomc_run_steps  # run_no=1
+        + cfg.namd_run_steps  # run_no=2
+        + cfg.gomc_run_steps  # run_no=3
     )
     assert orch.state.current_step == expected_step
 
@@ -232,8 +247,9 @@ def test_integration_dry_run_two_cycles(tmp_path: Path, monkeypatch):
 
 def _patch_managed_store_dry_run_dependencies(tmp_path: Path, monkeypatch):
     import itertools
-    import engines.namd_engine as ne
+
     import engines.gomc_engine as ge
+    import engines.namd_engine as ne
 
     tick_values = [0.0, 20.0, 100.0, 130.0]
     ticks = itertools.chain(tick_values, itertools.repeat(tick_values[-1]))
@@ -278,17 +294,46 @@ def _patch_managed_store_dry_run_dependencies(tmp_path: Path, monkeypatch):
     monkeypatch.setattr(
         ne,
         "get_namd_energy_data",
-        lambda lines, titles: (None, None, None, None, 10.0, 11.0, None, 20.0, 21.0),
+        lambda lines, titles: (
+            None,
+            None,
+            None,
+            None,
+            10.0,
+            11.0,
+            None,
+            20.0,
+            21.0,
+        ),
     )
-    monkeypatch.setattr(ge, "get_gomc_energy_data", lambda cfg, lines, box_number: object())
+    monkeypatch.setattr(
+        ge, "get_gomc_energy_data", lambda cfg, lines, box_number: object()
+    )
     monkeypatch.setattr(
         ge,
         "get_gomc_energy_data_kcal_per_mol",
-        lambda df: (None, None, None, None, 100.0, 101.0, None, None, None, None, 200.0, 201.0),
+        lambda df: (
+            None,
+            None,
+            None,
+            None,
+            100.0,
+            101.0,
+            None,
+            None,
+            None,
+            None,
+            200.0,
+            201.0,
+        ),
     )
 
-    monkeypatch.setattr(ne, "compare_namd_gomc_energies", lambda *args, **kwargs: None)
-    monkeypatch.setattr(ge, "compare_namd_gomc_energies", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        ne, "compare_namd_gomc_energies", lambda *args, **kwargs: None
+    )
+    monkeypatch.setattr(
+        ge, "compare_namd_gomc_energies", lambda *args, **kwargs: None
+    )
     monkeypatch.setattr(
         ne.NamdEngine,
         "get_run0_fft_filename",
@@ -320,6 +365,7 @@ def _patch_managed_store_dry_run_dependencies(tmp_path: Path, monkeypatch):
 #     assert not (namd_disk_run2 / "in.conf").exists()
 #     assert not (gomc_disk_run1 / "in.conf").exists()
 #     assert not (gomc_disk_run3 / "in.conf").exists()
+
 
 #     managed_root = tmp_path / "managed_runtime"
 #     assert not (managed_root / "NAMD").exists()
@@ -360,8 +406,12 @@ def test_integration_dry_run_default_mode_keeps_managed_outputs_off_disk(
     assert not (managed_root / "GOMC").exists()
 
 
-def test_integration_dry_run_developer_mode_mirrors_managed_outputs_to_disk(tmp_path: Path, monkeypatch):
-    monkeypatch.setenv("PY_MCMD_MANAGED_OUTPUT_ROOT", str(tmp_path / "managed_runtime"))
+def test_integration_dry_run_developer_mode_mirrors_managed_outputs_to_disk(
+    tmp_path: Path, monkeypatch
+):
+    monkeypatch.setenv(
+        "PY_MCMD_MANAGED_OUTPUT_ROOT", str(tmp_path / "managed_runtime")
+    )
     _patch_managed_store_dry_run_dependencies(tmp_path, monkeypatch)
 
     cfg = _cfg(tmp_path, developer_mode=True)

@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from config.models import SimulationConfig
 from engines.gomc_engine import GomcEngine
 from engines.namd.plan import build_namd_execution_plan
@@ -68,6 +67,7 @@ def test_default_allow_lists_are_empty():
 #     assert should_persist("NAMD", "in.conf") is False
 #     assert should_persist("GOMC", "Output_data_BOX_0_restart.coor") is False
 
+
 #     assert should_persist("namd", "/tmp/any/out.dat") is True
 #     assert should_persist("gomc", "/tmp/any/in.conf") is False
 def test_should_persist_uses_engine_allow_list():
@@ -75,10 +75,13 @@ def test_should_persist_uses_engine_allow_list():
     assert should_persist("GOMC", "out.dat") is False
 
     assert should_persist("NAMD", "in.conf") is False
-    assert should_persist(
-        "GOMC",
-        "Output_data_BOX_0_restart.coor",
-    ) is False
+    assert (
+        should_persist(
+            "GOMC",
+            "Output_data_BOX_0_restart.coor",
+        )
+        is False
+    )
 
     assert should_persist("namd", "/tmp/any/out.dat") is False
     assert should_persist("gomc", "/tmp/any/in.conf") is False
@@ -87,6 +90,7 @@ def test_should_persist_uses_engine_allow_list():
 # def test_persisted_output_path_returns_disk_path_only_for_allow_listed_file(tmp_path: Path):
 #     run_dir = tmp_path / "NAMD" / "00000000_a"
 #     assert persisted_output_path("NAMD", run_dir, "out.dat") == run_dir / "out.dat"
+
 
 #     with pytest.raises(ValueError):
 #         persisted_output_path("NAMD", run_dir, "in.conf")
@@ -122,6 +126,7 @@ def test_persisted_output_path_rejects_files_when_default_allow_list_is_empty(
 #         box0_dir=box0_dir,
 #         box1_dir=None,
 #     )
+
 
 #     assert plan.box0.stdout_path == box0_dir / "persisted-out.dat"
 #     assert calls == [("NAMD", box0_dir, "out.dat")]
@@ -160,7 +165,8 @@ def test_namd_engine_run_steps_routes_stdout_through_allow_list_helper(
     monkeypatch.setattr(engine.runner, "run_and_wait", fake_run_and_wait)
     monkeypatch.setattr(
         "engines.namd_engine.persisted_output_path",
-        lambda engine_name, run_dir, basename: Path(run_dir) / f"persisted-{basename}",
+        lambda engine_name, run_dir, basename: Path(run_dir)
+        / f"persisted-{basename}",
     )
 
     run_dir = tmp_path / "NAMD" / "00000000_a"
@@ -185,7 +191,8 @@ def test_gomc_engine_run_steps_routes_stdout_through_allow_list_helper(
     monkeypatch.setattr(engine.runner, "run_and_wait", fake_run_and_wait)
     monkeypatch.setattr(
         "engines.gomc_engine.persisted_output_path",
-        lambda engine_name, run_dir, basename: Path(run_dir) / f"persisted-{basename}",
+        lambda engine_name, run_dir, basename: Path(run_dir)
+        / f"persisted-{basename}",
     )
 
     run_dir = tmp_path / "GOMC" / "00000001"

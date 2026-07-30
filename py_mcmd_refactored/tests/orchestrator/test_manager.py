@@ -1,11 +1,12 @@
 import sys
+
 sys.path.insert(0, "/home/arsalan/wsu-gomc/py-MCMD-hm/py_mcmd_refactored")
 
-import pytest
 from pathlib import Path
 
-from orchestrator.manager import SimulationOrchestrator
+import pytest
 from config.models import SimulationConfig
+from orchestrator.manager import SimulationOrchestrator
 
 
 def make_cfg_for_orch(tmp_path: Path, **overrides) -> SimulationConfig:
@@ -58,8 +59,12 @@ def test_orchestrator_consumes_config_derived_sims(tmp_path: Path, monkeypatch):
     orch = SimulationOrchestrator(cfg, dry_run=True)
 
     # IMPORTANT: orchestrator now calls run_segment(), not run_steps()
-    monkeypatch.setattr(orch.namd, "run_segment", lambda **kwargs: None, raising=True)
-    monkeypatch.setattr(orch.gomc, "run_segment", lambda **kwargs: None, raising=True)
+    monkeypatch.setattr(
+        orch.namd, "run_segment", lambda **kwargs: None, raising=True
+    )
+    monkeypatch.setattr(
+        orch.gomc, "run_segment", lambda **kwargs: None, raising=True
+    )
 
     summary = orch.run()
 
@@ -89,15 +94,23 @@ def test_orchestrator_defaults_namd_simulation_order_to_series(tmp_path: Path):
 
 def test_orchestrator_initializes_run_state(tmp_path: Path, monkeypatch):
     # Set start_cycle=0 so run() does not apply restart current_step bump.
-    cfg = make_cfg_for_orch(tmp_path, starting_at_cycle_namd_gomc_sims=0, total_cycles_namd_gomc_sims=1)
+    cfg = make_cfg_for_orch(
+        tmp_path,
+        starting_at_cycle_namd_gomc_sims=0,
+        total_cycles_namd_gomc_sims=1,
+    )
     orch = SimulationOrchestrator(cfg, dry_run=True)
 
     assert hasattr(orch, "state")
     assert orch.state.current_step == 0
 
     # Prevent engine file/template access
-    monkeypatch.setattr(orch.namd, "run_segment", lambda **kwargs: None, raising=True)
-    monkeypatch.setattr(orch.gomc, "run_segment", lambda **kwargs: None, raising=True)
+    monkeypatch.setattr(
+        orch.namd, "run_segment", lambda **kwargs: None, raising=True
+    )
+    monkeypatch.setattr(
+        orch.gomc, "run_segment", lambda **kwargs: None, raising=True
+    )
 
     summary = orch.run()
     assert "state" in summary

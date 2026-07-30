@@ -1,9 +1,11 @@
 from __future__ import annotations
-from typing import Optional, Union
-from logging import Logger
+
 import warnings
+from logging import Logger
+from typing import Optional, Union
 
 Number = Union[int, float]
+
 
 def check_for_pdb_dims_and_override(
     dim_axis: str,
@@ -36,6 +38,7 @@ def check_for_pdb_dims_and_override(
     used_dim : int | float | None
         Chosen dimension.
     """
+
     def _log(msg: str) -> None:
         if logger is not None:
             logger.info(msg)

@@ -1,12 +1,10 @@
-
 from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-from config.models import SimulationConfig
 import orchestrator.manager as mgr
+import pytest
+from config.models import SimulationConfig
 
 
 def _cfg(tmp_path: Path, **overrides) -> SimulationConfig:
@@ -45,7 +43,9 @@ def _cfg(tmp_path: Path, **overrides) -> SimulationConfig:
     return SimulationConfig(**base)
 
 
-def test_orchestrator_run_no_loop_call_order_and_cycles_completed(tmp_path: Path, monkeypatch):
+def test_orchestrator_run_no_loop_call_order_and_cycles_completed(
+    tmp_path: Path, monkeypatch
+):
     calls = []
 
     class DummyNamd:
@@ -57,7 +57,9 @@ def test_orchestrator_run_no_loop_call_order_and_cycles_completed(tmp_path: Path
             calls.append(("NAMD", int(run_no)))
             # mimic legacy step updates
             if int(run_no) == 0:
-                state.current_step += int(self.cfg.namd_run_steps) + int(self.cfg.namd_minimize_steps)
+                state.current_step += int(self.cfg.namd_run_steps) + int(
+                    self.cfg.namd_minimize_steps
+                )
             else:
                 state.current_step += int(self.cfg.namd_run_steps)
             return {"run_no": int(run_no)}
@@ -75,7 +77,11 @@ def test_orchestrator_run_no_loop_call_order_and_cycles_completed(tmp_path: Path
     monkeypatch.setattr(mgr, "NamdEngine", DummyNamd)
     monkeypatch.setattr(mgr, "GomcEngine", DummyGomc)
 
-    cfg = _cfg(tmp_path, starting_at_cycle_namd_gomc_sims=0, total_cycles_namd_gomc_sims=2)
+    cfg = _cfg(
+        tmp_path,
+        starting_at_cycle_namd_gomc_sims=0,
+        total_cycles_namd_gomc_sims=2,
+    )
     orch = mgr.SimulationOrchestrator(cfg, dry_run=True)
 
     summary = orch.run()
@@ -92,7 +98,9 @@ def test_orchestrator_run_no_loop_call_order_and_cycles_completed(tmp_path: Path
     assert orch.state.current_step == expected_step
 
 
-def test_orchestrator_run_no_loop_applies_restart_current_step(tmp_path: Path, monkeypatch):
+def test_orchestrator_run_no_loop_applies_restart_current_step(
+    tmp_path: Path, monkeypatch
+):
     calls = []
 
     class DummyNamd:
@@ -119,7 +127,11 @@ def test_orchestrator_run_no_loop_applies_restart_current_step(tmp_path: Path, m
     monkeypatch.setattr(mgr, "GomcEngine", DummyGomc)
 
     # start at cycle 1 -> starting_sims=2, total_sims=4 -> run_no: 2,3
-    cfg = _cfg(tmp_path, starting_at_cycle_namd_gomc_sims=1, total_cycles_namd_gomc_sims=2)
+    cfg = _cfg(
+        tmp_path,
+        starting_at_cycle_namd_gomc_sims=1,
+        total_cycles_namd_gomc_sims=2,
+    )
     orch = mgr.SimulationOrchestrator(cfg, dry_run=True)
 
     summary = orch.run()
@@ -127,6 +139,8 @@ def test_orchestrator_run_no_loop_applies_restart_current_step(tmp_path: Path, m
     assert calls == [("NAMD", 2), ("GOMC", 3)]
     assert summary["cycles_completed"] == 1
 
-    restart_base = (cfg.namd_run_steps + cfg.gomc_run_steps) * cfg.starting_at_cycle_namd_gomc_sims + cfg.namd_minimize_steps
+    restart_base = (
+        cfg.namd_run_steps + cfg.gomc_run_steps
+    ) * cfg.starting_at_cycle_namd_gomc_sims + cfg.namd_minimize_steps
     expected = restart_base + cfg.namd_run_steps + cfg.gomc_run_steps
     assert orch.state.current_step == expected

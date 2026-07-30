@@ -146,10 +146,9 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-import pytest
-
-from config.models import SimulationConfig
 import orchestrator.manager as mgr
+import pytest
+from config.models import SimulationConfig
 
 
 def make_cfg(tmp_path: Path, **overrides) -> SimulationConfig:
@@ -208,33 +207,21 @@ class FakeFifoStore:
         self.resources = {}
 
         disk_roots = kwargs.get("disk_roots", {})
-        namd_root = Path(
-            disk_roots.get("NAMD", "/tmp/NAMD")
-        )
-        self.managed_root = (
-            namd_root.parent / "managed_runtime"
-        )
+        namd_root = Path(disk_roots.get("NAMD", "/tmp/NAMD"))
+        self.managed_root = namd_root.parent / "managed_runtime"
 
     def prepare_step(self, engine, step_id):
-        self.calls.append(
-            ("prepare", engine, step_id)
-        )
+        self.calls.append(("prepare", engine, step_id))
 
         endpoints = {
             "box0.out.dat": SimpleNamespace(
-                fifo_path=Path(
-                    f"/tmp/{engine}_{step_id}_box0.out.dat"
-                )
+                fifo_path=Path(f"/tmp/{engine}_{step_id}_box0.out.dat")
             ),
             "box1.out.dat": SimpleNamespace(
-                fifo_path=Path(
-                    f"/tmp/{engine}_{step_id}_box1.out.dat"
-                )
+                fifo_path=Path(f"/tmp/{engine}_{step_id}_box1.out.dat")
             ),
             "out.dat": SimpleNamespace(
-                fifo_path=Path(
-                    f"/tmp/{engine}_{step_id}_out.dat"
-                )
+                fifo_path=Path(f"/tmp/{engine}_{step_id}_out.dat")
             ),
         }
 
@@ -244,9 +231,7 @@ class FakeFifoStore:
             endpoints=endpoints,
         )
 
-        self.resources[
-            (engine, step_id)
-        ] = res
+        self.resources[(engine, step_id)] = res
 
         return res
 
@@ -255,27 +240,21 @@ class FakeFifoStore:
         engine,
         step_id,
     ):
-        self.calls.append(
-            ("success", engine, step_id)
-        )
+        self.calls.append(("success", engine, step_id))
 
     def finalize_step_failure(
         self,
         engine,
         step_id,
     ):
-        self.calls.append(
-            ("failure", engine, step_id)
-        )
+        self.calls.append(("failure", engine, step_id))
 
     def release_step(
         self,
         engine,
         step_id,
     ):
-        self.calls.append(
-            ("release", engine, step_id)
-        )
+        self.calls.append(("release", engine, step_id))
 
         self.resources.pop(
             (engine, step_id),
@@ -286,14 +265,10 @@ class FakeFifoStore:
         self,
         engine,
     ):
-        self.calls.append(
-            ("cleanup_cache", engine)
-        )
+        self.calls.append(("cleanup_cache", engine))
 
     def cleanup_all(self):
-        self.calls.append(
-            ("cleanup_all",)
-        )
+        self.calls.append(("cleanup_all",))
         self.resources.clear()
 
 
@@ -304,24 +279,14 @@ def _patch_successful_engines(
     monkeypatch.setattr(
         orch.namd,
         "run_segment",
-        lambda *,
-        run_no,
-        state,
-        fifo_resources=None: {
-            "run_no": run_no
-        },
+        lambda *, run_no, state, fifo_resources=None: {"run_no": run_no},
         raising=True,
     )
 
     monkeypatch.setattr(
         orch.gomc,
         "run_segment",
-        lambda *,
-        run_no,
-        state,
-        fifo_resources=None: {
-            "run_no": run_no
-        },
+        lambda *, run_no, state, fifo_resources=None: {"run_no": run_no},
         raising=True,
     )
 
@@ -391,9 +356,7 @@ def test_compact_mode_releases_older_cycle_pairs_and_cleans_all(
         "0000000005",
     ) not in orch.fifo_store.calls
 
-    assert (
-        "cleanup_all",
-    ) in orch.fifo_store.calls
+    assert ("cleanup_all",) in orch.fifo_store.calls
 
 
 def test_minimal_mode_releases_old_pairs_and_preserves_recent_window(
@@ -472,9 +435,7 @@ def test_minimal_mode_releases_old_pairs_and_preserves_recent_window(
         ),
     ]
 
-    assert (
-        "cleanup_all",
-    ) not in orch.fifo_store.calls
+    assert ("cleanup_all",) not in orch.fifo_store.calls
 
     assert (
         "cleanup_cache",
@@ -516,14 +477,9 @@ def test_off_mode_preserves_all_successful_runtime_steps(
 
     orch.run()
 
-    assert not any(
-        call[0] == "release"
-        for call in orch.fifo_store.calls
-    )
+    assert not any(call[0] == "release" for call in orch.fifo_store.calls)
 
-    assert (
-        "cleanup_all",
-    ) not in orch.fifo_store.calls
+    assert ("cleanup_all",) not in orch.fifo_store.calls
 
     assert orch._retained_cycle_pairs == [
         (
@@ -574,12 +530,7 @@ def test_failed_run_preserves_managed_runtime_artifacts_without_final_cleanup(
     monkeypatch.setattr(
         orch.namd,
         "run_segment",
-        lambda *,
-        run_no,
-        state,
-        fifo_resources=None: {
-            "run_no": run_no
-        },
+        lambda *, run_no, state, fifo_resources=None: {"run_no": run_no},
         raising=True,
     )
 
@@ -589,9 +540,7 @@ def test_failed_run_preserves_managed_runtime_artifacts_without_final_cleanup(
         state,
         fifo_resources=None,
     ):
-        raise RuntimeError(
-            "gomc failed"
-        )
+        raise RuntimeError("gomc failed")
 
     monkeypatch.setattr(
         orch.gomc,
@@ -618,14 +567,9 @@ def test_failed_run_preserves_managed_runtime_artifacts_without_final_cleanup(
         "0000000001",
     ) in orch.fifo_store.calls
 
-    assert not any(
-        call[0] == "release"
-        for call in orch.fifo_store.calls
-    )
+    assert not any(call[0] == "release" for call in orch.fifo_store.calls)
 
-    assert (
-        "cleanup_all",
-    ) not in orch.fifo_store.calls
+    assert ("cleanup_all",) not in orch.fifo_store.calls
 
     assert (
         "cleanup_cache",

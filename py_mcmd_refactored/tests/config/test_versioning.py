@@ -3,14 +3,14 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from cli.main import parse_args
+from config.models import SimulationConfig
+from orchestrator.manager import SimulationOrchestrator
 
 from py_mcmd_refactored import __version__ as package_version
 from py_mcmd_refactored import get_version as package_get_version
 from py_mcmd_refactored.version import __version__ as source_version
 from py_mcmd_refactored.version import get_version as source_get_version
-from cli.main import parse_args
-from config.models import SimulationConfig
-from orchestrator.manager import SimulationOrchestrator
 
 
 def make_cfg_for_orch(tmp_path: Path, **overrides) -> SimulationConfig:

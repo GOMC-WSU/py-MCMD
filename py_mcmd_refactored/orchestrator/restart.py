@@ -12,13 +12,16 @@ from utils.run_dirs import gomc_run_dir, namd_run_dir
 @dataclass(frozen=True)
 class StartContext:
     """Computed context at the beginning of orchestrator.run()."""
+
     current_step: int
     previous_namd_box0_dir: Optional[Path]
     previous_namd_box1_dir: Optional[Path]
     previous_gomc_dir: Optional[Path]
 
 
-def compute_start_context(cfg: SimulationConfig, *, id_width: int = 8) -> StartContext:
+def compute_start_context(
+    cfg: SimulationConfig, *, id_width: int = 8
+) -> StartContext:
     """Compute restart-related values for the first iteration of the run_no loop.
 
     Mirrors legacy behavior:
@@ -42,14 +45,24 @@ def compute_start_context(cfg: SimulationConfig, *, id_width: int = 8) -> StartC
     prev_namd_run_no = starting_sims - 2
     prev_gomc_run_no = starting_sims - 1
 
-    prev_namd_box0 = namd_run_dir(cfg.path_namd_runs, prev_namd_run_no, 0, id_width=id_width)
-    prev_gomc = gomc_run_dir(cfg.path_gomc_runs, prev_gomc_run_no, id_width=id_width)
+    prev_namd_box0 = namd_run_dir(
+        cfg.path_namd_runs, prev_namd_run_no, 0, id_width=id_width
+    )
+    prev_gomc = gomc_run_dir(
+        cfg.path_gomc_runs, prev_gomc_run_no, id_width=id_width
+    )
 
     prev_namd_box1 = None
-    if cfg.simulation_type == "GEMC" and (cfg.only_use_box_0_for_namd_for_gemc is False):
-        prev_namd_box1 = namd_run_dir(cfg.path_namd_runs, prev_namd_run_no, 1, id_width=id_width)
+    if cfg.simulation_type == "GEMC" and (
+        cfg.only_use_box_0_for_namd_for_gemc is False
+    ):
+        prev_namd_box1 = namd_run_dir(
+            cfg.path_namd_runs, prev_namd_run_no, 1, id_width=id_width
+        )
 
-    current_step = (int(cfg.namd_run_steps) + int(cfg.gomc_run_steps)) * start_cycle + int(cfg.namd_minimize_steps)
+    current_step = (
+        int(cfg.namd_run_steps) + int(cfg.gomc_run_steps)
+    ) * start_cycle + int(cfg.namd_minimize_steps)
 
     return StartContext(
         current_step=current_step,

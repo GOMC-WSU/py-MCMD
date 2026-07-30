@@ -2,9 +2,16 @@
 import json
 import re
 from pathlib import Path
-from typing import List, Dict, Optional, Literal
+from typing import Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, field_validator, model_validator, ConfigDict, StrictBool
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictBool,
+    field_validator,
+    model_validator,
+)
 
 
 class SimulationConfig(BaseModel):
@@ -12,13 +19,15 @@ class SimulationConfig(BaseModel):
     Pydantic model for hybrid NAMD↔GOMC simulation configuration.
     Enforces type checks, ranges, and cross-field constraints.
     """
+
     total_cycles_namd_gomc_sims: int = Field(
-        ..., alias="total_cycles_namd_gomc_sims", ge=1,
-        description="Total number of coupled cycles (>=1)"
+        ...,
+        alias="total_cycles_namd_gomc_sims",
+        ge=1,
+        description="Total number of coupled cycles (>=1)",
     )
     starting_at_cycle_namd_gomc_sims: int = Field(
-        ..., ge=0,
-        description="Starting cycle index (>=0)"
+        ..., ge=0, description="Starting cycle index (>=0)"
     )
 
     # Derived values
@@ -28,7 +37,6 @@ class SimulationConfig(BaseModel):
     gomc_use_CPU_or_GPU: Literal["CPU", "GPU"]
     simulation_type: Literal["GEMC", "GCMC", "NPT", "NVT"]
     only_use_box_0_for_namd_for_gemc: bool
-
 
     # Execution strategy
     # NOTE: This is only meaningful for GEMC when running two NAMD boxes
@@ -122,12 +130,14 @@ class SimulationConfig(BaseModel):
     )
 
     # Core counts
-    no_core_box_0: int = Field(..., ge=1) # must be a positive integer
-    no_core_box_1: int = Field(..., ge=0) # can be zero unless ensemble needs box 1
-    
+    no_core_box_0: int = Field(..., ge=1)  # must be a positive integer
+    no_core_box_1: int = Field(
+        ..., ge=0
+    )  # can be zero unless ensemble needs box 1
+
     simulation_temp_k: float = Field(..., gt=0)
     simulation_pressure_bar: Optional[float] = None
-    GCMC_ChemPot_or_Fugacity:  Optional[Literal["ChemPot", "Fugacity"]] = None
+    GCMC_ChemPot_or_Fugacity: Optional[Literal["ChemPot", "Fugacity"]] = None
     GCMC_ChemPot_or_Fugacity_dict: Optional[Dict[str, float]] = None
     namd_minimize_mult_scalar: int = Field(..., ge=0)
     namd_run_steps: int = Field(..., ge=0)
@@ -136,8 +146,8 @@ class SimulationConfig(BaseModel):
     set_dims_box_1_list: List[Optional[float]]
     set_angle_box_0_list: List[Optional[int]]
     set_angle_box_1_list: List[Optional[int]]
-    
-    # Force-field file lists (must be list[str])    
+
+    # Force-field file lists (must be list[str])
     starting_ff_file_list_gomc: List[str]
     starting_ff_file_list_namd: List[str]
 
@@ -156,7 +166,6 @@ class SimulationConfig(BaseModel):
     path_namd_template: Optional[str] = Field(default=None)
     path_gomc_template: Optional[str] = Field(default=None)
 
-    
     # Logging
     log_dir: str = Field("logs")  # can override in JSON
 
@@ -186,7 +195,6 @@ class SimulationConfig(BaseModel):
             )
         return v
 
-    
     @field_validator("disk_cleanup_mode", mode="before")
     @classmethod
     def _validate_disk_cleanup_mode(cls, v):
@@ -200,7 +208,7 @@ class SimulationConfig(BaseModel):
                 "disk_cleanup_mode must be one of: compact, minimal, off."
             )
         return mode
-    
+
     # @model_validator(mode="after")
     # def _require_box1_when_two_box_ensemble(self):
     #     # For ensembles that use a second box, require non-zero cores for box 1
@@ -208,7 +216,7 @@ class SimulationConfig(BaseModel):
     #         if self.no_core_box_1 <= 0:
     #             raise ValueError("no_core_box_1 must be > 0")
     #     return self
-    
+
     @model_validator(mode="after")
     def _require_box1_when_two_box_ensemble(self):
         # Only two-box GEMC runs require NAMD cores for box 1.
@@ -224,23 +232,31 @@ class SimulationConfig(BaseModel):
             )
         return self
 
-    @field_validator('set_dims_box_0_list', 'set_dims_box_1_list', mode='before')
+    @field_validator(
+        "set_dims_box_0_list", "set_dims_box_1_list", mode="before"
+    )
     def validate_dims_list(cls, v):
         if v is None:
             return [None, None, None]
         if not isinstance(v, list) or len(v) != 3:
-            raise ValueError("set_dims_box_X_list must be a list of three floats or None")
+            raise ValueError(
+                "set_dims_box_X_list must be a list of three floats or None"
+            )
         for x in v:
             if x is not None and x <= 0:
                 raise ValueError("All dimensions must be > 0 or None")
         return v
 
-    @field_validator('set_angle_box_0_list', 'set_angle_box_1_list', mode='before')
+    @field_validator(
+        "set_angle_box_0_list", "set_angle_box_1_list", mode="before"
+    )
     def validate_angle_list(cls, v):
         if v is None:
             return [None, None, None]
         if not isinstance(v, list) or len(v) != 3:
-            raise ValueError("set_angle_box_X_list must be a list of three ints or None")
+            raise ValueError(
+                "set_angle_box_X_list must be a list of three ints or None"
+            )
         for x in v:
             if x is not None and x != 90:
                 raise ValueError("All angles must be 90 or None")
@@ -254,16 +270,20 @@ class SimulationConfig(BaseModel):
         if v is None:
             return v
         if not isinstance(v, dict):
-            raise TypeError(f"ERROR: {field} must be a dictionary when using GCMC.")
+            raise TypeError(
+                f"ERROR: {field} must be a dictionary when using GCMC."
+            )
         # keys must be str, values must be int/float
         for k, val in v.items():
             if not isinstance(k, str):
                 raise TypeError(f"The {field} keys must be a string.")
             if not isinstance(val, (int, float)):
-                raise TypeError(f"The {field} values must be an integer or float.")
+                raise TypeError(
+                    f"The {field} values must be an integer or float."
+                )
         return v
-    
-    @model_validator(mode='after')
+
+    @model_validator(mode="after")
     def cross_field_validations(self):
         # Alias model fields to local variables
         sim = self.simulation_type
@@ -274,20 +294,20 @@ class SimulationConfig(BaseModel):
         chempot_dict = self.GCMC_ChemPot_or_Fugacity_dict
 
         # GEMC: require >0 cores on box 1 if two-box run
-        if sim == 'GEMC' and not use0:
+        if sim == "GEMC" and not use0:
             if nc1 <= 0:
                 raise ValueError(
                     "no_core_box_1 must be > 0 when running two NAMD boxes in GEMC"
                 )
 
         # NPT: pressure must be non-negative
-        if sim == 'NPT' and (pres is None or pres < 0):
+        if sim == "NPT" and (pres is None or pres < 0):
             raise ValueError(
                 "simulation_pressure_bar must be >= 0 for NPT simulations"
             )
 
         # GCMC: require chempot and dict, with valid numeric values
-        if sim == 'GCMC':
+        if sim == "GCMC":
             if chempot is None or chempot_dict is None:
                 raise ValueError(
                     "GCMC_ChemPot_or_Fugacity and its dict must be provided for GCMC simulations"
@@ -297,16 +317,12 @@ class SimulationConfig(BaseModel):
                     raise TypeError(
                         "GCMC_ChemPot_or_Fugacity_dict values must be numeric"
                     )
-                if chempot == 'Fugacity' and val < 0:
-                    raise ValueError(
-                        "Fugacity values must be >= 0"
-                    )
+                if chempot == "Fugacity" and val < 0:
+                    raise ValueError("Fugacity values must be >= 0")
         else:
             # clear GCMC fields when not using GCMC
-            object.__setattr__(self, 'GCMC_ChemPot_or_Fugacity', None)
-            object.__setattr__(
-                self, 'GCMC_ChemPot_or_Fugacity_dict', None
-            )
+            object.__setattr__(self, "GCMC_ChemPot_or_Fugacity", None)
+            object.__setattr__(self, "GCMC_ChemPot_or_Fugacity_dict", None)
 
         return self
 
@@ -323,7 +339,9 @@ class SimulationConfig(BaseModel):
             )
         return self
 
-    @field_validator("starting_ff_file_list_gomc", "starting_ff_file_list_namd", mode="after")
+    @field_validator(
+        "starting_ff_file_list_gomc", "starting_ff_file_list_namd", mode="after"
+    )
     @classmethod
     def _ensure_list_of_strings(cls, v: List[str], info):
         field = info.field_name
@@ -337,6 +355,7 @@ class SimulationConfig(BaseModel):
                     f"ERROR: The {field} must be a list of strings (item {i} is {type(item).__name__})."
                 )
         return v
+
     @model_validator(mode="after")
     def _ensemble_consistency(self):
         # --- GCMC-only checks ---
@@ -378,6 +397,7 @@ class SimulationConfig(BaseModel):
                 self.simulation_pressure_bar = 1.01325
 
         return self
+
     def __init__(self, **data):
         super().__init__(**data)
 
@@ -388,15 +408,21 @@ class SimulationConfig(BaseModel):
         # Tolerances
         object.__setattr__(self, "gomc_console_blkavg_hist_steps", gsteps)
         object.__setattr__(self, "gomc_rst_coor_ckpoint_steps", gsteps)
-        object.__setattr__(self, "gomc_hist_sample_steps", min(500, int(gsteps / 10)))
+        object.__setattr__(
+            self, "gomc_hist_sample_steps", min(500, int(gsteps / 10))
+        )
         object.__setattr__(self, "namd_rst_dcd_xst_steps", nsteps)
         object.__setattr__(self, "namd_console_blkavg_e_and_p_steps", nsteps)
-        object.__setattr__(self,"namd_minimize_steps",
-            int(int(self.namd_run_steps) * int(self.namd_minimize_mult_scalar))
+        object.__setattr__(
+            self,
+            "namd_minimize_steps",
+            int(int(self.namd_run_steps) * int(self.namd_minimize_mult_scalar)),
         )
 
         # Derive effective cores and totals (do *not* mutate the input fields)
-        if self.simulation_type == "GEMC" and (self.only_use_box_0_for_namd_for_gemc is False):
+        if self.simulation_type == "GEMC" and (
+            self.only_use_box_0_for_namd_for_gemc is False
+        ):
             eff_box1 = int(self.no_core_box_1)
             total = int(self.no_core_box_0) + eff_box1
         else:
@@ -408,10 +434,18 @@ class SimulationConfig(BaseModel):
         object.__setattr__(self, "total_no_cores", total)
 
         spc = 2  # segments per cycle: NAMD + GOMC
-        object.__setattr__(self, "total_sims_namd_gomc", spc * int(self.total_cycles_namd_gomc_sims))
-        object.__setattr__(self, "starting_sims_namd_gomc", spc * int(self.starting_at_cycle_namd_gomc_sims))
-        
-     # ---- tolerances (with defaults) ----
+        object.__setattr__(
+            self,
+            "total_sims_namd_gomc",
+            spc * int(self.total_cycles_namd_gomc_sims),
+        )
+        object.__setattr__(
+            self,
+            "starting_sims_namd_gomc",
+            spc * int(self.starting_at_cycle_namd_gomc_sims),
+        )
+
+    # ---- tolerances (with defaults) ----
     allowable_error_fraction_vdw_plus_elec: float = Field(5e-3, ge=0)
     allowable_error_fraction_potential: float = Field(5e-3, ge=0)
     max_absolute_allowable_kcal_fraction_vdw_plus_elec: float = Field(0.5, ge=0)
@@ -424,17 +458,15 @@ class SimulationConfig(BaseModel):
     namd_console_blkavg_e_and_p_steps: int = 0
 
     # Pydantic v2 configuration
-    model_config = ConfigDict(
-        populate_by_name=True,
-        extra="forbid"
-    )
+    model_config = ConfigDict(populate_by_name=True, extra="forbid")
+
 
 def load_simulation_config(path: str) -> SimulationConfig:
     """
     Load a JSON config file, stripping out // comments, and parse into SimulationConfig.
     """
     text = Path(path).read_text()
-    cleaned = re.sub(r'//.*$', '', text, flags=re.MULTILINE)
+    cleaned = re.sub(r"//.*$", "", text, flags=re.MULTILINE)
     data = json.loads(cleaned)
     return SimulationConfig(**data)
 
@@ -444,6 +476,6 @@ def main():
     # Pydantic V2: use model_dump_json for formatted output
     print(cfg.model_dump_json(indent=2))
 
+
 if __name__ == "__main__":
     main()
-    

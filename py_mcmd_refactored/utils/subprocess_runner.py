@@ -1,13 +1,12 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import threading
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-import subprocess
-import threading
-import os
-
 
 
 @dataclass(frozen=True)
@@ -31,7 +30,9 @@ class SubprocessRunner:
     def __init__(self, *, dry_run: bool = False):
         self.dry_run = bool(dry_run)
 
-    def _pump_stdout(self, pipe, primary_path: Path, mirror_path: Optional[Path]) -> None:
+    def _pump_stdout(
+        self, pipe, primary_path: Path, mirror_path: Optional[Path]
+    ) -> None:
         primary_path.parent.mkdir(parents=True, exist_ok=True)
         primary_fh = primary_path.open("wb")
         mirror_fh = None
@@ -64,15 +65,24 @@ class SubprocessRunner:
         cmd.cwd.mkdir(parents=True, exist_ok=True)
 
         if self.dry_run:
-            
+
             if cmd.stdout_path is not None and not cmd.stdout_path.exists():
                 cmd.stdout_path.parent.mkdir(parents=True, exist_ok=True)
-                cmd.stdout_path.write_text("[dry_run] subprocess not executed\n", encoding="utf-8")
+                cmd.stdout_path.write_text(
+                    "[dry_run] subprocess not executed\n", encoding="utf-8"
+                )
 
-            if cmd.stdout_disk_path is not None and not cmd.stdout_disk_path.exists():
+            if (
+                cmd.stdout_disk_path is not None
+                and not cmd.stdout_disk_path.exists()
+            ):
                 cmd.stdout_disk_path.parent.mkdir(parents=True, exist_ok=True)
-                cmd.stdout_disk_path.write_text("[dry_run] subprocess not executed\n", encoding="utf-8")
-            return ProcessHandle(pid=0, command=cmd, started_at=datetime.now(), popen=None)
+                cmd.stdout_disk_path.write_text(
+                    "[dry_run] subprocess not executed\n", encoding="utf-8"
+                )
+            return ProcessHandle(
+                pid=0, command=cmd, started_at=datetime.now(), popen=None
+            )
 
         if cmd.stdout_path is None:
             p = subprocess.Popen(
@@ -81,9 +91,13 @@ class SubprocessRunner:
                 stderr=subprocess.STDOUT,
                 text=True,
             )
-            return ProcessHandle(pid=p.pid, command=cmd, started_at=datetime.now(), popen=p)
+            return ProcessHandle(
+                pid=p.pid, command=cmd, started_at=datetime.now(), popen=p
+            )
 
-        if cmd.stdout_disk_path is None or Path(cmd.stdout_disk_path) == Path(cmd.stdout_path):
+        if cmd.stdout_disk_path is None or Path(cmd.stdout_disk_path) == Path(
+            cmd.stdout_path
+        ):
             cmd.stdout_path.parent.mkdir(parents=True, exist_ok=True)
             out_fh = cmd.stdout_path.open("w", encoding="utf-8")
             p = subprocess.Popen(
@@ -94,15 +108,25 @@ class SubprocessRunner:
                 text=True,
             )
             p._py_mcmd_out_fh = out_fh  # type: ignore[attr-defined]
-            return ProcessHandle(pid=p.pid, command=cmd, started_at=datetime.now(), popen=p)
-
+            return ProcessHandle(
+                pid=p.pid, command=cmd, started_at=datetime.now(), popen=p
+            )
 
         if cmd.stdout_fifo_path is not None:
             if self.dry_run:
-                if cmd.stdout_disk_path is not None and not cmd.stdout_disk_path.exists():
-                    cmd.stdout_disk_path.parent.mkdir(parents=True, exist_ok=True)
-                    cmd.stdout_disk_path.write_text("[dry_run] subprocess not executed\n", encoding="utf-8")
-                return ProcessHandle(pid=0, command=cmd, started_at=datetime.now(), popen=None)
+                if (
+                    cmd.stdout_disk_path is not None
+                    and not cmd.stdout_disk_path.exists()
+                ):
+                    cmd.stdout_disk_path.parent.mkdir(
+                        parents=True, exist_ok=True
+                    )
+                    cmd.stdout_disk_path.write_text(
+                        "[dry_run] subprocess not executed\n", encoding="utf-8"
+                    )
+                return ProcessHandle(
+                    pid=0, command=cmd, started_at=datetime.now(), popen=None
+                )
 
             p = subprocess.Popen(
                 cmd.argv,
@@ -113,7 +137,9 @@ class SubprocessRunner:
                 bufsize=0,
             )
 
-            def _pump_fifo(pipe, fifo_path: Path, mirror_path: Optional[Path]) -> None:
+            def _pump_fifo(
+                pipe, fifo_path: Path, mirror_path: Optional[Path]
+            ) -> None:
                 fifo_fh = None
                 mirror_fh = None
                 try:
@@ -143,12 +169,18 @@ class SubprocessRunner:
 
             pump_thread = threading.Thread(
                 target=_pump_fifo,
-                args=(p.stdout, Path(cmd.stdout_fifo_path), cmd.stdout_disk_path),
+                args=(
+                    p.stdout,
+                    Path(cmd.stdout_fifo_path),
+                    cmd.stdout_disk_path,
+                ),
                 daemon=True,
             )
             pump_thread.start()
             p._py_mcmd_pump_thread = pump_thread  # type: ignore[attr-defined]
-            return ProcessHandle(pid=p.pid, command=cmd, started_at=datetime.now(), popen=p)
+            return ProcessHandle(
+                pid=p.pid, command=cmd, started_at=datetime.now(), popen=p
+            )
         p = subprocess.Popen(
             cmd.argv,
             cwd=str(cmd.cwd),
@@ -164,7 +196,9 @@ class SubprocessRunner:
         )
         pump_thread.start()
         p._py_mcmd_pump_thread = pump_thread  # type: ignore[attr-defined]
-        return ProcessHandle(pid=p.pid, command=cmd, started_at=datetime.now(), popen=p)
+        return ProcessHandle(
+            pid=p.pid, command=cmd, started_at=datetime.now(), popen=p
+        )
 
     def wait(self, handle: ProcessHandle) -> int:
         if handle.popen is None:

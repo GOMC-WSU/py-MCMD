@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from pathlib import Path
-import pytest
 
+import pytest
 from config.models import SimulationConfig
 from engines.namd_engine import NamdEngine
-from orchestrator.state import RunState, PmeDims
+from orchestrator.state import PmeDims, RunState
 
 
 def _cfg(tmp_path: Path, **kw) -> SimulationConfig:
@@ -64,7 +64,9 @@ def _state() -> RunState:
     return st
 
 
-def _write_minimal_namd_out(out_path: Path, pot_i: float, pot_f: float, vpe_i: float, vpe_f: float) -> None:
+def _write_minimal_namd_out(
+    out_path: Path, pot_i: float, pot_f: float, vpe_i: float, vpe_f: float
+) -> None:
     """
     Minimal out.dat fixture. If your parser expects different tokens,
     tweak these lines to match get_namd_energy_data() logic.
@@ -111,7 +113,9 @@ def monkeypatch_writer(monkeypatch):
     return True
 
 
-def test_run_segment_run0_updates_step_includes_minimize(tmp_path: Path, monkeypatch_writer):
+def test_run_segment_run0_updates_step_includes_minimize(
+    tmp_path: Path, monkeypatch_writer
+):
     cfg = _cfg(tmp_path, starting_sims_namd_gomc=0)
     eng = NamdEngine(cfg, dry_run=True)
     st = _state()
@@ -126,7 +130,9 @@ def test_run_segment_run0_updates_step_includes_minimize(tmp_path: Path, monkeyp
     assert st.current_step == cfg.namd_run_steps + cfg.namd_minimize_steps
 
 
-def test_run_segment_nonzero_updates_step_without_minimize(tmp_path: Path, monkeypatch_writer):
+def test_run_segment_nonzero_updates_step_without_minimize(
+    tmp_path: Path, monkeypatch_writer
+):
     cfg = _cfg(tmp_path, starting_sims_namd_gomc=0)
     eng = NamdEngine(cfg, dry_run=True)
     st = _state()
@@ -144,8 +150,12 @@ def test_run_segment_nonzero_updates_step_without_minimize(tmp_path: Path, monke
     assert st.current_step == cfg.namd_run_steps
 
 
-def test_run_segment_skips_continuity_check_on_first_segment_after_restart(tmp_path: Path, monkeypatch, monkeypatch_writer):
-    cfg = _cfg(tmp_path, starting_sims_namd_gomc=2, starting_at_cycle_namd_gomc_sims=1)
+def test_run_segment_skips_continuity_check_on_first_segment_after_restart(
+    tmp_path: Path, monkeypatch, monkeypatch_writer
+):
+    cfg = _cfg(
+        tmp_path, starting_sims_namd_gomc=2, starting_at_cycle_namd_gomc_sims=1
+    )
     eng = NamdEngine(cfg, dry_run=True)
     st = _state()
 
@@ -165,13 +175,17 @@ def test_run_segment_skips_continuity_check_on_first_segment_after_restart(tmp_p
 
     res = eng.run_segment(run_no=2, state=st)
     out0 = Path(res["namd_box0_dir"]) / "out.dat"
-    _write_minimal_namd_out(out0, pot_i=10.0, pot_f=11.0, vpe_i=20.0, vpe_f=21.0)
+    _write_minimal_namd_out(
+        out0, pot_i=10.0, pot_f=11.0, vpe_i=20.0, vpe_f=21.0
+    )
 
     eng.run_segment(run_no=2, state=st)
     assert called["n"] == 0
 
 
-def test_run_segment_calls_continuity_check_when_expected(tmp_path: Path, monkeypatch, monkeypatch_writer):
+def test_run_segment_calls_continuity_check_when_expected(
+    tmp_path: Path, monkeypatch, monkeypatch_writer
+):
     cfg = _cfg(tmp_path, starting_sims_namd_gomc=0)
     eng = NamdEngine(cfg, dry_run=True)
     st = _state()
@@ -185,14 +199,20 @@ def test_run_segment_calls_continuity_check_when_expected(tmp_path: Path, monkey
     calls = []
     import engines.namd_engine as ne
 
-    def fake_compare(cfg_, gomc_pot_f, namd_pot_i, gomc_vpe_f, namd_vpe_i, run_no, box_number):
-        calls.append((gomc_pot_f, namd_pot_i, gomc_vpe_f, namd_vpe_i, run_no, box_number))
+    def fake_compare(
+        cfg_, gomc_pot_f, namd_pot_i, gomc_vpe_f, namd_vpe_i, run_no, box_number
+    ):
+        calls.append(
+            (gomc_pot_f, namd_pot_i, gomc_vpe_f, namd_vpe_i, run_no, box_number)
+        )
 
     monkeypatch.setattr(ne, "compare_namd_gomc_energies", fake_compare)
 
     res = eng.run_segment(run_no=2, state=st)
     out0 = Path(res["namd_box0_dir"]) / "out.dat"
-    _write_minimal_namd_out(out0, pot_i=10.0, pot_f=11.0, vpe_i=20.0, vpe_f=21.0)
+    _write_minimal_namd_out(
+        out0, pot_i=10.0, pot_f=11.0, vpe_i=20.0, vpe_f=21.0
+    )
 
     eng.run_segment(run_no=2, state=st)
 
@@ -200,7 +220,9 @@ def test_run_segment_calls_continuity_check_when_expected(tmp_path: Path, monkey
     assert calls[0][-2:] == (2, 0)  # run_no=2, box=0
 
 
-def test_run_segment_two_box_parallel_creates_both_out_files(tmp_path: Path, monkeypatch_writer):
+def test_run_segment_two_box_parallel_creates_both_out_files(
+    tmp_path: Path, monkeypatch_writer
+):
     cfg = _cfg(
         tmp_path,
         simulation_type="GEMC",

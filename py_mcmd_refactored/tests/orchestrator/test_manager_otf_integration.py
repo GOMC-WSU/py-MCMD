@@ -4,10 +4,9 @@ import threading
 from pathlib import Path
 from types import SimpleNamespace
 
-import pytest
-
-from config.models import SimulationConfig
 import orchestrator.manager as mgr
+import pytest
+from config.models import SimulationConfig
 
 
 def _cfg(
@@ -25,9 +24,7 @@ def _cfg(
         simulation_temp_k=250.0,
         simulation_pressure_bar=1.0,
         GCMC_ChemPot_or_Fugacity="ChemPot",
-        GCMC_ChemPot_or_Fugacity_dict={
-            "WAT": -2000
-        },
+        GCMC_ChemPot_or_Fugacity_dict={"WAT": -2000},
         namd_minimize_mult_scalar=1,
         namd_run_steps=10,
         gomc_run_steps=5,
@@ -52,45 +49,27 @@ def _cfg(
             90,
             90,
         ],
-        starting_ff_file_list_gomc=[
-            "ff_gomc.inp"
-        ],
-        starting_ff_file_list_namd=[
-            "ff_namd.inp"
-        ],
+        starting_ff_file_list_gomc=["ff_gomc.inp"],
+        starting_ff_file_list_namd=["ff_namd.inp"],
         starting_pdb_box_0_file="box0.pdb",
         starting_psf_box_0_file="box0.psf",
         starting_pdb_box_1_file="box1.pdb",
         starting_psf_box_1_file="box1.psf",
-        namd2_bin_directory=str(
-            tmp_path / "bin_namd"
-        ),
-        gomc_bin_directory=str(
-            tmp_path / "bin_gomc"
-        ),
-        path_namd_runs=str(
-            tmp_path / "NAMD"
-        ),
-        path_gomc_runs=str(
-            tmp_path / "GOMC"
-        ),
-        log_dir=str(
-            tmp_path / "logs"
-        ),
+        namd2_bin_directory=str(tmp_path / "bin_namd"),
+        gomc_bin_directory=str(tmp_path / "bin_gomc"),
+        path_namd_runs=str(tmp_path / "NAMD"),
+        path_gomc_runs=str(tmp_path / "GOMC"),
+        log_dir=str(tmp_path / "logs"),
         developer_mode=False,
         process_on_the_fly=False,
-        combined_data_dir=str(
-            tmp_path / "combined_data"
-        ),
+        combined_data_dir=str(tmp_path / "combined_data"),
         disk_cleanup_mode="compact",
         otf_keep_raw_cycles=1,
     )
 
     base.update(overrides)
 
-    return SimulationConfig(
-        **base
-    )
+    return SimulationConfig(**base)
 
 
 class FakeFifoStore:
@@ -115,10 +94,7 @@ class FakeFifoStore:
             )
         )
 
-        self.managed_root = (
-            namd_root.parent
-            / "managed_runtime"
-        )
+        self.managed_root = namd_root.parent / "managed_runtime"
 
     def _record(
         self,
@@ -142,20 +118,12 @@ class FakeFifoStore:
 
         endpoints = {
             "box0.out.dat": SimpleNamespace(
-                fifo_path=Path(
-                    "/tmp/box0.out.dat"
-                )
+                fifo_path=Path("/tmp/box0.out.dat")
             ),
             "box1.out.dat": SimpleNamespace(
-                fifo_path=Path(
-                    "/tmp/box1.out.dat"
-                )
+                fifo_path=Path("/tmp/box1.out.dat")
             ),
-            "out.dat": SimpleNamespace(
-                fifo_path=Path(
-                    "/tmp/out.dat"
-                )
-            ),
+            "out.dat": SimpleNamespace(fifo_path=Path("/tmp/out.dat")),
         }
 
         return SimpleNamespace(
@@ -219,26 +187,17 @@ def _patch_successful_engines(
     monkeypatch.setattr(
         orch.namd,
         "run_segment",
-        lambda *,
-        run_no,
-        state,
-        fifo_resources=None: {
-            "run_no": run_no
-        },
+        lambda *, run_no, state, fifo_resources=None: {"run_no": run_no},
         raising=True,
     )
 
     monkeypatch.setattr(
         orch.gomc,
         "run_segment",
-        lambda *,
-        run_no,
-        state,
-        fifo_resources=None: {
-            "run_no": run_no
-        },
+        lambda *, run_no, state, fifo_resources=None: {"run_no": run_no},
         raising=True,
     )
+
 
 def test_otf_processor_is_not_created_when_processing_is_disabled(
     tmp_path: Path,
@@ -254,9 +213,7 @@ def test_otf_processor_is_not_created_when_processing_is_disabled(
         *args,
         **kwargs,
     ):
-        raise AssertionError(
-            "OnTheFlyProcessor should not be constructed"
-        )
+        raise AssertionError("OnTheFlyProcessor should not be constructed")
 
     monkeypatch.setattr(
         mgr,
@@ -279,12 +236,11 @@ def test_otf_processor_is_not_created_when_processing_is_disabled(
 
     summary = orch.run()
 
-    assert (
-        summary["cycles_completed"]
-        == 2
-    )
+    assert summary["cycles_completed"] == 2
 
     assert orch._otf_processor is None
+
+
 """
 Verifies
 
@@ -296,13 +252,15 @@ GOMC 3 complete
     ↓
 process_cycle(2, 3)
 
-and 
+and
 
 all workers complete
     ↓
 processor.close()
 
 """
+
+
 def test_otf_processor_processes_each_cycle_pair_and_closes(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -323,9 +281,7 @@ def test_otf_processor_processes_each_cycle_pair_and_closes(
             *,
             managed_root=None,
         ):
-            self.combined_data_dir = (
-                combined_data_dir
-            )
+            self.combined_data_dir = combined_data_dir
             self.managed_root = managed_root
             self.processed = []
             self.seeded_steps = []
@@ -337,9 +293,7 @@ def test_otf_processor_processes_each_cycle_pair_and_closes(
             self,
             current_step,
         ):
-            self.seeded_steps.append(
-                int(current_step)
-            )
+            self.seeded_steps.append(int(current_step))
 
         def process_cycle(
             self,
@@ -397,15 +351,10 @@ def test_otf_processor_processes_each_cycle_pair_and_closes(
 
     assert processor.closed is True
 
-    assert (
-        processor.combined_data_dir
-        == cfg.combined_data_dir
-    )
+    assert processor.combined_data_dir == cfg.combined_data_dir
 
-    assert (
-        processor.managed_root
-        == orch.fifo_store.managed_root
-    )
+    assert processor.managed_root == orch.fifo_store.managed_root
+
 
 def test_otf_worker_overlaps_next_cycle_and_release_waits_for_consumption(
     tmp_path: Path,
@@ -460,9 +409,7 @@ def test_otf_worker_overlaps_next_cycle_and_release_waits_for_consumption(
             ):
                 first_started.set()
 
-                assert allow_first_finish.wait(
-                    timeout=2.0
-                )
+                assert allow_first_finish.wait(timeout=2.0)
 
             timeline.append(
                 (
@@ -473,9 +420,7 @@ def test_otf_worker_overlaps_next_cycle_and_release_waits_for_consumption(
             )
 
         def close(self):
-            timeline.append(
-                ("otf_close",)
-            )
+            timeline.append(("otf_close",))
 
     monkeypatch.setattr(
         mgr,
@@ -510,9 +455,7 @@ def test_otf_worker_overlaps_next_cycle_and_release_waits_for_consumption(
         )
 
         if run_no == 2:
-            assert first_started.wait(
-                timeout=2.0
-            )
+            assert first_started.wait(timeout=2.0)
 
             assert not any(
                 call[:3]
@@ -526,9 +469,7 @@ def test_otf_worker_overlaps_next_cycle_and_release_waits_for_consumption(
 
             allow_first_finish.set()
 
-        return {
-            "run_no": run_no
-        }
+        return {"run_no": run_no}
 
     def gomc_run(
         *,
@@ -544,9 +485,7 @@ def test_otf_worker_overlaps_next_cycle_and_release_waits_for_consumption(
             )
         )
 
-        return {
-            "run_no": run_no
-        }
+        return {"run_no": run_no}
 
     monkeypatch.setattr(
         orch.namd,
@@ -612,6 +551,7 @@ def test_otf_worker_overlaps_next_cycle_and_release_waits_for_consumption(
         "0000000001",
     ) in timeline
 
+
 """
 engine simulation succeeds
         ↓
@@ -626,6 +566,8 @@ run_succeeded stays False
 no cleanup_all()
 
 """
+
+
 def test_background_otf_failure_is_propagated_and_skips_success_cleanup(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -659,9 +601,7 @@ def test_background_otf_failure_is_propagated_and_skips_success_cleanup(
             namd_run_no,
             gomc_run_no,
         ):
-            raise RuntimeError(
-                "otf failed"
-            )
+            raise RuntimeError("otf failed")
 
         def close(self):
             self.closed = True
@@ -709,14 +649,9 @@ def test_background_otf_failure_is_propagated_and_skips_success_cleanup(
         "0000000001",
     ) in orch.fifo_store.calls
 
-    assert (
-        "cleanup_all",
-    ) not in orch.fifo_store.calls
+    assert ("cleanup_all",) not in orch.fifo_store.calls
 
-    assert not any(
-        call[0] == "release"
-        for call in orch.fifo_store.calls
-    )
+    assert not any(call[0] == "release" for call in orch.fifo_store.calls)
 
 
 def test_restart_current_step_is_seeded_into_otf_processor_before_processing(
@@ -764,9 +699,7 @@ def test_restart_current_step_is_seeded_into_otf_processor_before_processing(
             )
 
         def close(self):
-            events.append(
-                ("close",)
-            )
+            events.append(("close",))
 
     monkeypatch.setattr(
         mgr,
@@ -802,13 +735,8 @@ def test_restart_current_step_is_seeded_into_otf_processor_before_processing(
     orch.run()
 
     expected_restart_step = (
-        (
-            cfg.namd_run_steps
-            + cfg.gomc_run_steps
-        )
-        * cfg.starting_at_cycle_namd_gomc_sims
-        + cfg.namd_minimize_steps
-    )
+        cfg.namd_run_steps + cfg.gomc_run_steps
+    ) * cfg.starting_at_cycle_namd_gomc_sims + cfg.namd_minimize_steps
 
     assert events[0] == (
         "seed",

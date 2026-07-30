@@ -3,22 +3,29 @@ from __future__ import annotations
 
 import os
 
+
 def _rel(p: Path, base: Path) -> str:
     """Return a relative POSIX path from base to p (can traverse up with ..)."""
     return os.path.relpath(str(p), start=str(base)).replace("\\", "/")
 
+
 # --- update _build_parameters_block to avoid .relative_to on siblings ---
-def _build_parameters_block(params_files: Iterable[Path], relative_to: Path) -> str:
+def _build_parameters_block(
+    params_files: Iterable[Path], relative_to: Path
+) -> str:
     lines = []
     for p in params_files:
         p = Path(p)
         if p.is_absolute():
-            rel = os.path.relpath(str(p), start=str(relative_to)).replace("\\", "/")
+            rel = os.path.relpath(str(p), start=str(relative_to)).replace(
+                "\\", "/"
+            )
         else:
             # keep user-provided relative path as-is (matches legacy behavior & tests)
             rel = p.as_posix()
         lines.append(f"Parameters \t {rel}\n")
     return "".join(lines)
+
 
 # --- make XSC reader resilient to both token layouts (1,5,9) and (1,4,7) ---
 def _read_last_xsc_dims(xsc_path: Path) -> Tuple[float, float, float]:
@@ -39,30 +46,38 @@ def _read_last_xsc_dims(xsc_path: Path) -> Tuple[float, float, float]:
             return None
 
     # primary indices
-    lx = _try(1); ly = _try(5); lz = _try(9)
-    if lx is not None and ly is not None and lz is not None and (ly != 0.0 or lz != 0.0):
+    lx = _try(1)
+    ly = _try(5)
+    lz = _try(9)
+    if (
+        lx is not None
+        and ly is not None
+        and lz is not None
+        and (ly != 0.0 or lz != 0.0)
+    ):
         return lx, ly, lz
 
     # fallback indices
-    ly_fb = _try(4); lz_fb = _try(7)
+    ly_fb = _try(4)
+    lz_fb = _try(7)
     if lx is not None and ly_fb is not None and lz_fb is not None:
         return lx, ly_fb, lz_fb
 
     raise ValueError(f"Malformed XSC line in {xsc_path}: {lines[-1]!r}")
 
 
-from types import SimpleNamespace
-from pathlib import Path
 import logging
+from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
 
 from py_mcmd_refactored.engines.gomc.gomc_writer import (
-    write_gomc_conf_file,
     GOMCIOPaths,
     GOMCSimParams,
     GOMCStartFiles,
+    write_gomc_conf_file,
 )
-
-import pytest
 
 
 def _xsc(last_lx: float, last_ly: float, last_lz: float) -> str:
@@ -73,7 +88,9 @@ def _xsc(last_lx: float, last_ly: float, last_lz: float) -> str:
 
 def _pdb_cryst1(a: float, b: float, c: float) -> str:
     # Minimal CRYST1 line: indices 1,2,3 parsed as a,b,c
-    return f"CRYST1  {a:.1f} {b:.1f} {c:.1f} 90.00 90.00 90.00 P 1           1\n"
+    return (
+        f"CRYST1  {a:.1f} {b:.1f} {c:.1f} 90.00 90.00 90.00 P 1           1\n"
+    )
 
 
 def _make_cfg(
@@ -95,7 +112,12 @@ def _make_cfg(
     )
 
 
-def _write_template(path: Path, include_box1_tokens: bool, include_bin_lines: bool, include_gcmc_block: bool):
+def _write_template(
+    path: Path,
+    include_box1_tokens: bool,
+    include_bin_lines: bool,
+    include_gcmc_block: bool,
+):
     lines = []
     lines.append("all_parameter_files\n")
     lines.append("coor_box_0_file\nxsc_box_0_file\nvel_box_0_file\n")
@@ -110,7 +132,9 @@ def _write_template(path: Path, include_box1_tokens: bool, include_bin_lines: bo
         lines.append("pdb_file_box_1_file\npsf_file_box_1_file\n")
         lines.append("x_dim_box_1\ny_dim_box_1\nz_dim_box_1\n")
     lines.append("restart_true_or_false\n")
-    lines.append("GOMC_Run_Steps\nGOMC_RST_Coor_CKpoint_Steps\nGOMC_console_BLKavg_Hist_Steps\nGOMC_Hist_sample_Steps\n")
+    lines.append(
+        "GOMC_Run_Steps\nGOMC_RST_Coor_CKpoint_Steps\nGOMC_console_BLKavg_Hist_Steps\nGOMC_Hist_sample_Steps\n"
+    )
     lines.append("System_temp_set\nSystem_press_set\n")
     lines.append("GOMC_Equilb_Steps\nGOMC_Adj_Steps\n")
     lines.append("Restart_Checkpoint_file\n")
@@ -120,12 +144,19 @@ def _write_template(path: Path, include_box1_tokens: bool, include_bin_lines: bo
     path.write_text("".join(lines))
 
 
-def test_fresh_npt_writes_config(tmp_path: Path, caplog: pytest.LogCaptureFixture):
+def test_fresh_npt_writes_config(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+):
     caplog.set_level(logging.INFO)
 
     proj = tmp_path / "proj"
     tpl = proj / "templates" / "gomc.tpl"
-    _write_template(tpl, include_box1_tokens=False, include_bin_lines=False, include_gcmc_block=False)
+    _write_template(
+        tpl,
+        include_box1_tokens=False,
+        include_bin_lines=False,
+        include_gcmc_block=False,
+    )
 
     # dirs and files
     namd0 = proj / "NAMD" / "0000000001_a"
@@ -135,10 +166,15 @@ def test_fresh_npt_writes_config(tmp_path: Path, caplog: pytest.LogCaptureFixtur
     (namd0 / "namdOut.restart.vel").write_text("vel")
 
     # starting pdb/psf
-    pdb0 = proj / "inputs" / "box0.pdb";   pdb0.parent.mkdir(parents=True, exist_ok=True); pdb0.write_text(_pdb_cryst1(40, 50, 60))
-    psf0 = proj / "inputs" / "box0.psf";   psf0.write_text("psf0")
-    pdb1 = proj / "inputs" / "box1.pdb";   pdb1.write_text(_pdb_cryst1(70, 80, 90))
-    psf1 = proj / "inputs" / "box1.psf";   psf1.write_text("psf1")
+    pdb0 = proj / "inputs" / "box0.pdb"
+    pdb0.parent.mkdir(parents=True, exist_ok=True)
+    pdb0.write_text(_pdb_cryst1(40, 50, 60))
+    psf0 = proj / "inputs" / "box0.psf"
+    psf0.write_text("psf0")
+    pdb1 = proj / "inputs" / "box1.pdb"
+    pdb1.write_text(_pdb_cryst1(70, 80, 90))
+    psf1 = proj / "inputs" / "box1.psf"
+    psf1.write_text("psf1")
 
     # params (relative paths to avoid absolute resolution issues)
     (proj / "params").mkdir(exist_ok=True)
@@ -177,8 +213,12 @@ def test_fresh_npt_writes_config(tmp_path: Path, caplog: pytest.LogCaptureFixtur
     # assert "Parameters \t params/par2.prm" in conf
     import os
 
-    expected_par1 = os.path.relpath(proj / "params" / "par1.prm", out_dir).replace(os.sep, "/")
-    expected_par2 = os.path.relpath(proj / "params" / "par2.prm", out_dir).replace(os.sep, "/")
+    expected_par1 = os.path.relpath(
+        proj / "params" / "par1.prm", out_dir
+    ).replace(os.sep, "/")
+    expected_par2 = os.path.relpath(
+        proj / "params" / "par2.prm", out_dir
+    ).replace(os.sep, "/")
 
     assert f"Parameters \t {expected_par1}" in conf
     assert f"Parameters \t {expected_par2}" in conf
@@ -202,21 +242,34 @@ def test_fresh_npt_writes_config(tmp_path: Path, caplog: pytest.LogCaptureFixtur
 def test_gemc_box0_only_fresh_strips_box1_and_uses_pdb_dims(tmp_path: Path):
     proj = tmp_path / "proj"
     tpl = proj / "templates" / "gomc.tpl"
-    _write_template(tpl, include_box1_tokens=True, include_bin_lines=True, include_gcmc_block=False)
+    _write_template(
+        tpl,
+        include_box1_tokens=True,
+        include_bin_lines=True,
+        include_gcmc_block=False,
+    )
 
     # NAMD box 0
-    namd0 = proj / "NAMD" / "0000000002_a"; namd0.mkdir(parents=True)
+    namd0 = proj / "NAMD" / "0000000002_a"
+    namd0.mkdir(parents=True)
     (namd0 / "namdOut.restart.xsc").write_text(_xsc(11.0, 21.0, 31.0))
     (namd0 / "namdOut.restart.coor").write_text("c")
     (namd0 / "namdOut.restart.vel").write_text("v")
 
     # starting PDB/PSF (box1 PDB provides dims)
-    pdb0 = proj / "inputs" / "b0.pdb"; pdb0.parent.mkdir(parents=True, exist_ok=True); pdb0.write_text(_pdb_cryst1(101, 102, 103))
-    psf0 = proj / "inputs" / "b0.psf"; psf0.write_text("psf0")
-    pdb1 = proj / "inputs" / "b1.pdb"; pdb1.write_text(_pdb_cryst1(41, 51, 61))
-    psf1 = proj / "inputs" / "b1.psf"; psf1.write_text("psf1")
+    pdb0 = proj / "inputs" / "b0.pdb"
+    pdb0.parent.mkdir(parents=True, exist_ok=True)
+    pdb0.write_text(_pdb_cryst1(101, 102, 103))
+    psf0 = proj / "inputs" / "b0.psf"
+    psf0.write_text("psf0")
+    pdb1 = proj / "inputs" / "b1.pdb"
+    pdb1.write_text(_pdb_cryst1(41, 51, 61))
+    psf1 = proj / "inputs" / "b1.psf"
+    psf1.write_text("psf1")
 
-    cfg = _make_cfg(simulation_type="GEMC", only_use_box_0_for_namd_for_gemc=True)
+    cfg = _make_cfg(
+        simulation_type="GEMC", only_use_box_0_for_namd_for_gemc=True
+    )
     io = GOMCIOPaths(
         python_file_directory=proj,
         path_gomc_runs=Path("GOMC"),
@@ -226,7 +279,12 @@ def test_gemc_box0_only_fresh_strips_box1_and_uses_pdb_dims(tmp_path: Path):
         previous_gomc_dir=None,
     )
     sim = GOMCSimParams(1000, 100, 50, 25, 300.0, 1.0)
-    starts = GOMCStartFiles(pdb0.relative_to(proj), pdb1.relative_to(proj), psf0.relative_to(proj), psf1.relative_to(proj))
+    starts = GOMCStartFiles(
+        pdb0.relative_to(proj),
+        pdb1.relative_to(proj),
+        psf0.relative_to(proj),
+        psf1.relative_to(proj),
+    )
 
     out_dir = write_gomc_conf_file(cfg, io, run_no=2, sim=sim, starts=starts)
     conf = (out_dir / "in.conf").read_text()
@@ -249,27 +307,37 @@ def test_gemc_box0_only_fresh_strips_box1_and_uses_pdb_dims(tmp_path: Path):
 def test_gemc_both_boxes_from_namd(tmp_path: Path):
     proj = tmp_path / "proj"
     tpl = proj / "templates" / "gomc.tpl"
-    _write_template(tpl, include_box1_tokens=True, include_bin_lines=False, include_gcmc_block=False)
+    _write_template(
+        tpl,
+        include_box1_tokens=True,
+        include_bin_lines=False,
+        include_gcmc_block=False,
+    )
 
     # NAMD boxes
-    namd0 = proj / "NAMD" / "0000000003_a"; namd0.mkdir(parents=True)
+    namd0 = proj / "NAMD" / "0000000003_a"
+    namd0.mkdir(parents=True)
     (namd0 / "namdOut.restart.xsc").write_text(_xsc(12.0, 22.0, 32.0))
     (namd0 / "namdOut.restart.coor").write_text("c")
     (namd0 / "namdOut.restart.vel").write_text("v")
 
-    namd1 = proj / "NAMD" / "0000000003_b"; namd1.mkdir(parents=True)
+    namd1 = proj / "NAMD" / "0000000003_b"
+    namd1.mkdir(parents=True)
     (namd1 / "namdOut.restart.xsc").write_text(_xsc(13.0, 23.0, 33.0))
     (namd1 / "namdOut.restart.coor").write_text("c")
     (namd1 / "namdOut.restart.vel").write_text("v")
 
     # starting files
-    inputs = proj / "inputs"; inputs.mkdir(parents=True, exist_ok=True)
+    inputs = proj / "inputs"
+    inputs.mkdir(parents=True, exist_ok=True)
     (inputs / "b0.pdb").write_text(_pdb_cryst1(1, 2, 3))
     (inputs / "b1.pdb").write_text(_pdb_cryst1(4, 5, 6))
     (inputs / "b0.psf").write_text("psf0")
     (inputs / "b1.psf").write_text("psf1")
 
-    cfg = _make_cfg(simulation_type="GEMC", only_use_box_0_for_namd_for_gemc=False)
+    cfg = _make_cfg(
+        simulation_type="GEMC", only_use_box_0_for_namd_for_gemc=False
+    )
     io = GOMCIOPaths(
         python_file_directory=proj,
         path_gomc_runs=Path("GOMC"),
@@ -279,7 +347,12 @@ def test_gemc_both_boxes_from_namd(tmp_path: Path):
         previous_gomc_dir=None,
     )
     sim = GOMCSimParams(2000, 200, 100, 50, 310.0, 1.5)
-    starts = GOMCStartFiles(Path("inputs/b0.pdb"), Path("inputs/b1.pdb"), Path("inputs/b0.psf"), Path("inputs/b1.psf"))
+    starts = GOMCStartFiles(
+        Path("inputs/b0.pdb"),
+        Path("inputs/b1.pdb"),
+        Path("inputs/b0.psf"),
+        Path("inputs/b1.psf"),
+    )
 
     out_dir = write_gomc_conf_file(cfg, io, run_no=3, sim=sim, starts=starts)
     conf = (out_dir / "in.conf").read_text()
@@ -295,21 +368,31 @@ def test_gemc_both_boxes_from_namd(tmp_path: Path):
 def test_gcmc_restart_with_chempot_and_prev_gomc(tmp_path: Path):
     proj = tmp_path / "proj"
     tpl = proj / "templates" / "gomc.tpl"
-    _write_template(tpl, include_box1_tokens=True, include_bin_lines=False, include_gcmc_block=True)
+    _write_template(
+        tpl,
+        include_box1_tokens=True,
+        include_bin_lines=False,
+        include_gcmc_block=True,
+    )
 
     # NAMD box0
-    namd0 = proj / "NAMD" / "0000000004_a"; namd0.mkdir(parents=True)
+    namd0 = proj / "NAMD" / "0000000004_a"
+    namd0.mkdir(parents=True)
     (namd0 / "namdOut.restart.xsc").write_text(_xsc(14.0, 24.0, 34.0))
     (namd0 / "namdOut.restart.coor").write_text("c")
     (namd0 / "namdOut.restart.vel").write_text("v")
 
     # Previous GOMC dir with BOX_1 xsc and restart.chk
-    prev_gomc = proj / "GOMC" / "0000000003"; prev_gomc.mkdir(parents=True)
-    (prev_gomc / "Output_data_BOX_1_restart.xsc").write_text(_xsc(44.0, 54.0, 64.0))
+    prev_gomc = proj / "GOMC" / "0000000003"
+    prev_gomc.mkdir(parents=True)
+    (prev_gomc / "Output_data_BOX_1_restart.xsc").write_text(
+        _xsc(44.0, 54.0, 64.0)
+    )
     (prev_gomc / "Output_data_restart.chk").write_text("chk")
 
     # starting files
-    inputs = proj / "inputs"; inputs.mkdir(parents=True, exist_ok=True)
+    inputs = proj / "inputs"
+    inputs.mkdir(parents=True, exist_ok=True)
     (inputs / "b0.pdb").write_text(_pdb_cryst1(1, 2, 3))
     (inputs / "b1.pdb").write_text(_pdb_cryst1(4, 5, 6))
     (inputs / "b0.psf").write_text("psf0")
@@ -327,11 +410,16 @@ def test_gcmc_restart_with_chempot_and_prev_gomc(tmp_path: Path):
         path_gomc_runs=Path("GOMC"),
         path_gomc_template=tpl.relative_to(proj),
         namd_box_0_dir=namd0,
-        namd_box_1_dir=None,              # not needed in this branch
+        namd_box_1_dir=None,  # not needed in this branch
         previous_gomc_dir=prev_gomc,
     )
     sim = GOMCSimParams(1200, 120, 60, 30, 298.0, 1.0)
-    starts = GOMCStartFiles(Path("inputs/b0.pdb"), Path("inputs/b1.pdb"), Path("inputs/b0.psf"), Path("inputs/b1.psf"))
+    starts = GOMCStartFiles(
+        Path("inputs/b0.pdb"),
+        Path("inputs/b1.pdb"),
+        Path("inputs/b0.psf"),
+        Path("inputs/b1.psf"),
+    )
 
     out_dir = write_gomc_conf_file(cfg, io, run_no=4, sim=sim, starts=starts)
     conf = (out_dir / "in.conf").read_text()
@@ -358,7 +446,10 @@ def test_gcmc_restart_with_chempot_and_prev_gomc(tmp_path: Path):
 
 
 def test_gomc_writer_rewrites_relative_parameter_paths_to_run_dir(tmp_path):
-    from py_mcmd_refactored.engines.gomc.gomc_writer import _build_parameters_block
+    from py_mcmd_refactored.engines.gomc.gomc_writer import (
+        _build_parameters_block,
+    )
+
     proj = tmp_path / "proj"
     proj.mkdir()
 
@@ -380,10 +471,16 @@ def test_gomc_writer_rewrites_relative_parameter_paths_to_run_dir(tmp_path):
     assert block.strip().split()[-1] == expected
     assert expected.startswith("../")
 
+
 def test_restart_missing_checkpoint_is_allowed_in_dry_run(tmp_path: Path):
     proj = tmp_path / "proj"
     tpl = proj / "templates" / "gomc.tpl"
-    _write_template(tpl, include_box1_tokens=False, include_bin_lines=False, include_gcmc_block=False)
+    _write_template(
+        tpl,
+        include_box1_tokens=False,
+        include_bin_lines=False,
+        include_gcmc_block=False,
+    )
 
     namd0 = proj / "NAMD" / "0000000002_a"
     namd0.mkdir(parents=True)
@@ -393,7 +490,9 @@ def test_restart_missing_checkpoint_is_allowed_in_dry_run(tmp_path: Path):
 
     prev_gomc = proj / "GOMC" / "0000000001"
     prev_gomc.mkdir(parents=True)
-    (prev_gomc / "Output_data_BOX_0_restart.pdb").write_text(_pdb_cryst1(10, 20, 30))
+    (prev_gomc / "Output_data_BOX_0_restart.pdb").write_text(
+        _pdb_cryst1(10, 20, 30)
+    )
     (prev_gomc / "Output_data_BOX_0_restart.psf").write_text("psf")
     # intentionally do NOT create Output_data_restart.chk
 
@@ -415,11 +514,15 @@ def test_restart_missing_checkpoint_is_allowed_in_dry_run(tmp_path: Path):
     )
     sim = GOMCSimParams(20, 20, 20, 2, 250.0, 1.0)
     starts = GOMCStartFiles(
-        Path("inputs/b0.pdb"), Path("inputs/b1.pdb"),
-        Path("inputs/b0.psf"), Path("inputs/b1.psf"),
+        Path("inputs/b0.pdb"),
+        Path("inputs/b1.pdb"),
+        Path("inputs/b0.psf"),
+        Path("inputs/b1.psf"),
     )
 
-    out_dir = write_gomc_conf_file(cfg, io, run_no=3, sim=sim, starts=starts, dry_run=True)
+    out_dir = write_gomc_conf_file(
+        cfg, io, run_no=3, sim=sim, starts=starts, dry_run=True
+    )
     conf = (out_dir / "in.conf").read_text()
 
     assert "false Output_data_restart.chk" in conf
@@ -458,6 +561,7 @@ def _write_restart_routing_template(path: Path) -> None:
         "mu_ChemPot_K_or_P_Fugacitiy_bar_all\n"
     )
 
+
 def _prepare_restart_routing_inputs(proj: Path):
     inputs = proj / "inputs"
     inputs.mkdir(parents=True, exist_ok=True)
@@ -490,12 +594,11 @@ def _prepare_namd_restart_dir(
     namd_dir.mkdir(parents=True, exist_ok=True)
 
     (namd_dir / "namdOut.restart.coor").write_text("coor")
-    (namd_dir / "namdOut.restart.xsc").write_text(
-        _xsc(*dims)
-    )
+    (namd_dir / "namdOut.restart.xsc").write_text(_xsc(*dims))
     (namd_dir / "namdOut.restart.vel").write_text("vel")
 
     return namd_dir
+
 
 @pytest.mark.parametrize(
     (
@@ -530,9 +633,7 @@ def test_first_cycle_gcmc_and_one_box_gemc_strip_all_binary_restart_lines(
 
     cfg = _make_cfg(
         simulation_type=simulation_type,
-        only_use_box_0_for_namd_for_gemc=(
-            only_use_box_0_for_namd_for_gemc
-        ),
+        only_use_box_0_for_namd_for_gemc=(only_use_box_0_for_namd_for_gemc),
     )
     io = GOMCIOPaths(
         python_file_directory=proj,
@@ -574,6 +675,7 @@ def test_first_cycle_gcmc_and_one_box_gemc_strip_all_binary_restart_lines(
 
     assert "Restart false" in conf
 
+
 def test_subsequent_gcmc_uses_box1_restart_without_velocity_file(
     tmp_path: Path,
 ):
@@ -591,30 +693,15 @@ def test_subsequent_gcmc_uses_box1_restart_without_velocity_file(
     prev_gomc = proj / "GOMC" / "0000000001"
     prev_gomc.mkdir(parents=True)
 
-    (
-        prev_gomc
-        / "Output_data_BOX_1_restart.coor"
-    ).write_text("coor")
-    (
-        prev_gomc
-        / "Output_data_BOX_1_restart.xsc"
-    ).write_text(
+    (prev_gomc / "Output_data_BOX_1_restart.coor").write_text("coor")
+    (prev_gomc / "Output_data_BOX_1_restart.xsc").write_text(
         _xsc(42.0, 52.0, 62.0)
     )
-    (
-        prev_gomc
-        / "Output_data_BOX_1_restart.pdb"
-    ).write_text(
+    (prev_gomc / "Output_data_BOX_1_restart.pdb").write_text(
         _pdb_cryst1(42, 52, 62)
     )
-    (
-        prev_gomc
-        / "Output_data_BOX_1_restart.psf"
-    ).write_text("psf1")
-    (
-        prev_gomc
-        / "Output_data_restart.chk"
-    ).write_text("chk")
+    (prev_gomc / "Output_data_BOX_1_restart.psf").write_text("psf1")
+    (prev_gomc / "Output_data_restart.chk").write_text("chk")
 
     # Intentionally no Output_data_BOX_1_restart.vel.
 
@@ -674,6 +761,7 @@ def test_subsequent_gcmc_uses_box1_restart_without_velocity_file(
 
     assert "Restart true" in conf
 
+
 def test_first_cycle_two_box_gemc_uses_starting_box1_pdb_psf(
     tmp_path: Path,
 ):
@@ -732,29 +820,18 @@ def test_first_cycle_two_box_gemc_uses_starting_box1_pdb_psf(
     )
 
     assert "binCoordinates 0" in conf
-    assert (
-        "NAMD/0000000000_a/namdOut.restart.coor"
-        in conf
-    )
+    assert "NAMD/0000000000_a/namdOut.restart.coor" in conf
 
     assert "binCoordinates 1" in conf
-    assert (
-        "NAMD/0000000000_b/namdOut.restart.coor"
-        in conf
-    )
-    assert (
-        "NAMD/0000000000_b/namdOut.restart.xsc"
-        in conf
-    )
-    assert (
-        "NAMD/0000000000_b/namdOut.restart.vel"
-        in conf
-    )
+    assert "NAMD/0000000000_b/namdOut.restart.coor" in conf
+    assert "NAMD/0000000000_b/namdOut.restart.xsc" in conf
+    assert "NAMD/0000000000_b/namdOut.restart.vel" in conf
 
     assert f"Coordinates 1 {expected_pdb1}" in conf
     assert f"Structure 1 {expected_psf1}" in conf
 
     assert "Restart true" in conf
+
 
 def test_subsequent_two_box_gemc_uses_previous_gomc_box1_pdb_psf(
     tmp_path: Path,
@@ -778,30 +855,15 @@ def test_subsequent_two_box_gemc_uses_previous_gomc_box1_pdb_psf(
     prev_gomc = proj / "GOMC" / "0000000001"
     prev_gomc.mkdir(parents=True)
 
-    (
-        prev_gomc
-        / "Output_data_BOX_0_restart.pdb"
-    ).write_text(
+    (prev_gomc / "Output_data_BOX_0_restart.pdb").write_text(
         _pdb_cryst1(15, 25, 35)
     )
-    (
-        prev_gomc
-        / "Output_data_BOX_0_restart.psf"
-    ).write_text("psf0")
-    (
-        prev_gomc
-        / "Output_data_BOX_1_restart.pdb"
-    ).write_text(
+    (prev_gomc / "Output_data_BOX_0_restart.psf").write_text("psf0")
+    (prev_gomc / "Output_data_BOX_1_restart.pdb").write_text(
         _pdb_cryst1(16, 26, 36)
     )
-    (
-        prev_gomc
-        / "Output_data_BOX_1_restart.psf"
-    ).write_text("psf1")
-    (
-        prev_gomc
-        / "Output_data_restart.chk"
-    ).write_text("chk")
+    (prev_gomc / "Output_data_BOX_1_restart.psf").write_text("psf1")
+    (prev_gomc / "Output_data_restart.chk").write_text("chk")
 
     cfg = _make_cfg(
         simulation_type="GEMC",
@@ -841,18 +903,9 @@ def test_subsequent_two_box_gemc_uses_previous_gomc_box1_pdb_psf(
         out_dir,
     )
 
-    assert (
-        "NAMD/0000000002_b/namdOut.restart.coor"
-        in conf
-    )
-    assert (
-        "NAMD/0000000002_b/namdOut.restart.xsc"
-        in conf
-    )
-    assert (
-        "NAMD/0000000002_b/namdOut.restart.vel"
-        in conf
-    )
+    assert "NAMD/0000000002_b/namdOut.restart.coor" in conf
+    assert "NAMD/0000000002_b/namdOut.restart.xsc" in conf
+    assert "NAMD/0000000002_b/namdOut.restart.vel" in conf
 
     assert f"Coordinates 1 {expected_pdb1}" in conf
     assert f"Structure 1 {expected_psf1}" in conf

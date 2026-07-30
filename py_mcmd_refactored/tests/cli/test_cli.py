@@ -1,18 +1,20 @@
 # tests/test_cli.py
 
 import sys
+
 sys.path.insert(0, "/home/arsalan/wsu-gomc/py-MCMD-hm/py_mcmd_refactored")
 
-import pytest
-
-import os
 import logging
+import os
 
+import pytest
 from cli.main import parse_args
+
 
 def test_main_overrides_config_namd_simulation_order(tmp_path, monkeypatch):
     """Ensure cli.main.main() applies CLI override to SimulationConfig."""
     import json
+
     import cli.main as cli_main
 
     # Valid config JSON WITHOUT namd_simulation_order (so default would be "series")
@@ -61,7 +63,13 @@ def test_main_overrides_config_namd_simulation_order(tmp_path, monkeypatch):
     monkeypatch.setattr(
         cli_main.sys,
         "argv",
-        ["py-mcmd", "--file", str(config_file), "--namd_simulation_order", "parallel"],
+        [
+            "py-mcmd",
+            "--file",
+            str(config_file),
+            "--namd_simulation_order",
+            "parallel",
+        ],
     )
 
     cli_main.main()
@@ -77,7 +85,9 @@ def test_parse_args_valid_file_and_order(tmp_path, caplog):
 
     # Act: parse args with existing file and valid order
     caplog.set_level(logging.INFO)
-    args = parse_args(["--file", str(config_file), "--namd_simulation_order", "parallel"])
+    args = parse_args(
+        ["--file", str(config_file), "--namd_simulation_order", "parallel"]
+    )
 
     # Assert: args values and INFO logs
     assert args.file == str(config_file)
@@ -93,11 +103,16 @@ def test_parse_args_default_order_on_invalid(tmp_path, caplog):
 
     # Act: parse args with invalid order
     caplog.set_level(logging.WARNING)
-    args = parse_args(["--file", str(config_file), "--namd_simulation_order", "invalid_order"])
+    args = parse_args(
+        ["--file", str(config_file), "--namd_simulation_order", "invalid_order"]
+    )
 
     # Assert: default to 'series' and emit WARNING
     assert args.namd_simulation_order == "series"
-    assert "defaulting to <series>" in caplog.text or "defaulting to <series>." in caplog.text
+    assert (
+        "defaulting to <series>" in caplog.text
+        or "defaulting to <series>." in caplog.text
+    )
 
 
 def test_parse_args_exit_on_missing_file(tmp_path):
@@ -108,5 +123,3 @@ def test_parse_args_exit_on_missing_file(tmp_path):
     with pytest.raises(SystemExit) as exc_info:
         parse_args(["--file", str(nonexist)])
     assert exc_info.value.code == 1
-
-

@@ -11,7 +11,6 @@ from typing import Iterable, Optional, TextIO
 from utils.fifo_store import _discover_managed_root
 from utils.path import format_cycle_id
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -99,6 +98,7 @@ def _parse_namd_log(
 
     return e_titles, e_titles_density, rows, last_ts
 
+
 def _parse_gomc_log(
     lines: Iterable[str],
     box_no: int,
@@ -140,11 +140,7 @@ def _parse_gomc_log(
             raw_values: list[str] = []
 
             for index, value in enumerate(values):
-                title = (
-                    e_titles[index]
-                    if index < len(e_titles)
-                    else ""
-                )
+                title = e_titles[index] if index < len(e_titles) else ""
 
                 if title == "ETITLE:":
                     row.append(value)
@@ -153,9 +149,7 @@ def _parse_gomc_log(
 
                 elif title == "STEP":
                     try:
-                        normalized = str(
-                            int(value) + int(current_step)
-                        )
+                        normalized = str(int(value) + int(current_step))
                     except ValueError:
                         normalized = value
 
@@ -168,9 +162,7 @@ def _parse_gomc_log(
                         numeric = float(value)
 
                         row.append(str(numeric))
-                        kcal_row.append(
-                            str(numeric * K_TO_KCAL_MOL)
-                        )
+                        kcal_row.append(str(numeric * K_TO_KCAL_MOL))
                         raw_values.append(str(numeric))
 
                     except ValueError:
@@ -208,11 +200,7 @@ def _parse_gomc_log(
             raw_values: list[str] = []
 
             for index, value in enumerate(values):
-                title = (
-                    stat_titles[index]
-                    if index < len(stat_titles)
-                    else ""
-                )
+                title = stat_titles[index] if index < len(stat_titles) else ""
 
                 if title == "STITLE:":
                     stat_row.append(value)
@@ -220,9 +208,7 @@ def _parse_gomc_log(
 
                 elif title == "STEP":
                     try:
-                        normalized = str(
-                            int(value) + int(current_step)
-                        )
+                        normalized = str(int(value) + int(current_step))
                     except ValueError:
                         normalized = value
 
@@ -254,19 +240,13 @@ def _parse_gomc_log(
 
             for index in range(2, len(stat_row)):
                 value = stat_row[index]
-                title = (
-                    stat_titles[index]
-                    if index < len(stat_titles)
-                    else ""
-                )
+                title = stat_titles[index] if index < len(stat_titles) else ""
 
                 merged.append(value)
 
                 if title == "TOT_DENSITY":
                     try:
-                        merged_kcal.append(
-                            str(float(value) / 1000.0)
-                        )
+                        merged_kcal.append(str(float(value) / 1000.0))
                     except ValueError:
                         merged_kcal.append(value)
 
@@ -283,32 +263,18 @@ def _parse_gomc_log(
 
             pending_energy = None
 
-    merged_titles = (
-        list(e_titles[1:])
-        if e_titles
-        else []
-    )
+    merged_titles = list(e_titles[1:]) if e_titles else []
 
-    kcal_titles = (
-        list(e_titles[1:])
-        if e_titles
-        else []
-    )
+    kcal_titles = list(e_titles[1:]) if e_titles else []
 
     if stat_titles:
         merged_titles.extend(stat_titles[2:])
         kcal_titles.extend(stat_titles[2:])
 
-    if (
-        merged_titles
-        and not merged_titles[0].startswith("#")
-    ):
+    if merged_titles and not merged_titles[0].startswith("#"):
         merged_titles[0] = f"#{merged_titles[0]}"
 
-    if (
-        kcal_titles
-        and not kcal_titles[0].startswith("#")
-    ):
+    if kcal_titles and not kcal_titles[0].startswith("#"):
         kcal_titles[0] = f"#{kcal_titles[0]}"
 
     return (
@@ -320,6 +286,7 @@ def _parse_gomc_log(
         raw_lines,
         last_step,
     )
+
 
 # Module-level cache for which CPU core catdcd should be pinned to.
 # Set once by the processor based on NAMD's core count. catdcd is pinned
@@ -376,6 +343,7 @@ def _append_dcd(
     # normally, just without pinning.
     if _CATDCD_CORE is not None:
         import shutil as _shutil
+
         if _shutil.which("taskset"):
             command = ["taskset", "-c", str(_CATDCD_CORE)] + command
 
@@ -412,14 +380,16 @@ def _append_dcd(
         )
         tmp.unlink(missing_ok=True)
         return False
+
+
 class OnTheFlyProcessor:
     """
-        Append newly parsed NAMD/GOMC rows to combined outputs per cycle.
+    Append newly parsed NAMD/GOMC rows to combined outputs per cycle.
 
-        processing
-        trajectory handling
-        artifact preservation
-        combined-output formatting
+    processing
+    trajectory handling
+    artifact preservation
+    combined-output formatting
     """
 
     def __init__(
@@ -450,13 +420,9 @@ class OnTheFlyProcessor:
 
         # self._current_step = 0
 
-        self.sim_type = str(
-            cfg.simulation_type
-        ).upper()
+        self.sim_type = str(cfg.simulation_type).upper()
 
-        self._managed_root = _discover_managed_root(
-            managed_root
-        )
+        self._managed_root = _discover_managed_root(managed_root)
 
         # Pin catdcd to the CPU core specified in the JSON (catdcd_core),
         # so the per-cycle DCD combine does not steal CPU from NAMD's
@@ -475,19 +441,16 @@ class OnTheFlyProcessor:
                 chosen_core = int(catdcd_core)
             elif enable_affinity:
                 # Derive the core from NAMD's range + reserved offset
-                namd_cores = int(getattr(cfg, "no_core_box_0", 1)) + \
-                    int(getattr(cfg, "no_core_box_1", 0))
+                namd_cores = int(getattr(cfg, "no_core_box_0", 1)) + int(
+                    getattr(cfg, "no_core_box_1", 0)
+                )
                 chosen_core = namd_cores  # first core past NAMD's range
 
             if chosen_core is not None:
                 _set_catdcd_core(chosen_core)
-                logger.info(
-                    "[OnTheFly] catdcd pinned to core %d", chosen_core
-                )
+                logger.info("[OnTheFly] catdcd pinned to core %d", chosen_core)
             else:
-                logger.info(
-                    "[OnTheFly] catdcd runs without CPU pinning."
-                )
+                logger.info("[OnTheFly] catdcd runs without CPU pinning.")
         except Exception as _exc:
             logger.warning(
                 "[OnTheFly] Could not set catdcd CPU affinity: %s", _exc
@@ -512,13 +475,16 @@ class OnTheFlyProcessor:
             )
         )
 
-        self.combine_gomc_dcd = bool(
-            getattr(
-                cfg,
-                "combine_gomc_dcd_file",
-                True,
+        self.combine_gomc_dcd = (
+            bool(
+                getattr(
+                    cfg,
+                    "combine_gomc_dcd_file",
+                    True,
+                )
             )
-        ) and self.sim_type != "GCMC"
+            and self.sim_type != "GCMC"
+        )
 
         self._current_step = 0
 
@@ -550,41 +516,30 @@ class OnTheFlyProcessor:
             "gomc1_stitle": False,
         }
 
-        self._namd_log_fh = self._open_append(
-            "NAMD_data_box_0.txt"
-        )
+        self._namd_log_fh = self._open_append("NAMD_data_box_0.txt")
 
         self._gomc_log_fh = {
-            0: self._open_append(
-                "GOMC_data_box_0.txt"
-            ),
+            0: self._open_append("GOMC_data_box_0.txt"),
             1: None,
         }
 
         if self.sim_type in {"GEMC", "GCMC"}:
-            self._gomc_log_fh[1] = self._open_append(
-                "GOMC_data_box_1.txt"
-            )
+            self._gomc_log_fh[1] = self._open_append("GOMC_data_box_1.txt")
 
         self._combined_fh = self._open_append(
             "combined_NAMD_GOMC_data_box_0.txt"
         )
 
-        self._namd_density_fh = self._open_append(
-            "NAMD_data_density_box_0.txt"
-        )
+        self._namd_density_fh = self._open_append("NAMD_data_density_box_0.txt")
 
-        self._gomc_stat_fh = self._open_append(
-            "GOMC_Energies_Stat_box_0.txt"
-        )
+        self._gomc_stat_fh = self._open_append("GOMC_Energies_Stat_box_0.txt")
 
         self._gomc_kcal_fh = self._open_append(
             "GOMC_Energies_Stat_kcal_per_mol_box_0.txt"
         )
 
         logger.info(
-            "[OnTheFly] Initialized core processor. "
-            "Output dir: %s",
+            "[OnTheFly] Initialized core processor. " "Output dir: %s",
             self.combined_dir,
         )
 
@@ -592,10 +547,7 @@ class OnTheFlyProcessor:
         self,
         basename: str,
     ) -> TextIO:
-        return (
-            self.combined_dir
-            / basename
-        ).open(
+        return (self.combined_dir / basename).open(
             "a",
             encoding="utf-8",
             buffering=1,
@@ -606,58 +558,34 @@ class OnTheFlyProcessor:
         run_no: int,
         box: int = 0,
     ) -> Path:
-        suffix = (
-            "a"
-            if box == 0
-            else "b"
-        )
+        suffix = "a" if box == 0 else "b"
 
-        return (
-            self.namd_root
-            / (
-                f"{format_cycle_id(run_no, 10)}"
-                f"_{suffix}"
-            )
-        )
+        return self.namd_root / (f"{format_cycle_id(run_no, 10)}" f"_{suffix}")
 
     def _gomc_dir(
         self,
         run_no: int,
     ) -> Path:
-        return (
-            self.gomc_root
-            / format_cycle_id(run_no, 10)
-        )
+        return self.gomc_root / format_cycle_id(run_no, 10)
 
     def _runtime_namd_dir(
         self,
         run_no: int,
         box: int = 0,
     ) -> Path:
-        suffix = (
-            "a"
-            if box == 0
-            else "b"
-        )
+        suffix = "a" if box == 0 else "b"
 
         return (
             self._managed_root
             / "NAMD"
-            / (
-                f"{format_cycle_id(run_no, 10)}"
-                f"_{suffix}"
-            )
+            / (f"{format_cycle_id(run_no, 10)}" f"_{suffix}")
         )
 
     def _runtime_gomc_dir(
         self,
         run_no: int,
     ) -> Path:
-        return (
-            self._managed_root
-            / "GOMC"
-            / format_cycle_id(run_no, 10)
-        )
+        return self._managed_root / "GOMC" / format_cycle_id(run_no, 10)
 
     # @staticmethod
     # def _resolve_log_path(
@@ -710,7 +638,7 @@ class OnTheFlyProcessor:
     ) -> None:
         """Seed the global step offset when processing a restarted simulation."""
         self._current_step = int(current_step)
-        
+
     # def process_cycle(
     #     self,
     #     namd_run_no: int,
@@ -726,10 +654,7 @@ class OnTheFlyProcessor:
         self._process_namd_step(namd_run_no)
         self._process_gomc_step(gomc_run_no)
 
-        if (
-            self.combine_namd_dcd
-            and self.sim_type in {"NVT", "NPT"}
-        ):
+        if self.combine_namd_dcd and self.sim_type in {"NVT", "NPT"}:
             self._append_namd_dcd(namd_run_no)
 
         if self.combine_gomc_dcd:
@@ -762,13 +687,7 @@ class OnTheFlyProcessor:
                 handle.close()
 
             except Exception:
-                logger.exception(
-                    "[OnTheFly] Failed to close output file"
-                )
-
-
-
-
+                logger.exception("[OnTheFly] Failed to close output file")
 
     def _process_namd_step(
         self,
@@ -781,8 +700,7 @@ class OnTheFlyProcessor:
 
         if out_path is None:
             logger.warning(
-                "[OnTheFly] NAMD out.dat missing "
-                "for run %d",
+                "[OnTheFly] NAMD out.dat missing " "for run %d",
                 run_no,
             )
             return []
@@ -790,9 +708,7 @@ class OnTheFlyProcessor:
         lines = out_path.read_text(
             encoding="utf-8",
             errors="ignore",
-        ).splitlines(
-            keepends=True
-        )
+        ).splitlines(keepends=True)
 
         (
             self._namd_e_titles,
@@ -806,69 +722,37 @@ class OnTheFlyProcessor:
             self._namd_density_titles,
         )
 
-        if (
-            self._namd_e_titles
-            and not self._header_written["namd_raw"]
-        ):
-            self._namd_log_fh.write(
-                "\t ".join(
-                    self._namd_e_titles
-                )
-                + "\n"
-            )
+        if self._namd_e_titles and not self._header_written["namd_raw"]:
+            self._namd_log_fh.write("\t ".join(self._namd_e_titles) + "\n")
 
-            self._header_written[
-                "namd_raw"
-            ] = True
+            self._header_written["namd_raw"] = True
 
         combined_rows = []
 
         for row, density in raw_rows:
-            self._namd_log_fh.write(
-                "\t ".join(row)
-                + " \n"
-            )
+            self._namd_log_fh.write("\t ".join(row) + " \n")
 
             if (
                 self._namd_density_titles
-                and not self._header_written[
-                    "namd_density"
-                ]
+                and not self._header_written["namd_density"]
             ):
                 self._namd_density_fh.write(
-                    "\t".join(
-                        self._namd_density_titles
-                    )
-                    + "\n"
+                    "\t".join(self._namd_density_titles) + "\n"
                 )
 
-                self._header_written[
-                    "namd_density"
-                ] = True
+                self._header_written["namd_density"] = True
 
-            density_value = (
-                str(density)
-                if density is not None
-                else "NA"
-            )
+            density_value = str(density) if density is not None else "NA"
 
             self._namd_density_fh.write(
-                "\t".join(
-                    row[1:]
-                    + [density_value]
-                )
-                + "\n"
+                "\t".join(row[1:] + [density_value]) + "\n"
             )
 
             def _column(
                 title: str,
             ) -> str:
                 try:
-                    return row[
-                        self._namd_e_titles.index(
-                            title
-                        )
-                    ]
+                    return row[self._namd_e_titles.index(title)]
 
                 except (
                     ValueError,
@@ -881,31 +765,19 @@ class OnTheFlyProcessor:
                 {
                     "ENGINE": "NAMD",
                     "STEP": _column("TS"),
-                    "TOTAL_POT": _column(
-                        "POTENTIAL"
-                    ),
-                    "TOTAL_ELECT": _column(
-                        "ELECT"
-                    ),
-                    "PRESSURE": _column(
-                        "PRESSURE"
-                    ),
-                    "VOLUME": _column(
-                        "VOLUME"
-                    ),
+                    "TOTAL_POT": _column("POTENTIAL"),
+                    "TOTAL_ELECT": _column("ELECT"),
+                    "PRESSURE": _column("PRESSURE"),
+                    "VOLUME": _column("VOLUME"),
                     "DENSITY": density_value,
                 }
             )
 
         self._current_step = last_ts
 
-        self._append_combined_rows(
-            combined_rows
-        )
+        self._append_combined_rows(combined_rows)
 
         return combined_rows
-    
-
 
     def _process_gomc_step(
         self,
@@ -918,8 +790,7 @@ class OnTheFlyProcessor:
 
         if out_path is None:
             logger.warning(
-                "[OnTheFly] GOMC out.dat missing "
-                "for run %d",
+                "[OnTheFly] GOMC out.dat missing " "for run %d",
                 run_no,
             )
             return []
@@ -927,9 +798,7 @@ class OnTheFlyProcessor:
         lines = out_path.read_text(
             encoding="utf-8",
             errors="ignore",
-        ).splitlines(
-            keepends=True
-        )
+        ).splitlines(keepends=True)
 
         step_offset = self._current_step
 
@@ -949,71 +818,31 @@ class OnTheFlyProcessor:
             box_no=0,
         )
 
-        rows_to_write = (
-            merged_rows[1:]
-            if len(merged_rows) > 1
-            else merged_rows
-        )
+        rows_to_write = merged_rows[1:] if len(merged_rows) > 1 else merged_rows
 
-        kcal_to_write = (
-            kcal_rows[1:]
-            if len(kcal_rows) > 1
-            else kcal_rows
-        )
+        kcal_to_write = kcal_rows[1:] if len(kcal_rows) > 1 else kcal_rows
 
         box0_titles = self._gomc_titles[0]
 
-        if (
-            rows_to_write
-            and box0_titles["stat"]
-        ):
-            if not self._header_written[
-                "gomc_stat"
-            ]:
-                self._gomc_stat_fh.write(
-                    "\t".join(
-                        box0_titles["stat"]
-                    )
-                    + "\n"
-                )
+        if rows_to_write and box0_titles["stat"]:
+            if not self._header_written["gomc_stat"]:
+                self._gomc_stat_fh.write("\t".join(box0_titles["stat"]) + "\n")
 
-                self._header_written[
-                    "gomc_stat"
-                ] = True
+                self._header_written["gomc_stat"] = True
 
             for row in rows_to_write:
-                self._gomc_stat_fh.write(
-                    "\t".join(row)
-                    + "\n"
-                )
+                self._gomc_stat_fh.write("\t".join(row) + "\n")
 
-                self._append_gomc_combined_row(
-                    row
-                )
+                self._append_gomc_combined_row(row)
 
-        if (
-            kcal_to_write
-            and box0_titles["kcal"]
-        ):
-            if not self._header_written[
-                "gomc_kcal"
-            ]:
-                self._gomc_kcal_fh.write(
-                    "\t".join(
-                        box0_titles["kcal"]
-                    )
-                    + "\n"
-                )
+        if kcal_to_write and box0_titles["kcal"]:
+            if not self._header_written["gomc_kcal"]:
+                self._gomc_kcal_fh.write("\t".join(box0_titles["kcal"]) + "\n")
 
-                self._header_written[
-                    "gomc_kcal"
-                ] = True
+                self._header_written["gomc_kcal"] = True
 
             for row in kcal_to_write:
-                self._gomc_kcal_fh.write(
-                    "\t".join(row)
-                    + "\n"
-                )
+                self._gomc_kcal_fh.write("\t".join(row) + "\n")
 
         self._current_step = last_step
 
@@ -1076,7 +905,6 @@ class OnTheFlyProcessor:
             last_step,
         )
 
-
     def _append_raw_gomc_lines(
         self,
         raw_lines: list[tuple[str, str]],
@@ -1092,34 +920,22 @@ class OnTheFlyProcessor:
         energy_seen = 0
         stat_seen = 0
 
-        energy_count = sum(
-            1
-            for kind, _ in raw_lines
-            if kind == "ENER"
-        )
+        energy_count = sum(1 for kind, _ in raw_lines if kind == "ENER")
 
         for kind, content in raw_lines:
             header_key = None
 
             if kind == "ETITLE":
-                header_key = (
-                    f"gomc{box_no}_etitle"
-                )
+                header_key = f"gomc{box_no}_etitle"
 
             elif kind == "STITLE":
-                header_key = (
-                    f"gomc{box_no}_stitle"
-                )
+                header_key = f"gomc{box_no}_stitle"
 
             if header_key is not None:
-                if not self._header_written[
-                    header_key
-                ]:
+                if not self._header_written[header_key]:
                     handle.write(content)
 
-                    self._header_written[
-                        header_key
-                    ] = True
+                    self._header_written[header_key] = True
 
                 continue
 
@@ -1136,11 +952,7 @@ class OnTheFlyProcessor:
             elif kind == "STAT":
                 stat_seen += 1
 
-                if (
-                    skip_duplicate_pair
-                    and energy_count > 1
-                    and stat_seen == 1
-                ):
+                if skip_duplicate_pair and energy_count > 1 and stat_seen == 1:
                     continue
 
             handle.write(content)
@@ -1168,17 +980,14 @@ class OnTheFlyProcessor:
             )
             return False
 
-        dst = (
-            self.combined_dir
-            / "combined_box_0_NAMD_dcd_files.dcd"
-        )
+        dst = self.combined_dir / "combined_box_0_NAMD_dcd_files.dcd"
 
         return _append_dcd(
             self.catdcd_bin,
             src,
             dst,
         )
-    
+
     def _append_gomc_dcd(
         self,
         run_no: int,
@@ -1191,9 +1000,7 @@ class OnTheFlyProcessor:
             boxes.append(1)
 
         for box_no in boxes:
-            basename = (
-                f"Output_data_BOX_{box_no}.dcd"
-            )
+            basename = f"Output_data_BOX_{box_no}.dcd"
 
             src = self._resolve_artifact_path(
                 self._runtime_gomc_dir(run_no),
@@ -1203,20 +1010,15 @@ class OnTheFlyProcessor:
 
             if src is None:
                 logger.warning(
-                    "[OnTheFly] GOMC box-%d DCD missing "
-                    "for run %d",
+                    "[OnTheFly] GOMC box-%d DCD missing " "for run %d",
                     box_no,
                     run_no,
                 )
                 results[box_no] = False
                 continue
 
-            dst = (
-                self.combined_dir
-                / (
-                    f"combined_box_{box_no}_"
-                    "GOMC_dcd_files.dcd"
-                )
+            dst = self.combined_dir / (
+                f"combined_box_{box_no}_" "GOMC_dcd_files.dcd"
             )
 
             results[box_no] = _append_dcd(
@@ -1226,31 +1028,25 @@ class OnTheFlyProcessor:
             )
 
         return results
-    
+
     def _copy_merged_psf(
         self,
         gomc_run_no: int,
     ) -> bool:
-        dst = (
-            self.combined_dir
-            / "Output_data_merged.psf"
-        )
+        dst = self.combined_dir / "Output_data_merged.psf"
 
         if dst.exists():
             return False
 
         src = self._resolve_artifact_path(
-            self._runtime_gomc_dir(
-                gomc_run_no
-            ),
+            self._runtime_gomc_dir(gomc_run_no),
             self._gomc_dir(gomc_run_no),
             "Output_data_merged.psf",
         )
 
         if src is None:
             logger.warning(
-                "[OnTheFly] Merged GOMC PSF missing "
-                "for run %d",
+                "[OnTheFly] Merged GOMC PSF missing " "for run %d",
                 gomc_run_no,
             )
             return False
@@ -1264,13 +1060,12 @@ class OnTheFlyProcessor:
 
         except OSError as exc:
             logger.warning(
-                "[OnTheFly] Failed to copy merged PSF "
-                "%s: %s",
+                "[OnTheFly] Failed to copy merged PSF " "%s: %s",
                 src,
                 exc,
             )
             return False
-        
+
     def _archive_cycle_log(
         self,
         *,
@@ -1286,23 +1081,14 @@ class OnTheFlyProcessor:
         if src is None:
             return False
 
-        logs_dir = (
-            self.combined_dir
-            / "cycle_logs"
-        )
+        logs_dir = self.combined_dir / "cycle_logs"
 
         logs_dir.mkdir(
             parents=True,
             exist_ok=True,
         )
 
-        dst = (
-            logs_dir
-            / (
-                f"{engine.upper()}_"
-                f"{runtime_dir.name}_out.dat"
-            )
-        )
+        dst = logs_dir / (f"{engine.upper()}_" f"{runtime_dir.name}_out.dat")
 
         if dst.exists():
             return False
@@ -1321,7 +1107,7 @@ class OnTheFlyProcessor:
                 exc,
             )
             return False
-        
+
     def _archive_cycle_logs(
         self,
         namd_run_no: int,
@@ -1329,14 +1115,11 @@ class OnTheFlyProcessor:
     ) -> None:
         namd_boxes = [0]
 
-        if (
-            self.sim_type == "GEMC"
-            and not bool(
-                getattr(
-                    self.cfg,
-                    "only_use_box_0_for_namd_for_gemc",
-                    True,
-                )
+        if self.sim_type == "GEMC" and not bool(
+            getattr(
+                self.cfg,
+                "only_use_box_0_for_namd_for_gemc",
+                True,
             )
         ):
             namd_boxes.append(1)
@@ -1356,32 +1139,22 @@ class OnTheFlyProcessor:
 
         self._archive_cycle_log(
             engine="GOMC",
-            runtime_dir=self._runtime_gomc_dir(
-                gomc_run_no
-            ),
-            disk_dir=self._gomc_dir(
-                gomc_run_no
-            ),
+            runtime_dir=self._runtime_gomc_dir(gomc_run_no),
+            disk_dir=self._gomc_dir(gomc_run_no),
         )
+
     def _append_combined_rows(
         self,
         rows: list[dict[str, str]],
     ) -> None:
-        if (
-            rows
-            and not self._header_written[
-                "combined"
-            ]
-        ):
+        if rows and not self._header_written["combined"]:
             self._combined_fh.write(
                 "#ENGINE\tSTEP\tTOTAL_POT\t"
                 "TOTAL_ELECT\tPRESSURE\t"
                 "VOLUME\tDENSITY\n"
             )
 
-            self._header_written[
-                "combined"
-            ] = True
+            self._header_written["combined"] = True
 
         for row in rows:
             self._combined_fh.write(
@@ -1403,19 +1176,14 @@ class OnTheFlyProcessor:
         stat_titles = titles["stat"]
         energy_titles = titles["energy"]
 
-        if (
-            not stat_titles
-            or not energy_titles
-        ):
+        if not stat_titles or not energy_titles:
             return
 
         def _stat_column(
             title: str,
         ) -> str:
             try:
-                return row[
-                    stat_titles.index(title)
-                ]
+                return row[stat_titles.index(title)]
 
             except (
                 ValueError,
@@ -1427,10 +1195,7 @@ class OnTheFlyProcessor:
             title: str,
         ) -> str:
             try:
-                return row[
-                    energy_titles.index(title)
-                    - 1
-                ]
+                return row[energy_titles.index(title) - 1]
 
             except (
                 ValueError,
@@ -1442,26 +1207,12 @@ class OnTheFlyProcessor:
             [
                 {
                     "ENGINE": "GOMC",
-                    "STEP": (
-                        row[0]
-                        if row
-                        else "NA"
-                    ),
-                    "TOTAL_POT": _energy_column(
-                        "TOTAL"
-                    ),
-                    "TOTAL_ELECT": _energy_column(
-                        "TOTAL_ELECT"
-                    ),
-                    "PRESSURE": _stat_column(
-                        "PRESSURE"
-                    ),
-                    "VOLUME": _stat_column(
-                        "VOLUME"
-                    ),
-                    "DENSITY": _stat_column(
-                        "TOT_DENSITY"
-                    ),
+                    "STEP": (row[0] if row else "NA"),
+                    "TOTAL_POT": _energy_column("TOTAL"),
+                    "TOTAL_ELECT": _energy_column("TOTAL_ELECT"),
+                    "PRESSURE": _stat_column("PRESSURE"),
+                    "VOLUME": _stat_column("VOLUME"),
+                    "DENSITY": _stat_column("TOT_DENSITY"),
                 }
             ]
         )

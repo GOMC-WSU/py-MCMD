@@ -1,3 +1,3 @@
-from .state import RunState, PmeDims
+from .state import PmeDims, RunState
 
 __all__ = ["RunState", "PmeDims"]

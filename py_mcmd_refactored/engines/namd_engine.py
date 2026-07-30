@@ -1,23 +1,25 @@
+import logging
 import os
 import shutil
-import logging
+import time
 from pathlib import Path
 from turtle import width
 from typing import Optional
 
 from engines.base import Engine as BaseEngine
 from engines.namd.constants import DEFAULT_NAMD_E_TITLES_LIST
-from engines.namd.parser import extract_pme_grid_from_out, find_run0_fft_filename, get_run0_dir
-from engines.namd.namd_writer import write_namd_conf_file
 from engines.namd.energy import get_namd_energy_data
 from engines.namd.energy_compare import compare_namd_gomc_energies
-
-from utils.path import format_cycle_id
-from utils.subprocess_runner import Command, SubprocessRunner
+from engines.namd.namd_writer import write_namd_conf_file
+from engines.namd.parser import (
+    extract_pme_grid_from_out,
+    find_run0_fft_filename,
+    get_run0_dir,
+)
 from orchestrator.state import RunState
+from utils.path import format_cycle_id
 from utils.persisted_file_lists import persisted_output_path
-
-import time
+from utils.subprocess_runner import Command, SubprocessRunner
 
 logger = logging.getLogger(__name__)
 
@@ -25,24 +27,32 @@ logger = logging.getLogger(__name__)
 from engines.namd.plan import NamdExecutionPlan, build_namd_execution_plan
 
 logger = logging.getLogger(__name__)
-class NamdEngine(BaseEngine):
 
+
+class NamdEngine(BaseEngine):
 
     def __init__(self, cfg, engine_type="NAMD", dry_run: bool = False):
         super().__init__(cfg, engine_type, dry_run=dry_run)
         self.dry_run = dry_run
 
         self.bin_dir = Path(cfg.namd2_bin_directory)
-        self.path_template = Path(cfg.path_namd_template) if cfg.path_namd_template else None
+        self.path_template = (
+            Path(cfg.path_namd_template) if cfg.path_namd_template else None
+        )
 
         if self.bin_dir.exists():
             self.exec_path = str((self.bin_dir / "namd2").resolve())
         else:
             if self.dry_run:
-                logger.warning("NAMD bin dir %s not found; continuing in dry_run.", self.bin_dir)
+                logger.warning(
+                    "NAMD bin dir %s not found; continuing in dry_run.",
+                    self.bin_dir,
+                )
                 self.exec_path = "namd2"
             else:
-                raise FileNotFoundError(f"NAMD binary directory {self.bin_dir} does not exist.")
+                raise FileNotFoundError(
+                    f"NAMD binary directory {self.bin_dir} does not exist."
+                )
 
         # IMPORTANT: do NOT use `self.run_steps` as an int (it must remain callable)
         self.steps_per_run = int(getattr(cfg, "namd_run_steps", 0))
@@ -52,6 +62,7 @@ class NamdEngine(BaseEngine):
 
     def run(self):
         raise NotImplementedError("Use NamdEngine.run_segment(...) instead.")
+
     # -------------------------------------------------------------------------
     # Run-0 PME helpers
     # -------------------------------------------------------------------------
@@ -68,20 +79,26 @@ class NamdEngine(BaseEngine):
             raise ValueError("box_number must be integer 0 or 1")
 
         # Run 0 directory name (zero-padded run id + suffix a/b)
-        run0_id = format_cycle_id(0) # default width in utils.path is 10
+        run0_id = format_cycle_id(0)  # default width in utils.path is 10
         suffix = "a" if box_number == 0 else "b"
 
-        root = Path(run_root) if run_root is not None else Path(self.cfg.path_namd_runs)
+        root = (
+            Path(run_root)
+            if run_root is not None
+            else Path(self.cfg.path_namd_runs)
+        )
         run0_dir = root / f"{run0_id}_{suffix}"
 
         out_path = run0_dir / "out.dat"
         nx, ny, nz = extract_pme_grid_from_out(out_path)
 
         if nx is None:
-            logger.warning("[NAMD] PME grid not found in %s (box=%s)", out_path, box_number)
+            logger.warning(
+                "[NAMD] PME grid not found in %s (box=%s)", out_path, box_number
+            )
 
         return nx, ny, nz, str(run0_dir)
-    
+
     # -------------------------------------------------------------------------
     # Run-0 FFT helpers (with 10-digit→8-digit fallback)
     # -------------------------------------------------------------------------
@@ -107,7 +124,11 @@ class NamdEngine(BaseEngine):
         widths_to_try = (8, 10)
 
         for width in widths_to_try:
-            base_root = Path(run_root) if run_root is not None else Path(self.cfg.path_namd_runs)
+            base_root = (
+                Path(run_root)
+                if run_root is not None
+                else Path(self.cfg.path_namd_runs)
+            )
             run0_dir = get_run0_dir(base_root, box_number, id_width=width)
 
             if not run0_dir.exists():
@@ -132,9 +153,9 @@ class NamdEngine(BaseEngine):
             f"{base}/00000000_{suffix} and {base}/0000000000_{suffix}"
         )
 
-
-        
-    def delete_namd_run_0_fft_file(self, box_number: int, run_root: Optional[Path] = None) -> None:
+    def delete_namd_run_0_fft_file(
+        self, box_number: int, run_root: Optional[Path] = None
+    ) -> None:
         """
         Deletes the run 0 (1st NAMD simulation) FFT filename.
 
@@ -153,7 +174,9 @@ class NamdEngine(BaseEngine):
         write_log_data = (
             "*************************************************\n"
             "The NAMD FFT file was deleted from Run 0 in Box {} \n"
-            "************************************************* \n".format(str(box_number))
+            "************************************************* \n".format(
+                str(box_number)
+            )
         )
 
         try:
@@ -186,7 +209,6 @@ class NamdEngine(BaseEngine):
             logger.info(write_log_data.strip("\n"))
             print(write_log_data)
 
-
     def run_steps(
         self,
         *,
@@ -205,12 +227,16 @@ class NamdEngine(BaseEngine):
             ),
         )
         return self.runner.run_and_wait(cmd)
-    
 
     def _run0_fft_cache_dir(self, box_number: int, managed_root: Path) -> Path:
         if not isinstance(box_number, int) or box_number not in (0, 1):
             raise ValueError("box_number must be integer 0 or 1")
-        return Path(managed_root) / "_engine_cache" / "NAMD" / f"run0_fft_box{box_number}"
+        return (
+            Path(managed_root)
+            / "_engine_cache"
+            / "NAMD"
+            / f"run0_fft_box{box_number}"
+        )
 
     def get_cached_run0_fft_filename(
         self,
@@ -219,7 +245,9 @@ class NamdEngine(BaseEngine):
         managed_root: Path,
     ) -> tuple[Optional[str], str]:
         cache_dir = self._run0_fft_cache_dir(box_number, managed_root)
-        fft_name = find_run0_fft_filename(cache_dir) if cache_dir.exists() else None
+        fft_name = (
+            find_run0_fft_filename(cache_dir) if cache_dir.exists() else None
+        )
         return fft_name, str(cache_dir)
 
     def cache_run0_fft_file(
@@ -261,10 +289,13 @@ class NamdEngine(BaseEngine):
 
         dst = cache_dir / fft_filename
         shutil.copy2(src, dst)
-        logger.info("[NAMD] Cached run0 FFT file for box=%s: %s -> %s", box_number, src, dst)
+        logger.info(
+            "[NAMD] Cached run0 FFT file for box=%s: %s -> %s",
+            box_number,
+            src,
+            dst,
+        )
         return dst
-    
-
 
     def link_run0_fft_file_into_dir(
         self,
@@ -284,9 +315,11 @@ class NamdEngine(BaseEngine):
 
         try:
             if managed_root is not None:
-                cached_fft_filename, cached_dir = self.get_cached_run0_fft_filename(
-                    box_number,
-                    managed_root=Path(managed_root),
+                cached_fft_filename, cached_dir = (
+                    self.get_cached_run0_fft_filename(
+                        box_number,
+                        managed_root=Path(managed_root),
+                    )
                 )
                 if cached_fft_filename:
                     fft_filename = cached_fft_filename
@@ -341,16 +374,25 @@ class NamdEngine(BaseEngine):
             raise FileNotFoundError(f"Run-0 FFT file not found: {src}")
 
         dst.symlink_to(src)
-        logger.info("[NAMD] Linked run0 FFT file for box=%s: %s -> %s", box_number, dst, src)
-    def build_execution_plan(self, *, box0_dir: Path, box1_dir: Optional[Path]) -> NamdExecutionPlan:
-        exec_path = str(self.exec_path) if self.exec_path is not None else "namd2"
+        logger.info(
+            "[NAMD] Linked run0 FFT file for box=%s: %s -> %s",
+            box_number,
+            dst,
+            src,
+        )
+
+    def build_execution_plan(
+        self, *, box0_dir: Path, box1_dir: Optional[Path]
+    ) -> NamdExecutionPlan:
+        exec_path = (
+            str(self.exec_path) if self.exec_path is not None else "namd2"
+        )
         return build_namd_execution_plan(
             self.cfg,
             exec_path=exec_path,
             box0_dir=Path(box0_dir),
             box1_dir=Path(box1_dir) if box1_dir is not None else None,
         )
-
 
     def execute_plan(self, plan: NamdExecutionPlan) -> dict:
         """Execute the plan with legacy wait semantics.
@@ -373,33 +415,43 @@ class NamdEngine(BaseEngine):
         rc0 = self.runner.wait(h0)
         rc1 = self.runner.wait(h1)
         return {"rc_box0": rc0, "rc_box1": rc1, "mode": plan.mode}
-    
+
     # -------------------------------------------------------------------------
     # NAMD phase end-to-end (even run_no)
     # -------------------------------------------------------------------------
     def _two_box_enabled(self) -> bool:
-        return (self.cfg.simulation_type == "GEMC") and (self.cfg.only_use_box_0_for_namd_for_gemc is False)
+        return (self.cfg.simulation_type == "GEMC") and (
+            self.cfg.only_use_box_0_for_namd_for_gemc is False
+        )
 
-    def run_segment(self, *, run_no: int, state: RunState, fifo_resources=None) -> dict:
+    def run_segment(
+        self, *, run_no: int, state: RunState, fifo_resources=None
+    ) -> dict:
         """Run the full NAMD segment for an even run_no and update RunState."""
-        
+
         # runtime_namd_root = self._runtime_namd_root(fifo_resources)
         runtime_namd_root = self._runtime_namd_root(fifo_resources)
-        managed_root = Path(fifo_resources.managed_root) if fifo_resources is not None else None
+        managed_root = (
+            Path(fifo_resources.managed_root)
+            if fifo_resources is not None
+            else None
+        )
 
         if int(run_no) % 2 != 0:
-            raise ValueError(f"NAMD segment must be called for even run_no; got run_no={run_no}")
+            raise ValueError(
+                f"NAMD segment must be called for even run_no; got run_no={run_no}"
+            )
 
         box0 = 0
         box1 = 1
         two_box = self._two_box_enabled()
 
-        gomc_newdir = str(state.gomc_dir) if state.gomc_dir is not None else "NA"
-
-        
+        gomc_newdir = (
+            str(state.gomc_dir) if state.gomc_dir is not None else "NA"
+        )
 
         self._ensure_pme_dims_for_dry_run(state)
-        
+
         # --- Ensure namd_writer globals are wired from config (required for real runs) ---
         from engines.namd import namd_writer as nw
 
@@ -413,7 +465,11 @@ class NamdEngine(BaseEngine):
 
         root = Path.cwd()  # repo root where you run the CLI
         nw.starting_ff_file_list_namd = [
-            (root / f).resolve() if not Path(f).is_absolute() else Path(f).resolve()
+            (
+                (root / f).resolve()
+                if not Path(f).is_absolute()
+                else Path(f).resolve()
+            )
             for f in ff_files
         ]
 
@@ -421,7 +477,7 @@ class NamdEngine(BaseEngine):
         nw.simulation_type = self.cfg.simulation_type
         # 1) Write NAMD config(s)
         python_file_directory = Path.cwd()
-        
+
         namd_box0_dir = write_namd_conf_file(
             python_file_directory,
             self.cfg.path_namd_template,
@@ -438,7 +494,9 @@ class NamdEngine(BaseEngine):
             self.cfg.simulation_pressure_bar,
             self.cfg.starting_pdb_box_0_file,
             self.cfg.starting_psf_box_0_file,
-            state.pme_box0.x, state.pme_box0.y, state.pme_box0.z,
+            state.pme_box0.x,
+            state.pme_box0.y,
+            state.pme_box0.z,
             set_x_dim=self.cfg.set_dims_box_0_list[0],
             set_y_dim=self.cfg.set_dims_box_0_list[1],
             set_z_dim=self.cfg.set_dims_box_0_list[2],
@@ -463,14 +521,15 @@ class NamdEngine(BaseEngine):
                 self.cfg.simulation_pressure_bar,
                 self.cfg.starting_pdb_box_1_file,
                 self.cfg.starting_psf_box_1_file,
-                state.pme_box1.x, state.pme_box1.y, state.pme_box1.z,
+                state.pme_box1.x,
+                state.pme_box1.y,
+                state.pme_box1.z,
                 set_x_dim=self.cfg.set_dims_box_1_list[0],
                 set_y_dim=self.cfg.set_dims_box_1_list[1],
                 set_z_dim=self.cfg.set_dims_box_1_list[2],
                 fft_add_namd_ang_to_box_dim=0,
             )
             state.namd_box1_dir = Path(namd_box1_dir)
-        
 
         if self.dry_run:
             # Box 0 placeholders (use configured dims)
@@ -491,9 +550,11 @@ class NamdEngine(BaseEngine):
             self.delete_namd_run_0_fft_file(box0, run_root=runtime_namd_root)
             if two_box:
                 # self.delete_namd_run_0_fft_file(box1)
-                self.delete_namd_run_0_fft_file(box1, run_root=runtime_namd_root)
+                self.delete_namd_run_0_fft_file(
+                    box1, run_root=runtime_namd_root
+                )
         else:
-            
+
             self.link_run0_fft_file_into_dir(
                 box0,
                 Path(namd_box0_dir),
@@ -501,7 +562,7 @@ class NamdEngine(BaseEngine):
                 managed_root=managed_root,
             )
             if two_box and namd_box1_dir is not None:
-                
+
                 self.link_run0_fft_file_into_dir(
                     box1,
                     Path(namd_box1_dir),
@@ -509,11 +570,14 @@ class NamdEngine(BaseEngine):
                     managed_root=managed_root,
                 )
 
-
         # 3) Execute NAMD with legacy series/parallel semantics
         mode = self.cfg.namd_simulation_order if two_box else "series"
 
-        cores0 = int(self.cfg.total_no_cores) if (not two_box or mode == "series") else int(self.cfg.no_core_box_0)
+        cores0 = (
+            int(self.cfg.total_no_cores)
+            if (not two_box or mode == "series")
+            else int(self.cfg.no_core_box_0)
+        )
 
         disk_box0_dir = self._disk_namd_dir(fifo_resources, 0, run_no)
         disk_box0_dir.mkdir(parents=True, exist_ok=True)
@@ -529,7 +593,11 @@ class NamdEngine(BaseEngine):
 
         cmd1: Optional[Command] = None
         if two_box and namd_box1_dir is not None:
-            cores1 = int(self.cfg.total_no_cores) if mode == "series" else int(self.cfg.no_core_box_1)
+            cores1 = (
+                int(self.cfg.total_no_cores)
+                if mode == "series"
+                else int(self.cfg.no_core_box_1)
+            )
 
             disk_box1_dir = self._disk_namd_dir(fifo_resources, 1, run_no)
             disk_box1_dir.mkdir(parents=True, exist_ok=True)
@@ -543,7 +611,6 @@ class NamdEngine(BaseEngine):
                 ),
             )
 
-        
         rc0 = rc1 = None
         box0_time = 0.0
         box1_time = 0.0
@@ -580,11 +647,17 @@ class NamdEngine(BaseEngine):
 
         if (rc0 not in (None, 0)) or (rc1 not in (None, 0)):
             if not self.dry_run:
-                raise RuntimeError(f"NAMD failed (rc0={rc0}, rc1={rc1}, mode={mode})")
+                raise RuntimeError(
+                    f"NAMD failed (rc0={rc0}, rc1={rc1}, mode={mode})"
+                )
 
         # 4) Parse energies -> cache in state
         def _parse_to_energy(run_dir: Path, energy_obj) -> None:
-            lines = (run_dir / "out.dat").read_text(errors="ignore").splitlines(True)
+            lines = (
+                (run_dir / "out.dat")
+                .read_text(errors="ignore")
+                .splitlines(True)
+            )
             (
                 _elect_series,
                 _elect_initial,
@@ -605,7 +678,9 @@ class NamdEngine(BaseEngine):
             _parse_to_energy(Path(namd_box0_dir), state.energy_box0)
         except Exception as e:
             if self.dry_run:
-                logger.warning("[NAMD] Energy parse failed for box0 (dry_run): %s", e)
+                logger.warning(
+                    "[NAMD] Energy parse failed for box0 (dry_run): %s", e
+                )
             else:
                 raise
 
@@ -614,16 +689,21 @@ class NamdEngine(BaseEngine):
                 _parse_to_energy(Path(namd_box1_dir), state.energy_box1)
             except Exception as e:
                 if self.dry_run:
-                    logger.warning("[NAMD] Energy parse failed for box1 (dry_run): %s", e)
+                    logger.warning(
+                        "[NAMD] Energy parse failed for box1 (dry_run): %s", e
+                    )
                 else:
                     raise
 
         # 5) Continuity check (GOMC -> NAMD) when applicable
         if (run_no != 0) and (run_no != int(self.cfg.starting_sims_namd_gomc)):
             e0 = state.energy_box0
-            if (e0.gomc_potential_final is not None) and (e0.namd_potential_initial is not None) and (
-                e0.gomc_vdw_plus_elec_final is not None
-            ) and (e0.namd_vdw_plus_elec_initial is not None):
+            if (
+                (e0.gomc_potential_final is not None)
+                and (e0.namd_potential_initial is not None)
+                and (e0.gomc_vdw_plus_elec_final is not None)
+                and (e0.namd_vdw_plus_elec_initial is not None)
+            ):
                 compare_namd_gomc_energies(
                     self.cfg,
                     e0.gomc_potential_final,
@@ -636,9 +716,12 @@ class NamdEngine(BaseEngine):
 
             if two_box:
                 e1 = state.energy_box1
-                if (e1.gomc_potential_final is not None) and (e1.namd_potential_initial is not None) and (
-                    e1.gomc_vdw_plus_elec_final is not None
-                ) and (e1.namd_vdw_plus_elec_initial is not None):
+                if (
+                    (e1.gomc_potential_final is not None)
+                    and (e1.namd_potential_initial is not None)
+                    and (e1.gomc_vdw_plus_elec_final is not None)
+                    and (e1.namd_vdw_plus_elec_initial is not None)
+                ):
                     compare_namd_gomc_energies(
                         self.cfg,
                         e1.gomc_potential_final,
@@ -651,9 +734,15 @@ class NamdEngine(BaseEngine):
 
         # 6) Update PME dims after Run-0 (out.dat exists now)
         if run_no == 0:
-            nx0, ny0, nz0, _ = self.get_run0_pme_dims(0, run_root=runtime_namd_root)
+            nx0, ny0, nz0, _ = self.get_run0_pme_dims(
+                0, run_root=runtime_namd_root
+            )
             if (nx0 is not None) and (ny0 is not None) and (nz0 is not None):
-                state.pme_box0.x, state.pme_box0.y, state.pme_box0.z = int(nx0), int(ny0), int(nz0)
+                state.pme_box0.x, state.pme_box0.y, state.pme_box0.z = (
+                    int(nx0),
+                    int(ny0),
+                    int(nz0),
+                )
 
             self.cache_run0_fft_file(
                 0,
@@ -662,10 +751,20 @@ class NamdEngine(BaseEngine):
             )
 
             if two_box:
-                nx1, ny1, nz1, _ = self.get_run0_pme_dims(1, run_root=runtime_namd_root)
+                nx1, ny1, nz1, _ = self.get_run0_pme_dims(
+                    1, run_root=runtime_namd_root
+                )
 
-                if (nx1 is not None) and (ny1 is not None) and (nz1 is not None):
-                    state.pme_box1.x, state.pme_box1.y, state.pme_box1.z = int(nx1), int(ny1), int(nz1)
+                if (
+                    (nx1 is not None)
+                    and (ny1 is not None)
+                    and (nz1 is not None)
+                ):
+                    state.pme_box1.x, state.pme_box1.y, state.pme_box1.z = (
+                        int(nx1),
+                        int(ny1),
+                        int(nz1),
+                    )
 
                 self.cache_run0_fft_file(
                     1,
@@ -675,7 +774,9 @@ class NamdEngine(BaseEngine):
 
         # 7) Update step counter (legacy rule)
         if run_no == 0:
-            state.current_step += int(self.cfg.namd_run_steps) + int(self.cfg.namd_minimize_steps)
+            state.current_step += int(self.cfg.namd_run_steps) + int(
+                self.cfg.namd_minimize_steps
+            )
         else:
             state.current_step += int(self.cfg.namd_run_steps)
 
@@ -685,9 +786,11 @@ class NamdEngine(BaseEngine):
             "rc_box0": rc0,
             "rc_box1": rc1,
             "namd_box0_dir": str(namd_box0_dir),
-            "namd_box1_dir": str(namd_box1_dir) if namd_box1_dir is not None else None,
+            "namd_box1_dir": (
+                str(namd_box1_dir) if namd_box1_dir is not None else None
+            ),
         }
-    
+
     def _ensure_dry_run_restart_files(self, run_dir: Path, dims_xyz) -> None:
         run_dir.mkdir(parents=True, exist_ok=True)
         (run_dir / "namdOut.restart.coor").touch(exist_ok=True)
@@ -699,7 +802,6 @@ class NamdEngine(BaseEngine):
             # xsc parser expects last line tokens with indices 1,5,9 = Lx,Ly,Lz
             xsc.write_text(f"0 {x} 0 0 0 {y} 0 0 0 {z}\n", encoding="utf-8")
 
-
     def _ensure_pme_dims_for_dry_run(self, state) -> None:
         """Ensure PME dims exist in dry_run so namd_writer can compute PME grid."""
         if not self.dry_run:
@@ -707,27 +809,42 @@ class NamdEngine(BaseEngine):
 
         # If PME dims are missing, use a deterministic default.
         # Values should be reasonable multiples of small primes.
-        if state.pme_box0.x is None or state.pme_box0.y is None or state.pme_box0.z is None:
+        if (
+            state.pme_box0.x is None
+            or state.pme_box0.y is None
+            or state.pme_box0.z is None
+        ):
             state.pme_box0.x, state.pme_box0.y, state.pme_box0.z = 48, 48, 48
 
-        if self.cfg.simulation_type == "GEMC" and (self.cfg.only_use_box_0_for_namd_for_gemc is False):
-            if state.pme_box1.x is None or state.pme_box1.y is None or state.pme_box1.z is None:
-                state.pme_box1.x, state.pme_box1.y, state.pme_box1.z = 48, 48, 48
+        if self.cfg.simulation_type == "GEMC" and (
+            self.cfg.only_use_box_0_for_namd_for_gemc is False
+        ):
+            if (
+                state.pme_box1.x is None
+                or state.pme_box1.y is None
+                or state.pme_box1.z is None
+            ):
+                state.pme_box1.x, state.pme_box1.y, state.pme_box1.z = (
+                    48,
+                    48,
+                    48,
+                )
 
-    #FIFO helpers
-    
+    # FIFO helpers
+
     def _runtime_namd_root(self, fifo_resources) -> Path:
         if fifo_resources is None:
             return Path(self.cfg.path_namd_runs)
         return fifo_resources.managed_root / "NAMD"
 
-    def _disk_namd_dir(self, fifo_resources, box_number: int, run_no: int) -> Path:
+    def _disk_namd_dir(
+        self, fifo_resources, box_number: int, run_no: int
+    ) -> Path:
         step_id = format_cycle_id(run_no, 10)
         suffix = "a" if int(box_number) == 0 else "b"
         if fifo_resources is None:
             return Path(self.cfg.path_namd_runs) / f"{step_id}_{suffix}"
         return fifo_resources.disk_dir(box_number)
-
 
     # def _stdout_command_kwargs(
     #     self,
@@ -770,11 +887,13 @@ class NamdEngine(BaseEngine):
 
         if run_dir is not None:
             return {
-                "stdout_path": persisted_output_path("NAMD", run_dir, "out.dat"),
+                "stdout_path": persisted_output_path(
+                    "NAMD", run_dir, "out.dat"
+                ),
             }
 
         raise TypeError("Unsupported stdout routing arguments for NamdEngine")
-    
+
     def _get_run0_fft_filename_compat(
         self,
         box_number: int,

@@ -1,49 +1,45 @@
-
-import os
 import logging
+import os
+import time
 from pathlib import Path
 from typing import Optional
 
 from engines.base import Engine as BaseEngine
-
+from engines.gomc.energy_metrics import get_gomc_energy_data_kcal_per_mol
+from engines.gomc.energy_parse import get_gomc_energy_data
 from engines.gomc.gomc_writer import (
-    write_gomc_conf_file,
     GOMCIOPaths,
     GOMCSimParams,
     GOMCStartFiles,
+    write_gomc_conf_file,
 )
-from engines.gomc.energy_parse import get_gomc_energy_data
-from engines.gomc.energy_metrics import get_gomc_energy_data_kcal_per_mol
-
 from engines.namd.energy_compare import compare_namd_gomc_energies
-
-from py_mcmd_refactored.utils.path import format_cycle_id
-from utils.subprocess_runner import Command, SubprocessRunner
 from orchestrator.state import RunState
 from utils.persisted_file_lists import persisted_output_path
+from utils.subprocess_runner import Command, SubprocessRunner
 
-import time
+from py_mcmd_refactored.utils.path import format_cycle_id
 
 logger = logging.getLogger(__name__)
 
 
-
 class GomcEngine(BaseEngine):
-
 
     def __init__(self, cfg, engine_type="GOMC", dry_run: bool = False):
         super().__init__(cfg, engine_type, dry_run=dry_run)
         self.dry_run = dry_run
 
         self.bin_dir = Path(cfg.gomc_bin_directory)
-        self.path_template = Path(cfg.path_gomc_template) if cfg.path_gomc_template else None
+        self.path_template = (
+            Path(cfg.path_gomc_template) if cfg.path_gomc_template else None
+        )
 
         cpu_or_gpu = str(cfg.gomc_use_CPU_or_GPU).upper()
         ensemble = str(cfg.simulation_type).upper()
 
         candidate_names = [
-            f"GOMC_{cpu_or_gpu}_{ensemble}",   # legacy-compatible
-            f"GOMC_{cpu_or_gpu}",             # fallback, only if your local build uses this name
+            f"GOMC_{cpu_or_gpu}_{ensemble}",  # legacy-compatible
+            f"GOMC_{cpu_or_gpu}",  # fallback, only if your local build uses this name
         ]
 
         if self.bin_dir.exists():
@@ -64,11 +60,16 @@ class GomcEngine(BaseEngine):
             self.exec_name = found.name
         else:
             if self.dry_run:
-                logger.warning("GOMC bin dir %s not found; continuing in dry_run.", self.bin_dir)
+                logger.warning(
+                    "GOMC bin dir %s not found; continuing in dry_run.",
+                    self.bin_dir,
+                )
                 self.exec_path = candidate_names[0]
                 self.exec_name = candidate_names[0]
             else:
-                raise FileNotFoundError(f"GOMC binary directory {self.bin_dir} does not exist.")
+                raise FileNotFoundError(
+                    f"GOMC binary directory {self.bin_dir} does not exist."
+                )
 
         self.steps_per_run = int(getattr(cfg, "gomc_run_steps", 0))
         self.runner = SubprocessRunner(dry_run=self.dry_run)
@@ -86,13 +87,13 @@ class GomcEngine(BaseEngine):
 
         # 2) fallback: sibling GOMC/bin relative to this file, not CWD
         # this file: .../py_mcmd_refactored/engines/gomc_engine.py
-        py_root = Path(__file__).resolve().parents[1]     # py_mcmd_refactored/
-        repo_root = py_root.parent                        # repo root containing py_mcmd_refactored/
+        py_root = Path(__file__).resolve().parents[1]  # py_mcmd_refactored/
+        repo_root = py_root.parent  # repo root containing py_mcmd_refactored/
         return (repo_root / "GOMC" / "bin").resolve()
-    
-    
 
-    def run_steps(self, *, run_dir: Path, cores: int, fifo_resources=None) -> int:
+    def run_steps(
+        self, *, run_dir: Path, cores: int, fifo_resources=None
+    ) -> int:
         cmd = Command(
             argv=[str(self.exec_path), f"+p{int(cores)}", "in.conf"],
             cwd=Path(run_dir),
@@ -103,26 +104,29 @@ class GomcEngine(BaseEngine):
         )
         return self.runner.run_and_wait(cmd)
 
-    
     def _two_box_enabled(self) -> bool:
         # In legacy, box1 energies are parsed for GEMC and GCMC
         return self.cfg.simulation_type in ("GEMC", "GCMC")
 
-
-    
-    def run_segment(self, *, run_no: int, state: RunState, fifo_resources=None) -> dict:
+    def run_segment(
+        self, *, run_no: int, state: RunState, fifo_resources=None
+    ) -> dict:
         """Run the full GOMC segment for an odd run_no and update RunState."""
 
         runtime_gomc_root = self._runtime_gomc_root(fifo_resources)
 
         if int(run_no) % 2 != 1:
-            raise ValueError(f"GOMC segment must be called for odd run_no; got run_no={run_no}")
+            raise ValueError(
+                f"GOMC segment must be called for odd run_no; got run_no={run_no}"
+            )
 
         box0 = 0
         box1 = 1
         two_box = self._two_box_enabled()
 
-        previous_gomc_dir = str(state.gomc_dir) if state.gomc_dir is not None else "NA"
+        previous_gomc_dir = (
+            str(state.gomc_dir) if state.gomc_dir is not None else "NA"
+        )
 
         python_file_directory = Path.cwd()
 
@@ -131,14 +135,26 @@ class GomcEngine(BaseEngine):
             path_gomc_runs=runtime_gomc_root,
             path_gomc_template=Path(self.cfg.path_gomc_template),
             namd_box_0_dir=Path(state.namd_box0_dir),
-            namd_box_1_dir=Path(state.namd_box1_dir) if getattr(state, "namd_box1_dir", None) else None,
-            previous_gomc_dir=Path(state.gomc_dir) if getattr(state, "gomc_dir", None) else None,
+            namd_box_1_dir=(
+                Path(state.namd_box1_dir)
+                if getattr(state, "namd_box1_dir", None)
+                else None
+            ),
+            previous_gomc_dir=(
+                Path(state.gomc_dir)
+                if getattr(state, "gomc_dir", None)
+                else None
+            ),
         )
 
         sim = GOMCSimParams(
             gomc_run_steps=int(self.cfg.gomc_run_steps),
-            gomc_rst_coor_ckpoint_steps=int(self.cfg.gomc_rst_coor_ckpoint_steps),
-            gomc_console_blkavg_hist_steps=int(self.cfg.gomc_console_blkavg_hist_steps),
+            gomc_rst_coor_ckpoint_steps=int(
+                self.cfg.gomc_rst_coor_ckpoint_steps
+            ),
+            gomc_console_blkavg_hist_steps=int(
+                self.cfg.gomc_console_blkavg_hist_steps
+            ),
             gomc_hist_sample_steps=int(self.cfg.gomc_hist_sample_steps),
             simulation_temp_k=float(self.cfg.simulation_temp_k),
             simulation_pressure_bar=float(self.cfg.simulation_pressure_bar),
@@ -161,26 +177,25 @@ class GomcEngine(BaseEngine):
             dry_run=self.dry_run,
         )
 
-        
- 
-
         state.gomc_dir = Path(gomc_newdir)
 
         # 2) Execute GOMC (stdout -> out.dat)
-        
 
         disk_gomc_dir = self._disk_gomc_dir(fifo_resources, run_no)
         disk_gomc_dir.mkdir(parents=True, exist_ok=True)
 
         cmd = Command(
-            argv=[str(self.exec_path), f"+p{int(self.cfg.total_no_cores)}", "in.conf"],
+            argv=[
+                str(self.exec_path),
+                f"+p{int(self.cfg.total_no_cores)}",
+                "in.conf",
+            ],
             cwd=Path(gomc_newdir),
             **self._stdout_command_kwargs(
                 runtime_dir=Path(gomc_newdir),
                 disk_dir=disk_gomc_dir,
             ),
         )
-
 
         t0 = time.perf_counter()
         h = self.runner.start(cmd)
@@ -191,18 +206,28 @@ class GomcEngine(BaseEngine):
         state.timings.gomc_cycle_time_s = round(gomc_cycle_time_s, 6)
         if self.dry_run:
             # Create restart files that the next NAMD segment expects from the previous GOMC run.
-            self._ensure_dry_run_gomc_restart_files(Path(gomc_newdir), box_number=0)
+            self._ensure_dry_run_gomc_restart_files(
+                Path(gomc_newdir), box_number=0
+            )
 
             # If the workflow uses two boxes, also create BOX_1 restart files.
             if self._two_box_enabled():
-                self._ensure_dry_run_gomc_restart_files(Path(gomc_newdir), box_number=1)
-                
+                self._ensure_dry_run_gomc_restart_files(
+                    Path(gomc_newdir), box_number=1
+                )
+
         if rc != 0 and not self.dry_run:
-            raise RuntimeError(f"GOMC failed (rc={rc}) for run_no={run_no} in {gomc_newdir}")
+            raise RuntimeError(
+                f"GOMC failed (rc={rc}) for run_no={run_no} in {gomc_newdir}"
+            )
 
         # 3) Parse energies -> cache in state
         try:
-            lines = (Path(gomc_newdir) / "out.dat").read_text(errors="ignore").splitlines(True)
+            lines = (
+                (Path(gomc_newdir) / "out.dat")
+                .read_text(errors="ignore")
+                .splitlines(True)
+            )
 
             df0 = get_gomc_energy_data(self.cfg, lines, box0)
             (
@@ -226,7 +251,7 @@ class GomcEngine(BaseEngine):
             state.energy_box0.gomc_vdw_plus_elec_final = vpe0_f
 
             if two_box:
-                df1 = get_gomc_energy_data(self.cfg,lines, box1)
+                df1 = get_gomc_energy_data(self.cfg, lines, box1)
                 (
                     _e_elect1,
                     _e_elect1_i,
@@ -298,8 +323,10 @@ class GomcEngine(BaseEngine):
             "gomc_dir": str(gomc_newdir),
             "previous_gomc_dir": previous_gomc_dir,
         }
-    
-    def _ensure_dry_run_gomc_restart_files(self, gomc_dir: Path, box_number: int) -> None:
+
+    def _ensure_dry_run_gomc_restart_files(
+        self, gomc_dir: Path, box_number: int
+    ) -> None:
         """Create minimal GOMC restart files required by the next NAMD segment in dry_run."""
         gomc_dir = Path(gomc_dir)
         gomc_dir.mkdir(parents=True, exist_ok=True)
@@ -341,8 +368,7 @@ class GomcEngine(BaseEngine):
                 # Minimal placeholder; typically the writer just references this path
                 psf_path.write_text("PSF\n", encoding="utf-8")
 
-    #FIFO helper
-
+    # FIFO helper
 
     def _runtime_gomc_root(self, fifo_resources) -> Path:
         if fifo_resources is None:
@@ -355,7 +381,6 @@ class GomcEngine(BaseEngine):
             return Path(self.cfg.path_gomc_runs) / step_id
         return fifo_resources.disk_dir()
 
-    
     # def _stdout_command_kwargs(
     #     self,
     #     *,
@@ -395,7 +420,9 @@ class GomcEngine(BaseEngine):
 
         if run_dir is not None:
             return {
-                "stdout_path": persisted_output_path("GOMC", run_dir, "out.dat"),
+                "stdout_path": persisted_output_path(
+                    "GOMC", run_dir, "out.dat"
+                ),
             }
 
         raise TypeError("Unsupported stdout routing arguments for GomcEngine")

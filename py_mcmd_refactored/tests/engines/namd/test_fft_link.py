@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from pathlib import Path
-import pytest
 
+import pytest
 from config.models import SimulationConfig
 from engines.namd_engine import NamdEngine
 
@@ -99,7 +99,9 @@ def test_link_run0_fft_noop_when_not_found(tmp_path: Path, monkeypatch):
     assert list(dest_dir.iterdir()) == []
 
 
-def test_link_run0_fft_skips_missing_source_file_in_dry_run(tmp_path: Path, monkeypatch):
+def test_link_run0_fft_skips_missing_source_file_in_dry_run(
+    tmp_path: Path, monkeypatch
+):
     cfg = make_cfg(tmp_path)
     eng = NamdEngine(cfg, dry_run=True)
 
@@ -124,7 +126,10 @@ def test_link_run0_fft_skips_missing_source_file_in_dry_run(tmp_path: Path, monk
     assert not src.exists()
     assert not dst.exists()
 
-def test_link_run0_fft_prefers_cached_copy_when_runtime_run0_removed(tmp_path: Path):
+
+def test_link_run0_fft_prefers_cached_copy_when_runtime_run0_removed(
+    tmp_path: Path,
+):
     cfg = make_cfg(tmp_path)
     eng = NamdEngine(cfg, dry_run=True)
 

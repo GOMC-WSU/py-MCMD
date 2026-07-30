@@ -1,25 +1,25 @@
-
 import argparse
 import json
+import logging
 import os
 import sys
-import logging
+from pathlib import Path
 from pprint import pprint  # pretty-print the object
 
-from pathlib import Path
-
 HERE = Path(__file__).resolve()
-PROJECT_ROOT = HERE.parents[1]   # .../py_mcmd_refactored
-REPO_ROOT = HERE.parents[2]      # repo root
+PROJECT_ROOT = HERE.parents[1]  # .../py_mcmd_refactored
+REPO_ROOT = HERE.parents[2]  # repo root
 
 for p in (str(REPO_ROOT), str(PROJECT_ROOT)):
     if p not in sys.path:
         sys.path.insert(0, p)
-        
 
-from py_mcmd_refactored.version import get_version
+
 from config.models import load_simulation_config
 from orchestrator.manager import SimulationOrchestrator
+
+from py_mcmd_refactored.version import get_version
+
 
 # *************************************************
 # The python arguments that need to be selected to run the simulations (start)
@@ -36,7 +36,8 @@ def parse_args(argv=None):
     )
     # get the filename with the user required input
     arg_parser.add_argument(
-        "-f", "--file",
+        "-f",
+        "--file",
         type=str,
         default="user_input_NAMD_GOMC.json",
         help="Defines the variable inputs file used for the hybrid NAMD/GOMC simulation script. "
@@ -60,9 +61,7 @@ def parse_args(argv=None):
         type=str,
     )
     arg_parser.add_argument(
-        "-v", "--verbose",
-        action="store_true",
-        help="Enable debug logging"
+        "-v", "--verbose", action="store_true", help="Enable debug logging"
     )
     arg_parser.add_argument(
         "--dry_run",
@@ -84,7 +83,7 @@ def parse_args(argv=None):
     if args.namd_simulation_order in ("series", "parallel"):
         logging.info(
             "The NAMD simulations shall be run in <%s>.",
-            args.namd_simulation_order
+            args.namd_simulation_order,
         )
     else:
         # default to series if unspecified or invalid
@@ -92,26 +91,30 @@ def parse_args(argv=None):
         logging.warning(
             "The NAMD simulations are not set to 'parallel' or 'series'. "
             "Therefore, defaulting to <%s>.",
-            args.namd_simulation_order
+            args.namd_simulation_order,
         )
 
     logging.debug(
         "parse_args: file=%s, namd_simulation_order=%s",
-        args.file, args.namd_simulation_order
+        args.file,
+        args.namd_simulation_order,
     )
     return args
+
+
 # *************************************************
 # The python arguments that need to be selected to run the simulations (end)
 # *************************************************
+
 
 def main():
     args = parse_args()
     # logging setup
     level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
-    force=True  # <--- this resets any prior config
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+        force=True,  # <--- this resets any prior config
     )
     # load + validate config
     try:
@@ -123,13 +126,18 @@ def main():
 
     # CLI overrides (do not require JSON config changes)
     # NOTE: parse_args() normalizes invalid/missing values to "series".
-    cfg = cfg.model_copy(update={"namd_simulation_order": args.namd_simulation_order})
+    cfg = cfg.model_copy(
+        update={"namd_simulation_order": args.namd_simulation_order}
+    )
 
     # hand off to the orchestrator
     sim = SimulationOrchestrator(cfg, dry_run=args.dry_run)
-    logging.info("Configuration loaded and orchestrator constructed successfully.")
+    logging.info(
+        "Configuration loaded and orchestrator constructed successfully."
+    )
 
     sim.run()  # or sim.execute_cycles()
+
 
 if __name__ == "__main__":
     main()

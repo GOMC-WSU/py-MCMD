@@ -43,7 +43,12 @@ def make_cfg(tmp_path: Path, **kw) -> SimulationConfig:
 
 
 def test_plan_single_box_uses_total_no_cores(tmp_path: Path):
-    cfg = make_cfg(tmp_path, simulation_type="NPT", only_use_box_0_for_namd_for_gemc=True, no_core_box_0=5)
+    cfg = make_cfg(
+        tmp_path,
+        simulation_type="NPT",
+        only_use_box_0_for_namd_for_gemc=True,
+        no_core_box_0=5,
+    )
     plan = build_namd_execution_plan(
         cfg,
         exec_path="namd2",

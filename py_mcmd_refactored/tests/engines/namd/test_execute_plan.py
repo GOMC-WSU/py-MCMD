@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import Optional
 
 from config.models import SimulationConfig
-from engines.namd_engine import NamdEngine
 from engines.namd.plan import build_namd_execution_plan
+from engines.namd_engine import NamdEngine
 
 
 @dataclass
@@ -79,7 +79,12 @@ def test_execute_plan_series_runs_sequentially(tmp_path: Path):
     eng.execute_plan(plan)
 
     # series: start0 wait0 start1 wait1
-    assert [c[0] for c in eng.runner.calls] == ["start", "wait", "start", "wait"]
+    assert [c[0] for c in eng.runner.calls] == [
+        "start",
+        "wait",
+        "start",
+        "wait",
+    ]
 
 
 def test_execute_plan_parallel_starts_both_then_waits(tmp_path: Path):
@@ -97,4 +102,9 @@ def test_execute_plan_parallel_starts_both_then_waits(tmp_path: Path):
     eng.execute_plan(plan)
 
     # parallel: start0 start1 wait0 wait1
-    assert [c[0] for c in eng.runner.calls] == ["start", "start", "wait", "wait"]
+    assert [c[0] for c in eng.runner.calls] == [
+        "start",
+        "start",
+        "wait",
+        "wait",
+    ]

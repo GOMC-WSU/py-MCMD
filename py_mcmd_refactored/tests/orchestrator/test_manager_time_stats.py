@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+
 import orchestrator.manager as mgr
 from config.models import SimulationConfig
 
@@ -51,7 +52,9 @@ def test_time_stats_header_once_and_data_per_cycle(tmp_path: Path, monkeypatch):
     class DummyNamd:
         def __init__(self, cfg, engine_type="NAMD", dry_run=False):
             self.cfg = cfg
-            self.exec_path = "namd2"  # <-- required by orchestrator init/logging
+            self.exec_path = (
+                "namd2"  # <-- required by orchestrator init/logging
+            )
 
         def run_segment(self, *, run_no: int, state):
             state.timings.max_namd_cycle_time_s = 10.0

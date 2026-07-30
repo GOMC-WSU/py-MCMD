@@ -1,16 +1,24 @@
 from __future__ import annotations
 
-from pathlib import Path
-import subprocess
 import os
 import stat
+import subprocess
+from pathlib import Path
 
-from utils.subprocess_runner import Command, DryRunSubprocessRunner, SubprocessRunner
+from utils.subprocess_runner import (
+    Command,
+    DryRunSubprocessRunner,
+    SubprocessRunner,
+)
 
 
 def test_dry_run_creates_stdout_file(tmp_path: Path):
     runner = DryRunSubprocessRunner()
-    cmd = Command(argv=["/bin/echo", "hello"], cwd=tmp_path, stdout_path=tmp_path / "out.dat")
+    cmd = Command(
+        argv=["/bin/echo", "hello"],
+        cwd=tmp_path,
+        stdout_path=tmp_path / "out.dat",
+    )
 
     handle = runner.start(cmd)
     rc = runner.wait(handle)
@@ -20,7 +28,9 @@ def test_dry_run_creates_stdout_file(tmp_path: Path):
     assert "dry_run" in (tmp_path / "out.dat").read_text()
 
 
-def test_runner_invokes_popen_with_cwd_and_redirect(monkeypatch, tmp_path: Path):
+def test_runner_invokes_popen_with_cwd_and_redirect(
+    monkeypatch, tmp_path: Path
+):
     calls = {}
 
     class DummyPopen:
@@ -39,7 +49,11 @@ def test_runner_invokes_popen_with_cwd_and_redirect(monkeypatch, tmp_path: Path)
     monkeypatch.setattr(subprocess, "Popen", DummyPopen)
 
     runner = SubprocessRunner(dry_run=False)
-    cmd = Command(argv=["/bin/echo", "hello"], cwd=tmp_path, stdout_path=tmp_path / "out.dat")
+    cmd = Command(
+        argv=["/bin/echo", "hello"],
+        cwd=tmp_path,
+        stdout_path=tmp_path / "out.dat",
+    )
 
     handle = runner.start(cmd)
     rc = runner.wait(handle)
@@ -50,6 +64,7 @@ def test_runner_invokes_popen_with_cwd_and_redirect(monkeypatch, tmp_path: Path)
     assert calls["stderr"] == subprocess.STDOUT
     assert calls["text"] is True
     assert Path(calls["stdout"].name) == tmp_path / "out.dat"
+
 
 def test_dry_run_fifo_mode_keeps_fifo_and_writes_disk_mirror(tmp_path: Path):
     runner = DryRunSubprocessRunner()
