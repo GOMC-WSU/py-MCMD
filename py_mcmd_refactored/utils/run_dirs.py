@@ -5,12 +5,11 @@ from typing import Union
 
 from utils.path import format_cycle_id
 
+
 PathLike = Union[str, Path]
 
 
-def namd_run_dir(
-    namd_root: PathLike, run_no: int, box_number: int, *, id_width: int = 8
-) -> Path:
+def namd_run_dir(namd_root: PathLike, run_no: int, box_number: int, *, id_width: int = 8) -> Path:
     """Return NAMD run directory for a given run_no and box.
 
     Legacy naming: <NAMD_ROOT>/<zero_padded_run_no>_a or _b
@@ -22,9 +21,7 @@ def namd_run_dir(
     return Path(namd_root) / f"{run_id}_{suffix}"
 
 
-def gomc_run_dir(
-    gomc_root: PathLike, run_no: int, *, id_width: int = 8
-) -> Path:
+def gomc_run_dir(gomc_root: PathLike, run_no: int, *, id_width: int = 8) -> Path:
     """Return GOMC run directory for a given run_no.
 
     Legacy naming: <GOMC_ROOT>/<zero_padded_run_no>

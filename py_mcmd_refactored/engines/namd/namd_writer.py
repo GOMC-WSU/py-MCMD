@@ -1,13 +1,12 @@
 # py-MCMD
-# Author: Haydar Mehryar
+# Author: Haydar Mehryar 
 # Copyright (c) 2025
 # SPDX-License-Identifier: MIT
 from __future__ import annotations
-
-import logging
-import os
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Tuple
+from typing import Iterable, Tuple, Optional, Dict
+import os
+import logging
 
 log = logging.getLogger(__name__)
 starting_ff_file_list_namd = []
@@ -15,17 +14,15 @@ check_for_pdb_dims_and_override = None
 simulation_type = "NVT"
 log_template_file = None
 
-
 # --- Step 1. validate_box_number ------------------------------------------------
 def _validate_box_number(box_number: int) -> None:
     """Ensure box_number is an int in {0,1}."""
     if not isinstance(box_number, int) or box_number not in (0, 1):
         raise ValueError("box_number must be integer 0 or 1")
-
+    
 
 # --- Step 2. zeros prefix + run dir path ----------------------------------------
 from utils.path import format_cycle_id  # zero-prefix helper from your utils
-
 
 def _compute_namd_box_dir(
     python_file_directory: Path,
@@ -43,16 +40,10 @@ def _compute_namd_box_dir(
     _validate_box_number(box_number)
     suffix = "a" if box_number == 0 else "b"
     cycle_id = format_cycle_id(run_no, width)
-    return (
-        Path(python_file_directory)
-        / Path(path_namd_runs)
-        / f"{cycle_id}_{suffix}"
-    )
-
+    return Path(python_file_directory) / Path(path_namd_runs) / f"{cycle_id}_{suffix}"
 
 # --- Step 3. load template safely (resolve + read) ------------------------------
 from pathlib import Path
-
 
 def _resolve_under(base: Path, maybe_relative: Path | str) -> Path:
     """
@@ -61,7 +52,6 @@ def _resolve_under(base: Path, maybe_relative: Path | str) -> Path:
     """
     p = Path(maybe_relative)
     return p if p.is_absolute() else (Path(base) / p)
-
 
 def _load_template_text(
     python_file_directory: Path | str,
@@ -81,13 +71,22 @@ def _load_template_text(
         raise ValueError(f"NAMD template is empty: {tpl_path}")
     return data
 
-
-import os
-
 # --- Step 4. parameter files block (relative to run/box dir) --------------------
 from pathlib import Path
+import os
 from typing import Iterable
 
+def _rel(p: Path | str, base: Path | str) -> str:
+    """Return POSIX relative path from base to p if they share parent, else absolute path."""
+    try:
+        p_abs = Path(p).resolve()
+        base_abs = Path(base).resolve()
+        common = os.path.commonpath([str(p_abs), str(base_abs)])
+        if common not in ("/", ""):
+            return os.path.relpath(str(p_abs), start=str(base_abs)).replace("\\", "/")
+        return p_abs.as_posix()
+    except Exception:
+        return os.path.relpath(str(p), start=str(base)).replace("\\", "/")
 
 def _build_parameter_files_block(
     ff_files: Iterable[Path | str] | None,
@@ -108,18 +107,15 @@ def _build_parameter_files_block(
     lines: list[str] = []
     for f in ff_files:
         # compute relative path to the target run/box directory
-        rel = os.path.relpath(str(f), str(rel_to_dir))
-        rel_posix = Path(rel).as_posix()  # normalize separators
+        rel_posix = _rel(f, rel_to_dir)
         lines.append(f"parameters \t {rel_posix}\n")
     return "".join(lines)
 
-
-import os
-import struct
-
 # --- Step 5. compute run paths + read PDB lines (fresh vs restart) --------------
 from pathlib import Path
-from typing import Dict, Iterable, Tuple
+import os
+import struct
+from typing import Tuple, Iterable, Dict
 
 
 def _read_cryst1_lines(pdb_path: Path) -> list:
@@ -193,32 +189,43 @@ def _compute_run_paths_and_read_pdb_lines(
         # restart PSF. For GEMC, swap moves can change the molecule count
         # each cycle, making the .vel atom count stale -- using a mismatched
         # .vel causes "FATAL ERROR: Incorrect atom count in binary file".
-        gomc_rel = os.path.relpath(
-            str(gomc_newdir),
-            str(namd_box_x_newdir),
+        gomc_rel = _rel(gomc_newdir, namd_box_x_newdir)
+        pdb_abs = (
+            gomc_newdir
+            / f"Output_data_BOX_{box_number}_restart.pdb"
         )
-        pdb_abs = gomc_newdir / f"Output_data_BOX_{box_number}_restart.pdb"
-        psf_abs = gomc_newdir / f"Output_data_BOX_{box_number}_restart.psf"
-        vel_abs = gomc_newdir / f"Output_data_BOX_{box_number}_restart.vel"
+        psf_abs = (
+            gomc_newdir
+            / f"Output_data_BOX_{box_number}_restart.psf"
+        )
+        vel_abs = (
+            gomc_newdir
+            / f"Output_data_BOX_{box_number}_restart.vel"
+        )
 
         if _vel_atom_count_matches_psf(vel_abs, psf_abs):
             # Full binary restart: positions, box dims, and velocities all
             # come from GOMC. Atom count validated -- safe to use .vel.
             replacements = {
                 "pdb_box_file": (
-                    f"{gomc_rel}/" f"Output_data_BOX_{box_number}_restart.pdb"
+                    f"{gomc_rel}/"
+                    f"Output_data_BOX_{box_number}_restart.pdb"
                 ),
                 "psf_box_file": (
-                    f"{gomc_rel}/" f"Output_data_BOX_{box_number}_restart.psf"
+                    f"{gomc_rel}/"
+                    f"Output_data_BOX_{box_number}_restart.psf"
                 ),
                 "coor_file": (
-                    f"{gomc_rel}/" f"Output_data_BOX_{box_number}_restart.coor"
+                    f"{gomc_rel}/"
+                    f"Output_data_BOX_{box_number}_restart.coor"
                 ),
                 "xsc_file": (
-                    f"{gomc_rel}/" f"Output_data_BOX_{box_number}_restart.xsc"
+                    f"{gomc_rel}/"
+                    f"Output_data_BOX_{box_number}_restart.xsc"
                 ),
                 "vel_file": (
-                    f"{gomc_rel}/" f"Output_data_BOX_{box_number}_restart.vel"
+                    f"{gomc_rel}/"
+                    f"Output_data_BOX_{box_number}_restart.vel"
                 ),
                 "Bool_restart": "true",
             }
@@ -226,14 +233,8 @@ def _compute_run_paths_and_read_pdb_lines(
             # .vel missing, or atom count changed (GEMC swap moved molecules).
             # Use restart PDB/PSF for coordinates and topology; let NAMD
             # regenerate velocities from the configured temperature.
-            pdb_rel = os.path.relpath(
-                str(pdb_abs),
-                str(namd_box_x_newdir),
-            )
-            psf_rel = os.path.relpath(
-                str(psf_abs),
-                str(namd_box_x_newdir),
-            )
+            pdb_rel = _rel(pdb_abs, namd_box_x_newdir)
+            psf_rel = _rel(psf_abs, namd_box_x_newdir)
 
             replacements = {
                 "pdb_box_file": pdb_rel,
@@ -250,14 +251,8 @@ def _compute_run_paths_and_read_pdb_lines(
         # Fresh run: use starting pdb/psf (resolved under python_file_directory)
         pdb_abs = python_file_directory / starting_pdb_box_x_file
         psf_abs = python_file_directory / starting_psf_box_x_file
-        pdb_rel = os.path.relpath(
-            str(pdb_abs),
-            str(namd_box_x_newdir),
-        )
-        psf_rel = os.path.relpath(
-            str(psf_abs),
-            str(namd_box_x_newdir),
-        )
+        pdb_rel = _rel(pdb_abs, namd_box_x_newdir)
+        psf_rel = _rel(psf_abs, namd_box_x_newdir)
         replacements = {
             "pdb_box_file": pdb_rel,
             "psf_box_file": psf_rel,
@@ -274,14 +269,9 @@ def _compute_run_paths_and_read_pdb_lines(
 # --- Step 6. parse CRYST1 line (robust to fixed-width or whitespace) -----------
 from typing import Iterable, Optional, Tuple
 
-
 def _parse_cryst1(lines: Iterable[str]) -> Tuple[
-    Optional[float],
-    Optional[float],
-    Optional[float],
-    Optional[float],
-    Optional[float],
-    Optional[float],
+    Optional[float], Optional[float], Optional[float],
+    Optional[float], Optional[float], Optional[float],
 ]:
     """
     Parse a PDB CRYST1 record for (a, b, c, alpha, beta, gamma).
@@ -298,26 +288,20 @@ def _parse_cryst1(lines: Iterable[str]) -> Tuple[
                 b = float(line[15:24])
                 c = float(line[24:33])
                 alpha = float(line[33:40])
-                beta = float(line[40:47])
+                beta  = float(line[40:47])
                 gamma = float(line[47:54])
                 return a, b, c, alpha, beta, gamma
             except Exception:
                 # Fallback to whitespace-split
                 parts = line.split()
                 if len(parts) >= 7 and parts[0] == "CRYST1":
-                    a = float(parts[1])
-                    b = float(parts[2])
-                    c = float(parts[3])
-                    alpha = float(parts[4])
-                    beta = float(parts[5])
-                    gamma = float(parts[6])
+                    a = float(parts[1]); b = float(parts[2]); c = float(parts[3])
+                    alpha = float(parts[4]); beta = float(parts[5]); gamma = float(parts[6])
                     return a, b, c, alpha, beta, gamma
     return None, None, None, None, None, None
 
-
 # --- Step 7. dimension override wrapper -----------------------------------------
-from typing import Callable, Optional
-
+from typing import Optional, Callable
 
 def _override_dim(
     checker: Optional[Callable[..., float]],
@@ -341,14 +325,10 @@ def _override_dim(
         return float(set_dim)
     if read_dim is not None:
         return float(read_dim)
-    raise ValueError(
-        f"Unable to determine {axis}-dimension (no PDB value and no override)."
-    )
-
+    raise ValueError(f"Unable to determine {axis}-dimension (no PDB value and no override).")
 
 # --- Step 8. angles validation (orthogonality on run 0) -------------------------
 from typing import Optional
-
 
 def _validate_angles(
     run_no: int,
@@ -384,14 +364,11 @@ def _validate_angles(
 
     if violations:
         raise ValueError(
-            "Non-orthogonal box angles are not allowed on run 0: "
-            + ", ".join(violations)
+            "Non-orthogonal box angles are not allowed on run 0: " + ", ".join(violations)
         )
 
-
 # --- Step 9. PME grid dimension computation ------------------------------------
-from typing import Optional, Tuple
-
+from typing import Tuple, Optional
 
 def _compute_pme_grid_dims(
     run_no: int,
@@ -421,10 +398,8 @@ def _compute_pme_grid_dims(
     z = int((used_z + fft_add_namd_ang_to_box_dim) * mult + 1)
     return x, y, z
 
-
 # --- Step 10. render template with placeholder mapping --------------------------
-from typing import Any, Dict, Iterable, Optional
-
+from typing import Dict, Any, Iterable, Optional
 
 def _apply_replacements(
     template: str,
@@ -450,9 +425,7 @@ def _apply_replacements(
             raise ValueError(f"Unreplaced tokens: {leftovers}")
     return out
 
-
 log = logging.getLogger(__name__)
-
 
 def write_namd_conf_file(
     python_file_directory,
@@ -493,15 +466,11 @@ def write_namd_conf_file(
     gomc_newdir = Path(gomc_newdir)
 
     # 1) Build run/box dir
-    target_dir = _compute_namd_box_dir(
-        python_file_directory, path_namd_runs, run_no, box_number
-    )
+    target_dir = _compute_namd_box_dir(python_file_directory, path_namd_runs, run_no, box_number)
     target_dir.mkdir(parents=True, exist_ok=True)
 
     # 2) Load template text
-    template_text = _load_template_text(
-        python_file_directory, path_namd_template
-    )
+    template_text = _load_template_text(python_file_directory, path_namd_template)
 
     # 3) Parameter files block (from global if available)
     ff_files = globals().get("starting_ff_file_list_namd", [])
@@ -509,22 +478,15 @@ def write_namd_conf_file(
 
     # 4) Paths + PDB lines
     repl_paths, pdb_lines = _compute_run_paths_and_read_pdb_lines(
-        python_file_directory,
-        gomc_newdir,
-        target_dir,
-        run_no,
-        box_number,
-        starting_pdb_box_x_file,
-        starting_psf_box_x_file,
+        python_file_directory, gomc_newdir, target_dir,
+        run_no, box_number, starting_pdb_box_x_file, starting_psf_box_x_file
     )
 
     # 5) Parse CRYST1
     rx, ry, rz, ra, rb, rg = _parse_cryst1(pdb_lines)
 
     # 6) Validate angles for run 0
-    _validate_angles(
-        run_no, ra, rb, rg, set_angle_alpha, set_angle_beta, set_angle_gamma
-    )
+    _validate_angles(run_no, ra, rb, rg, set_angle_alpha, set_angle_beta, set_angle_gamma)
 
     # 7) Resolve used dims via checker or fallbacks
     checker = globals().get("check_for_pdb_dims_and_override", None)
@@ -535,15 +497,9 @@ def write_namd_conf_file(
     # 8) PME grid dims
     sim_type = globals().get("simulation_type", "NVT")
     gx, gy, gz = _compute_pme_grid_dims(
-        run_no,
-        used_x,
-        used_y,
-        used_z,
-        namd_x_pme_grid_dim,
-        namd_y_pme_grid_dim,
-        namd_z_pme_grid_dim,
-        fft_add_namd_ang_to_box_dim,
-        sim_type,
+        run_no, used_x, used_y, used_z,
+        namd_x_pme_grid_dim, namd_y_pme_grid_dim, namd_z_pme_grid_dim,
+        fft_add_namd_ang_to_box_dim, sim_type
     )
 
     # 9) Compose replacements
@@ -555,30 +511,20 @@ def write_namd_conf_file(
         "xsc_file": repl_paths["xsc_file"],
         "vel_file": repl_paths["vel_file"],
         "Bool_restart": repl_paths["Bool_restart"],
-        "x_dim_box": used_x,
-        "y_dim_box": used_y,
-        "z_dim_box": used_z,
-        "x_origin_box": used_x / 2,
-        "y_origin_box": used_y / 2,
-        "z_origin_box": used_z / 2,
+        "x_dim_box": used_x, "y_dim_box": used_y, "z_dim_box": used_z,
+        "x_origin_box": used_x/2, "y_origin_box": used_y/2, "z_origin_box": used_z/2,
         "NAMD_Run_Steps": int(namd_run_steps),
         "NAMD_Minimize": int(namd_minimize_steps),
         "NAMD_RST_DCD_XST_Steps": int(namd_rst_dcd_xst_steps),
-        "NAMD_console_BLKavg_E_and_P_Steps": int(
-            namd_console_blkavg_e_and_p_steps
-        ),
+        "NAMD_console_BLKavg_E_and_P_Steps": int(namd_console_blkavg_e_and_p_steps),
         "current_step": 0,
         "System_temp_set": simulation_temp_k,
         "System_press_set": simulation_pressure_bar,
-        "X_PME_GRID_DIM": gx,
-        "Y_PME_GRID_DIM": gy,
-        "Z_PME_GRID_DIM": gz,
+        "X_PME_GRID_DIM": gx, "Y_PME_GRID_DIM": gy, "Z_PME_GRID_DIM": gz,
     }
 
     must_replace = list(mapping.keys())
-    rendered = _apply_replacements(
-        template_text, mapping, strict=True, must_replace=must_replace
-    )
+    rendered = _apply_replacements(template_text, mapping, strict=True, must_replace=must_replace)
     (target_dir / "in.conf").write_text(rendered)
 
     msg = f"NAMD simulation data for simulation number {run_no} in box {box_number} is completed\n"

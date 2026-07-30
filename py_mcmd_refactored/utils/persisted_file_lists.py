@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Final
 
+
 # Default-mode disk persistence allow-lists
 # Everything else is FIFO-only unless developer_mode enables dual-write.
 # NAMD_PERSISTED_BASENAMES: Final[list[str]] = ["out.dat"]
@@ -36,9 +37,7 @@ def should_persist(engine: str, basename: str) -> bool:
     return normalized_basename in get_persisted_basenames(engine)
 
 
-def persisted_output_path(
-    engine: str, run_dir: str | Path, basename: str
-) -> Path:
+def persisted_output_path(engine: str, run_dir: str | Path, basename: str) -> Path:
     """Return the persisted output path for an allow-listed file.
 
     Raises:

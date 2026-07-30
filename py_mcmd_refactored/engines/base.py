@@ -1,20 +1,14 @@
-import logging
 import os
+import logging
 from pathlib import Path
-
 from config.models import SimulationConfig
 
 logger = logging.getLogger(__name__)
 
-
 class Engine:
     """Abstract base for NAMD and GOMC engines."""
-
     """Shared base for NAMD and GOMC engine wrappers."""
-
-    def __init__(
-        self, cfg: SimulationConfig, engine_type: str, dry_run: bool = False
-    ):
+    def __init__(self, cfg: SimulationConfig, engine_type: str, dry_run: bool = False):
         """
         Initialize common engine state.
 

@@ -1,19 +1,17 @@
 from __future__ import annotations
 
-import logging
-import os
-import struct
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional, Tuple
+import logging
+import os
 
 from py_mcmd_refactored.config.models import SimulationConfig
 from py_mcmd_refactored.utils.path import format_cycle_id
 
+import struct
 
-def _update_pdb_with_namd_coor(
-    pdb_in_path: Path, coor_bin_path: Path, pdb_out_path: Path
-) -> bool:
+def _update_pdb_with_namd_coor(pdb_in_path: Path, coor_bin_path: Path, pdb_out_path: Path) -> bool:
     """Read big-endian NAMD .coor file and overwrite coordinates of ATOM/HETATM lines in a new PDB."""
     try:
         with open(coor_bin_path, "rb") as f:
@@ -51,11 +49,9 @@ def _update_pdb_with_namd_coor(
 
     return True
 
-
 log = logging.getLogger(__name__)
 
 # ----------------------------- DTOs -----------------------------
-
 
 @dataclass(frozen=True)
 class GOMCStartFiles:
@@ -87,7 +83,6 @@ class GOMCIOPaths:
 
 # ----------------------------- Helpers -----------------------------
 
-
 def _load_text(p: Path) -> str:
     return p.read_text()
 
@@ -97,9 +92,17 @@ def _save_text(p: Path, s: str) -> None:
     p.write_text(s)
 
 
-def _rel(p: Path, base: Path) -> str:
-    """Return POSIX relative path from base to p (works across siblings)."""
-    return os.path.relpath(str(p), start=str(base)).replace("\\", "/")
+def _rel(p: Path | str, base: Path | str) -> str:
+    """Return POSIX relative path from base to p if they share parent, else absolute path."""
+    try:
+        p_abs = Path(p).resolve()
+        base_abs = Path(base).resolve()
+        common = os.path.commonpath([str(p_abs), str(base_abs)])
+        if common not in ("/", ""):
+            return os.path.relpath(str(p_abs), start=str(base_abs)).replace("\\", "/")
+        return p_abs.as_posix()
+    except Exception:
+        return os.path.relpath(str(p), start=str(base)).replace("\\", "/")
 
 
 def _build_parameters_block(
@@ -146,8 +149,7 @@ def _strip_box1_binary_restart_lines(template_text: str) -> str:
 
         if (
             len(toks) >= 2
-            and toks[0]
-            in {
+            and toks[0] in {
                 "binCoordinates",
                 "extendedSystem",
                 "binVelocities",
@@ -165,8 +167,7 @@ def _strip_box1_binary_restart_lines(template_text: str) -> str:
 
         if (
             len(toks) >= 2
-            and toks[0]
-            in {
+            and toks[0] in {
                 "CellBasisVector1",
                 "CellBasisVector2",
                 "CellBasisVector3",
@@ -187,8 +188,7 @@ def _strip_box0_binary_restart_lines(template_text: str) -> str:
         toks = line.split()
         if (
             len(toks) >= 2
-            and toks[0]
-            in {
+            and toks[0] in {
                 "binCoordinates",
                 "extendedSystem",
                 "binVelocities",
@@ -211,8 +211,7 @@ def _strip_all_binary_restart_lines(template_text: str) -> str:
         toks = line.split()
         if (
             len(toks) >= 2
-            and toks[0]
-            in {
+            and toks[0] in {
                 "binCoordinates",
                 "extendedSystem",
                 "binVelocities",
@@ -231,7 +230,11 @@ def _strip_box1_velocity_restart_line(template_text: str) -> str:
     out = []
     for line in template_text.splitlines(keepends=True):
         toks = line.split()
-        if len(toks) >= 2 and toks[0] == "binVelocities" and toks[1] == "1":
+        if (
+            len(toks) >= 2
+            and toks[0] == "binVelocities"
+            and toks[1] == "1"
+        ):
             continue
 
         out.append(line)
@@ -256,19 +259,11 @@ def _read_last_xsc_dims(xsc_path: Path) -> Tuple[float, float, float]:
         except (IndexError, ValueError):
             return None
 
-    lx = _try(1)
-    ly = _try(5)
-    lz = _try(9)
-    if (
-        lx is not None
-        and ly is not None
-        and lz is not None
-        and (ly != 0.0 or lz != 0.0)
-    ):
+    lx = _try(1); ly = _try(5); lz = _try(9)
+    if lx is not None and ly is not None and lz is not None and (ly != 0.0 or lz != 0.0):
         return lx, ly, lz
 
-    ly_fb = _try(4)
-    lz_fb = _try(7)
+    ly_fb = _try(4); lz_fb = _try(7)
     if lx is not None and ly_fb is not None and lz_fb is not None:
         return lx, ly_fb, lz_fb
 
@@ -280,13 +275,9 @@ def _read_pdb_cryst1_dims(pdb_path: Path) -> Tuple[float, float, float]:
         if line.startswith("CRYST1"):
             toks = line.split()
             try:
-                a = float(toks[1])
-                b = float(toks[2])
-                c = float(toks[3])
+                a = float(toks[1]); b = float(toks[2]); c = float(toks[3])
             except (IndexError, ValueError) as e:
-                raise ValueError(
-                    f"Malformed CRYST1 in {pdb_path}: {line!r}"
-                ) from e
+                raise ValueError(f"Malformed CRYST1 in {pdb_path}: {line!r}") from e
             return a, b, c
     raise ValueError(f"No CRYST1 record in {pdb_path}")
 
@@ -296,7 +287,7 @@ def _override_dim(read_val: float, override: Optional[float]) -> float:
 
 
 def _compute_adjustment_blocks(run_steps: int) -> Tuple[int, int]:
-    set_max_steps_equib_adj = 10 * (10**6)
+    set_max_steps_equib_adj = 10 * (10 ** 6)
     if run_steps >= set_max_steps_equib_adj:
         adj_steps = 1000 if (run_steps / 10) >= 1000 else int(run_steps / 10)
         equil_steps = 0
@@ -312,7 +303,6 @@ def _compute_adjustment_blocks(run_steps: int) -> Tuple[int, int]:
 
 
 # ----------------------------- Public API -----------------------------
-
 
 def write_gomc_conf_file(
     cfg: SimulationConfig,
@@ -341,11 +331,9 @@ def write_gomc_conf_file(
 
     # Box 0: always from NAMD previous step
     prev_namd0_rel = _rel(io.namd_box_0_dir, gomc_newdir)
-    out = out.replace(
-        "coor_box_0_file", f"{prev_namd0_rel}/namdOut.restart.coor"
-    )
-    out = out.replace("xsc_box_0_file", f"{prev_namd0_rel}/namdOut.restart.xsc")
-    out = out.replace("vel_box_0_file", f"{prev_namd0_rel}/namdOut.restart.vel")
+    out = out.replace("coor_box_0_file", f"{prev_namd0_rel}/namdOut.restart.coor")
+    out = out.replace("xsc_box_0_file",  f"{prev_namd0_rel}/namdOut.restart.xsc")
+    out = out.replace("vel_box_0_file",  f"{prev_namd0_rel}/namdOut.restart.vel")
 
     # PDB/PSF for box 0: fresh vs restart
     if io.previous_gomc_dir is None:
@@ -354,31 +342,19 @@ def write_gomc_conf_file(
             namd_coor = io.namd_box_0_dir / "namdOut.restart.coor"
             if namd_coor.exists():
                 min_pdb_path = gomc_newdir / "NAMD_minimized_box_0.pdb"
-                success = _update_pdb_with_namd_coor(
-                    pdb0_path, namd_coor, min_pdb_path
-                )
+                success = _update_pdb_with_namd_coor(pdb0_path, namd_coor, min_pdb_path)
                 if success:
                     pdb0_path = min_pdb_path
 
         pdb0_rel = _rel(pdb0_path, gomc_newdir)
-        psf0_rel = _rel(
-            python_dir / starts.starting_psf_box_0_file, gomc_newdir
-        )
+        psf0_rel = _rel(python_dir / starts.starting_psf_box_0_file, gomc_newdir)
         out = out.replace("pdb_file_box_0_file", pdb0_rel)
         out = out.replace("psf_file_box_0_file", psf0_rel)
-        out = out.replace(
-            "Restart_Checkpoint_file", f"false {'Output_data_restart.chk'}"
-        )
+        out = out.replace("Restart_Checkpoint_file", f"false {'Output_data_restart.chk'}")
     else:
         prev_gomc_rel = _rel(io.previous_gomc_dir, gomc_newdir)
-        out = out.replace(
-            "pdb_file_box_0_file",
-            f"{prev_gomc_rel}/Output_data_BOX_0_restart.pdb",
-        )
-        out = out.replace(
-            "psf_file_box_0_file",
-            f"{prev_gomc_rel}/Output_data_BOX_0_restart.psf",
-        )
+        out = out.replace("pdb_file_box_0_file", f"{prev_gomc_rel}/Output_data_BOX_0_restart.pdb")
+        out = out.replace("psf_file_box_0_file", f"{prev_gomc_rel}/Output_data_BOX_0_restart.psf")
 
     # Box 0 dims from xsc
     xsc0 = io.namd_box_0_dir / "namdOut.restart.xsc"
@@ -427,7 +403,7 @@ def write_gomc_conf_file(
     #         out = out.replace("x_dim_box_1", str(lx1))
     #         out = out.replace("y_dim_box_1", str(ly1))
     #         out = out.replace("z_dim_box_1", str(lz1))
-
+    
     # Box 1 branches
     if cfg.simulation_type in {"GEMC", "GCMC"}:
         if (cfg.simulation_type == "GCMC") or (
@@ -459,11 +435,14 @@ def write_gomc_conf_file(
                 a1, b1, c1 = _read_pdb_cryst1_dims(
                     python_dir / starts.starting_pdb_box_1_file
                 )
-                set_dims = getattr(
-                    cfg,
-                    "set_dims_box_1_list",
-                    [None, None, None],
-                ) or [None, None, None]
+                set_dims = (
+                    getattr(
+                        cfg,
+                        "set_dims_box_1_list",
+                        [None, None, None],
+                    )
+                    or [None, None, None]
+                )
                 x1 = _override_dim(a1, set_dims[0])
                 y1 = _override_dim(b1, set_dims[1])
                 z1 = _override_dim(c1, set_dims[2])
@@ -481,37 +460,52 @@ def write_gomc_conf_file(
                 )
                 out = out.replace(
                     "coor_box_1_file",
-                    (f"{prev_gomc_rel}/" "Output_data_BOX_1_restart.coor"),
+                    (
+                        f"{prev_gomc_rel}/"
+                        "Output_data_BOX_1_restart.coor"
+                    ),
                 )
                 out = out.replace(
                     "xsc_box_1_file",
-                    (f"{prev_gomc_rel}/" "Output_data_BOX_1_restart.xsc"),
+                    (
+                        f"{prev_gomc_rel}/"
+                        "Output_data_BOX_1_restart.xsc"
+                    ),
                 )
 
                 out = _strip_box1_velocity_restart_line(out)
 
                 out = out.replace(
                     "pdb_file_box_1_file",
-                    (f"{prev_gomc_rel}/" "Output_data_BOX_1_restart.pdb"),
+                    (
+                        f"{prev_gomc_rel}/"
+                        "Output_data_BOX_1_restart.pdb"
+                    ),
                 )
                 out = out.replace(
                     "psf_file_box_1_file",
-                    (f"{prev_gomc_rel}/" "Output_data_BOX_1_restart.psf"),
+                    (
+                        f"{prev_gomc_rel}/"
+                        "Output_data_BOX_1_restart.psf"
+                    ),
                 )
 
                 xsc1_prev = (
-                    io.previous_gomc_dir / "Output_data_BOX_1_restart.xsc"
+                    io.previous_gomc_dir
+                    / "Output_data_BOX_1_restart.xsc"
                 )
-                lx1, ly1, lz1 = _read_last_xsc_dims(xsc1_prev)
+                lx1, ly1, lz1 = _read_last_xsc_dims(
+                    xsc1_prev
+                )
                 out = out.replace("x_dim_box_1", str(lx1))
                 out = out.replace("y_dim_box_1", str(ly1))
                 out = out.replace("z_dim_box_1", str(lz1))
 
         else:
             # Two-box GEMC receives binary restart data from both NAMD boxes.
-            assert (
-                io.namd_box_1_dir is not None
-            ), "namd_box_1_dir is required for GEMC with both boxes."
+            assert io.namd_box_1_dir is not None, (
+                "namd_box_1_dir is required for GEMC with both boxes."
+            )
 
             prev_namd1_rel = _rel(
                 io.namd_box_1_dir,
@@ -530,7 +524,10 @@ def write_gomc_conf_file(
                 f"{prev_namd1_rel}/namdOut.restart.vel",
             )
 
-            xsc1 = io.namd_box_1_dir / "namdOut.restart.xsc"
+            xsc1 = (
+                io.namd_box_1_dir
+                / "namdOut.restart.xsc"
+            )
             lx1, ly1, lz1 = _read_last_xsc_dims(xsc1)
             out = out.replace("x_dim_box_1", str(lx1))
             out = out.replace("y_dim_box_1", str(ly1))
@@ -561,22 +558,25 @@ def write_gomc_conf_file(
                 )
                 out = out.replace(
                     "pdb_file_box_1_file",
-                    (f"{prev_gomc_rel}/" "Output_data_BOX_1_restart.pdb"),
+                    (
+                        f"{prev_gomc_rel}/"
+                        "Output_data_BOX_1_restart.pdb"
+                    ),
                 )
                 out = out.replace(
                     "psf_file_box_1_file",
-                    (f"{prev_gomc_rel}/" "Output_data_BOX_1_restart.psf"),
+                    (
+                        f"{prev_gomc_rel}/"
+                        "Output_data_BOX_1_restart.psf"
+                    ),
                 )
 
     else:
         out = _strip_box1_binary_restart_lines(out)
     # restart_true_or_false
     if cfg.simulation_type in {"GEMC", "GCMC"}:
-        if (cfg.simulation_type == "GCMC" and io.previous_gomc_dir is None) or (
-            cfg.simulation_type == "GEMC"
-            and cfg.only_use_box_0_for_namd_for_gemc
-            and io.previous_gomc_dir is None
-        ):
+        if (cfg.simulation_type == "GCMC" and io.previous_gomc_dir is None) or \
+           (cfg.simulation_type == "GEMC" and cfg.only_use_box_0_for_namd_for_gemc and io.previous_gomc_dir is None):
             out = out.replace("restart_true_or_false", "false")
         else:
             out = out.replace("restart_true_or_false", "true")
@@ -585,16 +585,9 @@ def write_gomc_conf_file(
 
     # Steps and thermo
     out = out.replace("GOMC_Run_Steps", str(int(sim.gomc_run_steps)))
-    out = out.replace(
-        "GOMC_RST_Coor_CKpoint_Steps", str(int(sim.gomc_rst_coor_ckpoint_steps))
-    )
-    out = out.replace(
-        "GOMC_console_BLKavg_Hist_Steps",
-        str(int(sim.gomc_console_blkavg_hist_steps)),
-    )
-    out = out.replace(
-        "GOMC_Hist_sample_Steps", str(int(sim.gomc_hist_sample_steps))
-    )
+    out = out.replace("GOMC_RST_Coor_CKpoint_Steps", str(int(sim.gomc_rst_coor_ckpoint_steps)))
+    out = out.replace("GOMC_console_BLKavg_Hist_Steps", str(int(sim.gomc_console_blkavg_hist_steps)))
+    out = out.replace("GOMC_Hist_sample_Steps", str(int(sim.gomc_hist_sample_steps)))
     out = out.replace("System_temp_set", str(sim.simulation_temp_k))
     out = out.replace("System_press_set", str(sim.simulation_pressure_bar))
 
@@ -617,18 +610,16 @@ def write_gomc_conf_file(
             for k in items:
                 v = mapping[k]
                 lines.append(f"{mode} \t {k} \t {v}\n")
-            out = out.replace(
-                "mu_ChemPot_K_or_P_Fugacitiy_bar_all", "".join(lines)
-            )
+            out = out.replace("mu_ChemPot_K_or_P_Fugacitiy_bar_all", "".join(lines))
             log.info(f"GCMC using {mode}: {mapping}")
         else:
-            log.warning(
-                "Warning: There is in error in the chemical potential settings for GCMC simulation."
-            )
+            log.warning("Warning: There is in error in the chemical potential settings for GCMC simulation.")
+
 
     if io.previous_gomc_dir is not None:
         prev_chk = io.previous_gomc_dir / "Output_data_restart.chk"
-
+        
+        
         if prev_chk.exists():
             prev_chk_rel = _rel(prev_chk, gomc_newdir)
             out = out.replace(
@@ -646,9 +637,7 @@ def write_gomc_conf_file(
                 "false Output_data_restart.chk",
             )
         else:
-            raise FileNotFoundError(
-                f"Missing GOMC restart checkpoint: {prev_chk}"
-            )
+            raise FileNotFoundError(f"Missing GOMC restart checkpoint: {prev_chk}")
     else:
         if "Restart_Checkpoint_file" in out:
             out = out.replace(
@@ -656,7 +645,10 @@ def write_gomc_conf_file(
                 "false Output_data_restart.chk",
             )
 
+
     out_path = gomc_newdir / "in.conf"
     _save_text(out_path, out)
     log.info(f"[GOMC] Wrote config: {out_path}")
     return gomc_newdir
+
+

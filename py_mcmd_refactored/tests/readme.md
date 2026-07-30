@@ -29,3 +29,4 @@ pytest --collect-only -q
 
 # Quit after first failure (quiet):
 pytest --maxfail=1 -q
+
