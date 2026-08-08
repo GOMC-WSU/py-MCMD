@@ -9,3 +9,17 @@ NAMD_GOMC_started_at_cycle_No_0.log
 **/__pycache__/**
 *.py[cod]
 __pycache__/
+
+
+# Python generated files
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+
+# Local simulation binaries/builds
+required_data/GOMC_bin/
+required_data/NAMD_CPU/
+
+# Local development archives
+py_mcmd_refactored.zip

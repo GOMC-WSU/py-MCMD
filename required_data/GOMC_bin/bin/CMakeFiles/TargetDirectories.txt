@@ -1,6 +1,0 @@
-/home/ia5498/GOMC/bin/CMakeFiles/NVT.dir
-/home/ia5498/GOMC/bin/CMakeFiles/GEMC.dir
-/home/ia5498/GOMC/bin/CMakeFiles/GCMC.dir
-/home/ia5498/GOMC/bin/CMakeFiles/NPT.dir
-/home/ia5498/GOMC/bin/CMakeFiles/edit_cache.dir
-/home/ia5498/GOMC/bin/CMakeFiles/rebuild_cache.dir
