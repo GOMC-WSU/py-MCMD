@@ -5,8 +5,9 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
-from typing import Iterable, List, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 
 @dataclass(frozen=True)
@@ -25,10 +26,6 @@ class NamdEnergyData:
     potential_last: float
     vdw_plus_elec_first: float
     vdw_plus_elec_last: float
-
-
-import math
-from typing import Iterable, List, Tuple
 
 
 def _normalize_titles(
@@ -83,9 +80,6 @@ def _extract_titles_and_rows(
     return titles, norm_rows
 
 
-from typing import Dict, List
-
-
 def _column_indices(
     titles: List[str],
     required: tuple[str, ...] = ("ELECT", "POTENTIAL", "VDW"),
@@ -103,9 +97,6 @@ def _column_indices(
                 f"Required column '{name}' not found in titles: {titles}"
             ) from e
     return idx
-
-
-from typing import List
 
 
 def _col(rows: List[List[float]], idx: int) -> List[float]:
@@ -149,9 +140,6 @@ def parse_namd_energy_lines(
         vdw_plus_elec_first=vdw_plus_elec[0],
         vdw_plus_elec_last=vdw_plus_elec[-1],
     )
-
-
-from typing import Iterable
 
 
 def get_namd_energy_data(

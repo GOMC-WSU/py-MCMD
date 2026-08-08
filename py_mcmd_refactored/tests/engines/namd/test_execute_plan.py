@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from config.models import SimulationConfig
 from engines.namd.plan import build_namd_execution_plan
