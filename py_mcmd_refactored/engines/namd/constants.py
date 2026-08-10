@@ -1,0 +1,25 @@
+# Keep an immutable canonical tuple, and (optionally) a list view if callers expect a list.
+DEFAULT_NAMD_E_TITLES = [
+    "ETITLE:",
+    "TS",
+    "BOND",
+    "ANGLE",
+    "DIHED",
+    "IMPRP",
+    "ELECT",
+    "VDW",
+    "BOUNDARY",
+    "MISC",
+    "KINETIC",
+    "TOTAL",
+    "TEMP",
+    "POTENTIAL",
+    "TOTAL3",
+    "TEMPAVG",
+    "PRESSURE",
+    "GPRESSURE",
+    "VOLUME",
+    "PRESSAVG",
+    "GPRESSAVG",
+]
+DEFAULT_NAMD_E_TITLES_LIST = list(DEFAULT_NAMD_E_TITLES)

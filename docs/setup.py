@@ -8,7 +8,7 @@ from setuptools import find_packages, setup
 
 #####################################
 NAME = "py-MCMD"
-VERSION = "0.0.2"
+VERSION = "2.0.0"
 ISRELEASED = True
 if ISRELEASED:
     __version__ = VERSION

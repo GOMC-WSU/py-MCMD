@@ -1,0 +1,57 @@
+* initial_box_0 - created by mBuild using the on 2023-03-16 21:00:47.267555.
+* These parameters use the non-bonded LJ form --- with these force field(s) via MoSDef  {'TIP4': '../../OPC.xml'}.
+*  1-4 electrostatic scaling = {'TIP4': 0.0} , and 1-4 non-bonded scaling = {'TIP4': 0.0}, and non-bonded mixing rule = geometric
+
+*            2000 atoms
+*            1500 bonds
+*            1500 angles
+*               0 dihedrals
+*               0 impropers
+
+
+* masses
+
+! atom_types      mass            ! atomClass_ResidueName
+* OW0             15.999          ! TIP4_OW
+* HW0             1.008           ! TIP4_HW
+* LP0             0.0             ! TIP4__LP
+
+BONDS * harmonic
+!
+! V(bond) = Kb(b - b0)**2
+!
+! Kb: kcal/mol/A**2 (LJ) and  K/A**2 (Mie and Exp6)
+! b0: A
+! Kb (kcal/mol) = Kb_K (K) * Boltz. const.; (9999999999 if no stretching)
+!
+! type_1   type_2     Kb              b0              ! extended_type_1      extended_type_2
+OW0        HW0        999999999999    0.8724          ! TIP4_OW              TIP4_HW
+OW0        LP0        999999999999    0.1594          ! TIP4_OW              TIP4__LP
+
+ANGLES * harmonic
+!
+! V(angle) = Ktheta(Theta - Theta0)**2
+!
+! Ktheta: kcal/mol/rad**2 (LJ) and  K/rad**2 (Mie and Exp6)
+! Theta0: degrees
+!
+!  Boltzmann = 0.0019872041 kcal / (mol * K)
+!
+! Ktheta (kcal/mol) = Ktheta_K (K) * Boltz. const.
+!
+! type_1   type_2     type_3     Ktheta          Theta0          ! extended_type_1      extended_type_2      extended_type_3
+HW0        OW0        HW0        999999999999    103.6           ! HW_TIP4              OW_TIP4              HW_TIP4
+HW0        OW0        LP0        999999999999    51.8            ! HW_TIP4              OW_TIP4              _LP_TIP4
+
+NONBONDED
+!
+! V(Lennard-Jones) = Epsilon,i,j[(Rmin,i,j/ri,j)**12 - 2(Rmin,i,j/ri,j)**6]
+!                                    or
+! V(Lennard-Jones) = 4 * Epsilon,i,j[(Sigma,i,j/ri,j)**12 - (Sigma,i,j/ri,j)**6]
+!
+! type_1   ignored         epsilon         Rmin/2          ignored         epsilon,1-4     Rmin/2,1-4      ! extended_type_1      extended_type_2
+OW0        0.0             -0.2128011472   1.7771660995    0.0             -0.0            1.7771660995    ! TIP4_OW              TIP4_OW
+HW0        0.0             -0.0            0.0             0.0             -0.0            0.0             ! TIP4_HW              TIP4_HW
+LP0        0.0             -0.0            0.0             0.0             -0.0            0.0             ! TIP4__LP             TIP4__LP
+
+END

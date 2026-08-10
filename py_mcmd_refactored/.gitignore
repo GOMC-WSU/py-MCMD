@@ -1,0 +1,28 @@
+# Python bytecode & caches
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+
+# Test & coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Type checker / static analysis
+.mypy_cache/
+.pyright/
+.pyre/
+
+# Build / dist
+build/
+dist/
+*.egg-info/
+
+# Editors/IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
