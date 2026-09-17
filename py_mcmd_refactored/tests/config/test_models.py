@@ -179,6 +179,7 @@ def test_runtime_cleanup_and_otf_fields_default_values():
     )
     assert cfg.combine_namd_dcd_file is True
     assert cfg.combine_gomc_dcd_file is True
+    assert cfg.combine_dcd_files_cycle_freq == 1
     assert cfg.otf_keep_raw_cycles == 2
 
 
@@ -199,6 +200,37 @@ def test_disk_cleanup_mode_accepts_and_normalizes_valid_modes(
     cfg = SimulationConfig(**data)
 
     assert cfg.disk_cleanup_mode == expected_mode
+
+
+def test_combine_dcd_files_cycle_freq_accepts_positive_integer():
+    data = minimal_config()
+    data["combine_dcd_files_cycle_freq"] = 5
+
+    cfg = SimulationConfig(**data)
+
+    assert cfg.combine_dcd_files_cycle_freq == 5
+
+
+@pytest.mark.parametrize("bad_value", [0, -3])
+def test_combine_dcd_files_cycle_freq_must_be_at_least_one(bad_value):
+    data = minimal_config()
+    data["combine_dcd_files_cycle_freq"] = bad_value
+
+    with pytest.raises(ValidationError) as exc:
+        SimulationConfig(**data)
+
+    assert "combine_dcd_files_cycle_freq" in str(exc.value)
+
+
+@pytest.mark.parametrize("bad_value", [2.5, "2", True])
+def test_combine_dcd_files_cycle_freq_rejects_non_integer(bad_value):
+    data = minimal_config()
+    data["combine_dcd_files_cycle_freq"] = bad_value
+
+    with pytest.raises(ValidationError) as exc:
+        SimulationConfig(**data)
+
+    assert "combine_dcd_files_cycle_freq" in str(exc.value)
 
 
 def test_disk_cleanup_mode_rejects_invalid_mode():

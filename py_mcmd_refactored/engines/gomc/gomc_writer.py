@@ -97,9 +97,19 @@ def _save_text(p: Path, s: str) -> None:
     p.write_text(s)
 
 
-def _rel(p: Path, base: Path) -> str:
-    """Return POSIX relative path from base to p (works across siblings)."""
-    return os.path.relpath(str(p), start=str(base)).replace("\\", "/")
+def _rel(p: Path | str, base: Path | str) -> str:
+    """Return POSIX relative path from base to p if they share parent, else absolute path."""
+    try:
+        p_abs = Path(p).resolve()
+        base_abs = Path(base).resolve()
+        common = os.path.commonpath([str(p_abs), str(base_abs)])
+        if common not in ("/", ""):
+            return os.path.relpath(str(p_abs), start=str(base_abs)).replace(
+                "\\", "/"
+            )
+        return p_abs.as_posix()
+    except Exception:
+        return os.path.relpath(str(p), start=str(base)).replace("\\", "/")
 
 
 def _build_parameters_block(

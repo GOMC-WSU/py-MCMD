@@ -89,6 +89,21 @@ from pathlib import Path
 from typing import Iterable
 
 
+def _rel(p: Path | str, base: Path | str) -> str:
+    """Return POSIX relative path from base to p if they share parent, else absolute path."""
+    try:
+        p_abs = Path(p).resolve()
+        base_abs = Path(base).resolve()
+        common = os.path.commonpath([str(p_abs), str(base_abs)])
+        if common not in ("/", ""):
+            return os.path.relpath(str(p_abs), start=str(base_abs)).replace(
+                "\\", "/"
+            )
+        return p_abs.as_posix()
+    except Exception:
+        return os.path.relpath(str(p), start=str(base)).replace("\\", "/")
+
+
 def _build_parameter_files_block(
     ff_files: Iterable[Path | str] | None,
     rel_to_dir: Path,
@@ -108,7 +123,7 @@ def _build_parameter_files_block(
     lines: list[str] = []
     for f in ff_files:
         # compute relative path to the target run/box directory
-        rel = os.path.relpath(str(f), str(rel_to_dir))
+        rel = _rel(f, rel_to_dir)
         rel_posix = Path(rel).as_posix()  # normalize separators
         lines.append(f"parameters \t {rel_posix}\n")
     return "".join(lines)
@@ -193,10 +208,7 @@ def _compute_run_paths_and_read_pdb_lines(
         # restart PSF. For GEMC, swap moves can change the molecule count
         # each cycle, making the .vel atom count stale -- using a mismatched
         # .vel causes "FATAL ERROR: Incorrect atom count in binary file".
-        gomc_rel = os.path.relpath(
-            str(gomc_newdir),
-            str(namd_box_x_newdir),
-        )
+        gomc_rel = _rel(gomc_newdir, namd_box_x_newdir)
         pdb_abs = gomc_newdir / f"Output_data_BOX_{box_number}_restart.pdb"
         psf_abs = gomc_newdir / f"Output_data_BOX_{box_number}_restart.psf"
         vel_abs = gomc_newdir / f"Output_data_BOX_{box_number}_restart.vel"
@@ -226,14 +238,8 @@ def _compute_run_paths_and_read_pdb_lines(
             # .vel missing, or atom count changed (GEMC swap moved molecules).
             # Use restart PDB/PSF for coordinates and topology; let NAMD
             # regenerate velocities from the configured temperature.
-            pdb_rel = os.path.relpath(
-                str(pdb_abs),
-                str(namd_box_x_newdir),
-            )
-            psf_rel = os.path.relpath(
-                str(psf_abs),
-                str(namd_box_x_newdir),
-            )
+            pdb_rel = _rel(pdb_abs, namd_box_x_newdir)
+            psf_rel = _rel(psf_abs, namd_box_x_newdir)
 
             replacements = {
                 "pdb_box_file": pdb_rel,
@@ -250,14 +256,8 @@ def _compute_run_paths_and_read_pdb_lines(
         # Fresh run: use starting pdb/psf (resolved under python_file_directory)
         pdb_abs = python_file_directory / starting_pdb_box_x_file
         psf_abs = python_file_directory / starting_psf_box_x_file
-        pdb_rel = os.path.relpath(
-            str(pdb_abs),
-            str(namd_box_x_newdir),
-        )
-        psf_rel = os.path.relpath(
-            str(psf_abs),
-            str(namd_box_x_newdir),
-        )
+        pdb_rel = _rel(pdb_abs, namd_box_x_newdir)
+        psf_rel = _rel(psf_abs, namd_box_x_newdir)
         replacements = {
             "pdb_box_file": pdb_rel,
             "psf_box_file": psf_rel,
@@ -413,6 +413,9 @@ def _compute_pme_grid_dims(
       - Convert to int with +1 (legacy behavior): int(value + 1).
     """
     if run_no != 0:
+        # If PME is disabled, given_* will be None — return zeros (safe, unused by NAMD)
+        if given_x is None or given_y is None or given_z is None:
+            return 0, 0, 0
         return int(given_x), int(given_y), int(given_z)
 
     mult = 1.3 if (simulation_type in {"GEMC", "NPT"}) else 1.0
