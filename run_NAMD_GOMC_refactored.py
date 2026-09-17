@@ -1668,7 +1668,6 @@ def get_namd_energy_data(read_namd_box_x_energy_file, e_default_namd_titles):
     )
     namd_e_vdw_box_x = namd_energy_data_box_x_df.loc[:, "VDW"]
     namd_e_vdw_box_x_initial_value = float(namd_e_vdw_box_x.values.tolist()[0])
-    namd_e_vdw_box_x_final_value = float(namd_e_vdw_box_x.values.tolist()[-1])
 
     namd_e_vdw_plus_elec_box_x = [
         float(namd_e_vdw_box_x[k_i]) + float(namd_e_electro_box_x[k_i])
