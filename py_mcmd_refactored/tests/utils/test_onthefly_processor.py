@@ -29,7 +29,9 @@ def test_ensure_catdcd_executable_reports_missing_binary(tmp_path: Path):
     assert _ensure_catdcd_executable(tmp_path / "nope" / "catdcd") is False
 
 
-def test_ensure_catdcd_executable_leaves_runnable_binary_untouched(tmp_path: Path):
+def test_ensure_catdcd_executable_leaves_runnable_binary_untouched(
+    tmp_path: Path,
+):
     fake = tmp_path / "catdcd"
     fake.write_bytes(b"#!/bin/sh\nexit 0\n")
     fake.chmod(0o755)
