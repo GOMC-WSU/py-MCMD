@@ -944,7 +944,7 @@ def get_namd_run_0_pme_dim(box_number):
             "{}/out.dat".format(namd_box_x_run_0_dir), "r"
         ).readlines()
 
-        for i, line in enumerate(read_namd_box_x_run_0_log_file):
+        for, line in enumerate(read_namd_box_x_run_0_log_file):
             split_line = line.split()
             if len(split_line) >= 7:
                 if (
