@@ -37,7 +37,7 @@ def test_metrics_happy_path_multiple_rows():
         lrc_last,
         vpe_list,
         vpe_first,
-        vpe_last,
+        
     ) = result
 
     # Lists
