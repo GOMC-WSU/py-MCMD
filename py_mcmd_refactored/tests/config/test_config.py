@@ -57,7 +57,7 @@ def with_two_box(cfg_kwargs):
 
 def test_load_config():
     # Resolve the JSON file path *relative* to the project root
-    project_root = Path(__file__).parent.parent.parent
+   
     # config_path = project_root / "user_input_NAMD_GOMC.json"
     config_path = repo_root() / "user_input_NAMD_GOMC.json"
     # sanity check
