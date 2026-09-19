@@ -2632,7 +2632,6 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
     gomc_e_inter_lj_box_x_initial_value = float(
         gomc_e_inter_lj_box_x_kcal_per_mol[0]
     )
-    gomc_e_inter_lj_box_x_final_value = float(
         gomc_e_inter_lj_box_x_kcal_per_mol[-1]
     )
 
