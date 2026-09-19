@@ -2078,7 +2078,6 @@ def write_gomc_conf_file(
                         read_y_dim_box_1_origin = read_y_dim_box_1 / 2
                         read_z_dim_box_1 = read_pdb_file[i].split()[3:4]
                         read_z_dim_box_1 = float(read_z_dim_box_1[0])
-                        read_z_dim_box_1_origin = read_z_dim_box_1 / 2
 
                         read_angle_alpha = read_pdb_file[i].split()[4:5]
                         read_angle_alpha = read_angle_alpha[0]
