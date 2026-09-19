@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import pandas as pd
 import pytest
 
 from py_mcmd_refactored.engines.gomc.energy_parse import get_gomc_energy_data
