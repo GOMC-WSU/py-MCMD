@@ -1,15 +1,23 @@
-Example Simulation
-===============
+Illustration: Water Insertion in a Protein Binding Pocket
+=========================================================
 
+Hybrid NAMD/GOMC sampling can be used to alternate molecular dynamics with
+grand-canonical insertion and deletion moves. In this example, NAMD evolves
+the protein and solvent configuration, then GOMC samples water occupancy in a
+binding pocket.
 
-Video of Hybrid MD/MC: Inserting Water in BPTI's Binding Pocket
----------------
-
-Utilizing the hybrid molecular dynamics (MD)/Monte Carlo (MC) or py-MCMD simulation, water is inserted into the buried binding pocket of the bovine pancreatic trypsin inhibitor (BPTI). The hybrid py-MCMD (NAMD/GOMC) simulation produces water in the binding pocket orders of magnitude faster than when using MD alone.  The hybrid simulation is capable of producing faster and more accurate results because the MC moves allow waters to be quickly inserted and do not solely rely on diffusion of water into the BPTI binding pocket.
-
-The **green** protein and waters (spheres) represent the crystallography data.  The **purple** protein and **red/white** water are the simulated system.
+This is a visualization, not a runnable tutorial: the repository does not
+include a complete BPTI input set. Use :doc:`quick_start` for the supplied
+GEMC calculation. For a protein calculation, prepare and validate the
+inputs described in :doc:`generating_systems` and
+:doc:`simulation_parameters_files`.
+The video illustrates a BPTI binding-pocket calculation. Green protein and
+water spheres are crystallographic coordinates; purple protein and red/white
+water are simulation output.
 
 .. raw:: html
 
-	<iframe src="_static/Hybrid_MC_MD_BPTI.mp4" width="100%" height="410" style="border:1px solid black;">
-</iframe>
+   <video controls width="100%">
+     <source src="_static/Hybrid_MC_MD_BPTI.mp4" type="video/mp4">
+     Your browser does not support embedded video.
+   </video>

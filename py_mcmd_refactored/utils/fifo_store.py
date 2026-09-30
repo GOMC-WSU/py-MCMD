@@ -198,12 +198,27 @@ class ManagedArtifactStore:
     def finalize_step_failure(self, engine: str, step_id: str | int) -> None:
         resources = self.get_step(engine, step_id)
         resources.status = "failed"
+        if self.developer_mode:
+            try:
+                resources.mirror_to_disk()
+                self.logger.info(
+                    "[ARTIFACT_STORE] Mirrored failed step %s %s to disk.",
+                    engine,
+                    step_id,
+                )
+            except Exception as e:
+                self.logger.warning(
+                    "[ARTIFACT_STORE] Failed to mirror failed step resources to disk: %s",
+                    e,
+                )
+
         self.logger.warning(
-            "[ARTIFACT_STORE] finalized failure engine=%s step=%s; cleaning runtime dirs",
+            "[ARTIFACT_STORE] finalized failure engine=%s step=%s; preserving runtime dirs for debugging",
             resources.engine,
             resources.step_id,
         )
-        # self.cleanup_step(engine, step_id)
+        # self.cleanup_step(engine, step_id) intentionally not called: a failed
+        # step's runtime dir is left in place so it can be inspected.
 
     def release_step(self, engine: str, step_id: str | int) -> None:
         """Release runtime files after downstream consumers no longer need them."""

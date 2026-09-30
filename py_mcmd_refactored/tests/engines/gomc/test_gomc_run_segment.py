@@ -106,6 +106,28 @@ def test_gomc_run_segment_updates_step_and_sets_dir(
     assert (Path(res["gomc_dir"]) / "out.dat").exists()
 
 
+def test_gomc_run_segment_single_box_with_no_box1_files(
+    tmp_path: Path, monkeypatch_writer
+):
+    """NVT/NPT/GCMC-box0-only configs legitimately have no box-1 starting
+    files (Optional[str] = None in the schema). GOMCStartFiles must accept
+    that without crashing on Path(None)."""
+    cfg = _cfg(
+        tmp_path,
+        simulation_type="NPT",
+        starting_pdb_box_1_file=None,
+        starting_psf_box_1_file=None,
+    )
+    eng = GomcEngine(cfg, dry_run=True)
+    st = _state(tmp_path)
+
+    res = eng.run_segment(run_no=1, state=st)
+
+    assert st.current_step == cfg.gomc_run_steps
+    assert st.gomc_dir is not None
+    assert (Path(res["gomc_dir"]) / "out.dat").exists()
+
+
 def test_gomc_run_segment_calls_compare_when_values_exist(
     tmp_path: Path, monkeypatch, monkeypatch_writer
 ):

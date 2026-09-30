@@ -1,262 +1,385 @@
-Simulation Parameters  (pre-simulation)
-===============
+Simulation Input and Templates
+==============================
 
+Input Files
+-----------
 
-NAMD and GOMC Configuration Files
----------------
+The refactored CLI reads one simulation JSON file. Start from
+``user_input_NAMD_GOMC.json`` and change its engine paths before execution.
+All relative paths are resolved from the current working directory.
 
-These are slightly modified versions of the standard configuration files used for the NAMD and GOMC simulation engines.
-Some of the variable entries are modified in the configuration files, which allows the python code to search and replace these variables for the next simulation, so the simulation is started correctly from the previous one.
-Please refer to the `GOMC Manual <https://gomc.eng.wayne.edu/documentation/>`_ and the `NAMD Users Guide <https://www.ks.uiuc.edu/Research/namd/2.14/ug/>`_ for more information on the proper inputs for the simulation engines.
+.. list-table::
+   :header-rows: 1
+   :widths: 18 47 35
 
-These files are located in the *"py-MCMD/required_data/config_files"* directory, and **these configurations files are auto-selected based on the user specified ensemble.**
-The NAMD configuration file applies to all the possible ensembles.
-The provided GOMC configuration files are named and designed for each different ensemble (NPT, NVT, GCMC, or GEMC), which changes the inputs and move frequencies.
-An experienced user can modify these configuration files by changing or adding variables, time steps, move types, and move frequencies, as long as the variables work smoothly between NAMD and GOMC.
-These changes will **likely** not effect the hybrid python code if the inputs match between NAMD and GOMC and are hardcoded and not dependent on a variable value in the existing configuration files.
-**However, the configuration files must maintain their names and locations in the "py-MCMD/required_data/config_files" directory.**
+   * - Input
+     - Configuration field or default path
+     - Requirement
+   * - Run configuration
+     - ``user_input_NAMD_GOMC.json``
+     - Select another file with ``-f FILE``.
+   * - Coordinates
+     - ``starting_pdb_box_0_file``, ``starting_pdb_box_1_file``
+     - PDB files consistent with the corresponding PSF.
+   * - Topology
+     - ``starting_psf_box_0_file``, ``starting_psf_box_1_file``
+     - PSF files with matching atom order and residue definitions.
+   * - Force fields
+     - ``starting_ff_file_list_namd``, ``starting_ff_file_list_gomc``
+     - Lists of engine-specific parameter files describing the same system.
+   * - NAMD template
+     - ``required_data/config_files/NAMD.conf``
+     - Override with ``path_namd_template``.
+   * - GOMC template
+     - ``required_data/config_files/GOMC_<simulation_type>.conf``
+     - Override with ``path_gomc_template``.
 
-It is also possible to use various configuration files throughout a longer simulation by simply changing the configuration files and restarting the hybrid simulation with the different files in their proper location. For Example, in the grand canonical Monte Carlo (GCMC) ensemble, suppose the first NAMD simulation requires restraining a protein for the first cycle.  In this case, the GCMC simulation can insert molecules into the binding pocket before allowing unrestricted movement of the protein.  The simulation would then be restarted on the second cycle to the Nth cycle with a different NAMD configuration file without restraining the protein.
-*However, the configuration files must maintain their names and locations.*
+JSON conventions
+----------------
 
+* Field names are case-sensitive. Use the allowed values exactly as shown.
+* Use unquoted ``true``, ``false``, and ``null`` for JSON literals.
+* Unknown fields cause validation errors.
+* A required field must be present even when its permitted value is
+  ``null``.
+* Defaults in the tables apply when a field is omitted; the supplied
+  example may select a different value.
 
-**NOTE:** A simulation cycle is one (1) NAMD simulation and one (1) GOMC simulation.
+.. warning::
 
-**NOTE:**  GOMC and NAMD both support the Shift, Switch, and Buckingham potentials, so they can be implemented in these hybrid simulations without issue.
+   The reader removes ``//`` and the remainder of each line before
+   parsing. Do not put ``//`` inside strings. Standard JSON parsers do
+   not accept these comments.
 
-**NOTE:** These hybrid simulation are currently only designed for orthogonal boxes.
+Ensemble requirements
+---------------------
 
-**NOTE:**  GOMC uses the standard Ewald Summation Method, while NAMD utilized the Particle Mesh Ewald (PME) to calculate long-range electrostatics.
+.. list-table::
+   :header-rows: 1
+   :widths: 12 30 20 38
 
-An Example GCMC configuration file for the GOMC engine is provided below.  **The configuration file sections that should not be modified without a good understanding of the overall code are listed at DO NOT MODIFY in each section.** The same DO NOT MODIFY statements are listing in the NAMD control file to alert the user.
+   * - Ensemble
+     - Starting structures
+     - NAMD stage
+     - Additional input
+   * - ``NVT``
+     - Box 0; box-1 path keys set to ``null``
+     - Box 0
+     - No ensemble-specific field.
+   * - ``NPT``
+     - Box 0; box-1 path keys set to ``null``
+     - Box 0
+     - ``simulation_pressure_bar``.
+   * - ``GCMC``
+     - Boxes 0 and 1
+     - Box 0
+     - Chemical-potential or fugacity settings by residue.
+   * - ``GEMC``
+     - Boxes 0 and 1
+     - Box 0 or both boxes
+     - ``only_use_box_0_for_namd_for_gemc`` selects the NAMD boxes.
 
-	.. literalinclude:: ../required_data/config_files/GOMC_GCMC.conf
+GEMC denotes Gibbs ensemble Monte Carlo; GCMC denotes grand canonical
+Monte Carlo. NAMD uses NVT dynamics for all four selections. GOMC
+implements the selected ensemble.
 
+Run control
+-----------
 
+.. list-table::
+   :header-rows: 1
+   :widths: 38 22 40
 
-Required Files for the Hybrid Simulation
----------------
+   * - Parameter
+     - Type / default
+     - Definition
+   * - ``total_cycles_namd_gomc_sims``
+     - Integer ≥ 1; required
+     - Total target cycle count, including completed cycles on restart.
+   * - ``starting_at_cycle_namd_gomc_sims``
+     - Integer ≥ 0; required
+     - First cycle to execute. Use ``0`` for a new calculation; must be less than the target to
+       execute cycles.
+   * - ``simulation_type``
+     - String; required
+     - ``GEMC``, ``GCMC``, ``NPT``, or ``NVT``.
+   * - ``gomc_use_CPU_or_GPU``
+     - String; required
+     - ``CPU`` or ``GPU``; selects GOMC, not NAMD.
+   * - ``only_use_box_0_for_namd_for_gemc``
+     - Boolean; required
+     - For GEMC, ``true`` runs NAMD in box 0 only; ``false`` runs NAMD in both boxes.
+   * - ``namd_simulation_order``
+     - String; ``series``
+     - ``series`` or ``parallel`` for two-NAMD-box GEMC. The CLI overrides this field.
+   * - ``namd_run_steps``
+     - Integer ≥ 0; required
+     - MD steps per NAMD segment.
+   * - ``gomc_run_steps``
+     - Integer ≥ 0; required
+     - MC steps per GOMC segment.
+   * - ``namd_minimize_mult_scalar``
+     - Integer ≥ 0; required
+     - Initial minimization steps equal ``namd_run_steps * namd_minimize_mult_scalar``.
 
-The hybrid simulation requires a **PSF**, **PDB**, and **force field files (i.e., .inp or .par files)** to run the simulation, which are required inputs.  Typically, only a single **PDB** and **PSF** file are required per simulation box, unless you need a second **PDB** file to fix or restrain the atoms within NAMD, etc.  A single or multiple force field files are required for both the NAMD and GOMC simulation engines, which is dependent on the system, and which force fields are being utilized.
+Use positive segment lengths for production. Keep segment lengths,
+ensemble, topology, force fields, and templates unchanged on restart.
+A start cycle of ``2`` and target count of ``5`` executes cycles 2, 3,
+and 4. See :doc:`simulation_output`.
 
+Pass ``-namd_sims_order parallel`` to select parallel NAMD execution.
+Omitting the CLI option selects ``series`` even if the JSON requests
+``parallel``.
 
-**NOTE:**  GOMC and NAMD force field files can be slightly different, so please refer to their respective manuals/documentation.  However, unlike NAMD, GOMC handles fixed bonds and angles in its force field file by replacing bond and angle K-constants with *"999999999999"*.  Please also see the image below for this section of the GOMC water force field with fixed bonds and angles.
+Thermodynamic parameters
+------------------------
 
-	.. image:: _images/GOMC_fixed_bond_angles.png
-   			:width: 350
+.. list-table::
+   :header-rows: 1
+   :widths: 38 22 40
 
-**NOTE:**  Additionally, the impropers and CMAP parameters need to be removed from the GOMC force field files, or GOMC will fail with an error when reading them.
+   * - Parameter
+     - Type / default
+     - Definition
+   * - ``simulation_temp_k``
+     - Number > 0; required
+     - Temperature in K.
+   * - ``simulation_pressure_bar``
+     - Number or ``null``; ``null``
+     - Required and non-negative for NPT, in bar. Other ensembles may omit it or use ``null`` ;
+       the workflow then supplies 1.01325 where a numeric value is needed.
+   * - ``GCMC_ChemPot_or_Fugacity``
+     - String or ``null``; ``null``
+     - Required for GCMC: ``ChemPot`` or ``Fugacity``.
+   * - ``GCMC_ChemPot_or_Fugacity_dict``
+     - Object or ``null``; ``null``
+     - Required for GCMC: residue names mapped to chemical potential in GOMC K units or fugacity
+       in bar. Fugacity must be non-negative.
 
-MD/MC Hybrid Input
----------------
+GCMC residue names must match the prepared system. Set the two GCMC
+fields to ``null`` or omit them for other ensembles.
 
-The MD/MC Hybrid input file is in the `json <https://developer.mozilla.org/en-US/docs/Learn/JavaScript/Objects/JSON>`_ format. An example fo the "user_input_NAMD_GOMC.json" file is provided below, and can be renamed by the user.
+Box geometry and CPU allocation
+-------------------------------
 
-	.. literalinclude:: ../user_input_NAMD_GOMC.json
-   		:language: json
+.. list-table::
+   :header-rows: 1
+   :widths: 38 22 40
 
+   * - Parameter
+     - Type / default
+     - Definition
+   * - ``no_core_box_0``
+     - Integer ≥ 1; required
+     - NAMD CPU cores for box 0.
+   * - ``no_core_box_1``
+     - Integer ≥ 0; required
+     - NAMD CPU cores for box 1. Must be positive for GEMC with NAMD in both boxes; use ``0``
+       for box-0-only execution.
+   * - ``set_dims_box_0_list``, ``set_dims_box_1_list``
+     - List or ``null``; both keys required
+     - Three positive box lengths in Å, or ``null`` entries read from the corresponding PDB
+       CRYST1 record. ``null`` for the whole list leaves all lengths to the PDB.
+   * - ``set_angle_box_0_list``, ``set_angle_box_1_list``
+     - List or ``null``; both keys required
+     - Three entries, each ``90`` or ``null``. Only orthogonal boxes are supported.
 
-**NOTE:**  The hybrid simulation always starts with NAMD and finishes with GOMC in a cycle. If set by the user, the first NAMD simulation will minimize the structure of the system.
+For example, ``[40.0, null, null]`` sets the x length to 40 Å and reads
+the remaining lengths from the PDB. Include all four geometry keys even
+when a second NAMD box is not used.
 
-**NOTE:** We assume that the best number of steps for each simulation engine per cycle is the values that, on average, provides two (2) uncorrelated samples for NAMD and two (2) accepted moves for each of the desired GOMC moves.
+Structures, force fields, and engine paths
+------------------------------------------
 
+.. list-table::
+   :header-rows: 1
+   :widths: 38 22 40
 
+   * - Parameter
+     - Type / default
+     - Definition
+   * - ``starting_pdb_box_0_file``, ``starting_psf_box_0_file``
+     - String; required
+     - Paths to the initial box-0 coordinates and topology.
+   * - ``starting_pdb_box_1_file``, ``starting_psf_box_1_file``
+     - String or ``null``; required
+     - Paths for GEMC/GCMC. Both keys must be present with value ``null`` for NVT/NPT.
+   * - ``starting_ff_file_list_namd``
+     - List of strings; required
+     - NAMD force-field paths. Supply at least one valid parameter file.
+   * - ``starting_ff_file_list_gomc``
+     - List of strings; required
+     - GOMC force-field paths.
+   * - ``namd2_bin_directory``
+     - String; required
+     - Directory containing the ``namd2`` executable.
+   * - ``gomc_bin_directory``
+     - String; required
+     - Directory containing ``GOMC_<CPU/GPU>_<ENSEMBLE>`` ; ``GOMC_CPU`` or ``GOMC_GPU`` is
+       accepted as a fallback.
+   * - ``path_namd_template``
+     - String; distributed template
+     - Defaults to ``required_data/config_files/NAMD.conf``.
+   * - ``path_gomc_template``
+     - String; ensemble template
+     - Defaults to ``required_data/config_files/GOMC_<simulation_type>.conf``.
 
-**Variable definitions** and usage for the *"user_input_variables_NAMD_GOMC.json"* file, or whatever the user names it are provided below:
+Preserve the placeholders used by the distributed templates. Changes to
+engine settings, time steps, and move frequencies require independent
+validation of the resulting NAMD and GOMC inputs.
 
-	total_cycles_namd_gomc_sims : integer
-		The total number of simulation cycles, where a cycle is a NAMD and
-		GOMC simulation.
-		total_cycles_namd_gomc_sims = (NAMD_simulations + GOMC_simulations)/2
+The NAMD and GOMC force fields must represent the same molecular model.
+Verify that both installed engine versions support its interaction terms.
+See :doc:`generating_systems` for consistency checks.
 
-	starting_at_cycle_namd_gomc_sims : integer
-		The cycle number to start the simulations at.
-		Enter zero for intial simualtion start, or non-zero for a restart.
-		A new simulation would be started at zero (0).
-		To restart a simulation, the last full cycle number of the
-		simulation would be entered. The user may need to delete 1 or more
-		of the last simulations if the simulation failed prematurely.
+Output and retention
+--------------------
 
-	gomc_use_CPU_or_GPU : string (only 'CPU' or 'GPU')
-		Run the GOMC simulation using the CPU or GPU.
-		Note: For the NAMD simulation, the user will have to provide the
-		path to the GPU or CPU NAMD version (i.e., This function does not
-		set NAMD's CPU or GPU version).
+.. list-table::
+   :header-rows: 1
+   :widths: 38 22 40
 
-	simulation_type : string (only 'GEMC', 'GCMC', 'NPT', 'NVT')
-		The simulation type or ensemble to use
-		Note: only GEMC-NVT available currently: 'GEMC' = GEMC-NVT
+   * - Parameter
+     - Type / default
+     - Definition
+   * - ``developer_mode``
+     - Boolean; ``false``
+     - Mirror raw engine files to the on-disk output roots. Enable before execution for the
+       documented restart and standalone-analysis procedures.
+   * - ``path_namd_runs``
+     - String; ``NAMD``
+     - On-disk NAMD output root.
+   * - ``path_gomc_runs``
+     - String; ``GOMC``
+     - On-disk GOMC output root.
+   * - ``log_dir``
+     - String; ``logs``
+     - Run-log directory.
+   * - ``process_on_the_fly``
+     - Boolean; ``false``
+     - Combine selected output after each completed cycle.
+   * - ``combined_data_dir``
+     - String; ``combined_data``
+     - Destination for on-the-fly analysis files.
+   * - ``disk_cleanup_mode``
+     - String; ``compact``
+     - ``compact`` , ``minimal`` , or ``off`` . Controls managed storage, not developer-mode
+       disk copies.
+   * - ``otf_keep_raw_cycles``
+     - Integer ≥ 1; ``2``
+     - Recent cycle pairs retained during rolling cleanup in ``compact`` and ``minimal`` modes.
 
-	only_use_box_0_for_namd_for_gemc : bool (true or false)
-		This chooses if you want to run both simulation boxes in NAMD
-		when running the GEMC ensemble, or just box 0.
-		true = NAMD runs only box 0 for GEMC
-		false = NAMD runs box 0 and 1 for GEMC
+.. warning::
 
-	no_core_box_0 : integer (> 0)
-		Number of CPU cores to use for box 0.  This is the ONLY place to enter CPU cores for
-		'GCMC', 'NPT', 'NVT', and  'GEMC' and only_use_box_0_for_namd_for_gemc = True
-		Note: The total simulation core = no_core_box_0 + no_core_box_1, when using the
-		(GEMC' and only_use_box_0_for_namd_for_gemc = False) values.
-		Note: If using the 'GCMC', 'NPT', 'NVT', or
-		(GEMC' and only_use_box_0_for_namd_for_gemc = True) ensembles,
-		the total simulation cores = no_core_box_0, regardless of the no_core_box_1 value.
+   With ``developer_mode`` and ``process_on_the_fly`` both set to
+   ``false``, default compact cleanup leaves no raw or combined simulation data
+   after successful completion. Select retention before execution.
 
-	no_core_box_1 : integer (>= 0)
-		Number or CPU cores to use in box 1.  This always ZERO for 'GCMC', 'NPT', 'NVT' (>= 0).
-		Only use when 'GEMC' and only_use_box_0_for_namd_for_gemc = True (> 0)
-		Note: The total simulation core = no_core_box_0 + no_core_box_1, when using the
-		(GEMC' and only_use_box_0_for_namd_for_gemc = False) values.
-		Note: If using the 'GCMC', 'NPT', 'NVT', or
-		(GEMC' and only_use_box_0_for_namd_for_gemc = True) ensembles,
-		the total simulation cores = no_core_box_0, regardless of the no_core_box_1 value.
+See :doc:`fifo_output_and_developer_mode` for cleanup and failure behavior.
 
-	simulation_temp_k : float or integer
-		GOMC and NAMD units of temperature are in Kelvin.
+Trajectory processing and CPU affinity
+--------------------------------------
 
-	simulation_pressure_bar : float or integer
-		GOMC and NAMD units of pressure are in bar (1.01325 bar = 1 atm).
+.. list-table::
+   :header-rows: 1
+   :widths: 38 22 40
 
-	GCMC_ChemPot_or_Fugacity : None or string (only stings are 'ChemPot' or 'Fugacity')
-		GCMC ensemble only: The variable used in the to control the GCMC ensemble.
-		Choose either None, 'ChemPot' or 'Fugacity'
+   * - Parameter
+     - Type / default
+     - Definition
+   * - ``combine_namd_dcd_file``
+     - Boolean; ``true``
+     - Combine NAMD DCD segments for NVT/NPT only.
+   * - ``combine_gomc_dcd_file``
+     - Boolean; ``true``
+     - Combine GOMC DCD segments for any supported ensemble.
+   * - ``combine_dcd_files_cycle_freq``
+     - Integer ≥ 1; ``1``
+     - Select every Nth cycle's DCD segment, counted from the start cycle. Does not select
+       individual frames within a segment.
+   * - ``rel_path_to_combine_binary_catdcd``
+     - String; bundled binary
+     - CatDCD path; see the default below.
+   * - ``catdcd_core``
+     - Integer or ``null``; ``null``
+     - Explicit CPU core for CatDCD via ``taskset`` . Applies even when ``enable_cpu_affinity``
+       is false.
+   * - ``enable_cpu_affinity``
+     - Boolean; ``false``
+     - Without an explicit CatDCD core, select the first core following the configured NAMD core
+       range.
+   * - ``otf_reserved_cores``
+     - Integer or ``null``; ``null``
+     - Accepted but not used to reserve or select cores. Use ``catdcd_core`` for explicit
+       placement.
 
-	GCMC_ChemPot_or_Fugacity_dict = {str (residue name up to 4 characters): int or float (see below)}
-		GCMC ensemble only: The selected residue, which is a molecule, its
-		chemical potential (ChemPot) or fugacity (Fugacity).
-		GCMC_ChemPot_or_Fugacity_dict = {str (Residue name): int or float
-		(ChemPots in unit GOMC K units or Fugacity in unit bar)}
-		NOTE: For a protein, the general residue name of 'PROTA' should be used, which accounts for the whole protein.
-		NOTE: For a residue that should not be removed, the residue should have the beta value in the PDB file set to 2,
-		and have the ChemPot set to be -99999999999999999999999999999999999999.
-		Example Chempot: GCMC_ChemPot_or_Fugacity_dict = {'TIP3': 1000, 'Cl' : -1000, 'Na' : -900}
-		Example Fugacity (values >=0): GCMC_ChemPot_or_Fugacity_dict = {'TIP3': 1000, 'Cl' : 10, 'Na' : 0}
-		Example Chempot with a protein: GCMC_ChemPot_or_Fugacity_dict =
-		{
-		"TIP3": -4166,
-		"PROTA":-99999999999999999999999999999999999999,
-		"POPC":-99999999999999999999999999999999999999,
-		"POT":-99999999999999999999999999999999999999,
-		"CLA":-99999999999999999999999999999999999999
-		}
+The default CatDCD path is
+``required_data/bin/catdcd-4.0b/LINUXAMD64/bin/catdcd4.0/catdcd``.
+Select an executable compatible with the compute node. Any pinned CPU
+must belong to the job's allocation and should lie outside NAMD's core
+range.
 
-	namd_minimize_mult_scalar : int (>=0)
-		The scalar multiple used to get the number of NAMD minimization steps for this
-		intitial NAMD simulation.
-		NAMD_minimize steps = namd_run_steps * namd_minimize_mult_scalar
+Derived engine output intervals
+-------------------------------
 
-	namd_run_steps : int (>=10)
-		The number of steps to run each cycle of the NAMD simulation.
-		Needs to be 10 minimum for now, NEEDS TO BE THE SAME AS THE PREVIOUS SIMULATION, IF RESTARTED!
+The configuration loader calculates the following intervals from segment
+lengths. They are not independent user controls: values supplied under
+these names are overwritten during configuration initialization.
 
-	gomc_run_steps : int (>=10)
-		The number of steps to run each cycle of the GOMC simulation.
-		Needs to be 10 minimum for now, NEEDS TO BE THE SAME AS THE PREVIOUS SIMULATION, IF RESTARTED!
+.. list-table::
+   :header-rows: 1
+   :widths: 55 45
 
-	set_dims_box_0_list : list or null, [null or float or int (>0), null or float or int (>0), null or float or int (>0)]
-		The x, y, and z-dimensions of length for box 0 in Angstrom units.
-		This is a list of 3, which can contain a null, float or int (>0).
-		The length is auto read from the PDB files CRYST1 line, if it is containted there.
-		This command overrides the PDB value(s), and is needed for the simulation if
-		the data is not in the pdb file.
-		Note: if null is used instead of a list the PDB values will be used.
-		Note: if null is used instead of the x, y, or z-dimension, the
-		PDB file will be used for the null dimensions. Example: [10, null, null],
-		the x dimension would use 10 and the y and z dimensions would be the PDB
-		file values.
+   * - Derived field
+     - Calculated value
+   * - ``namd_rst_dcd_xst_steps``
+     - ``namd_run_steps``
+   * - ``namd_console_blkavg_e_and_p_steps``
+     - ``namd_run_steps``
+   * - ``gomc_console_blkavg_hist_steps``
+     - ``gomc_run_steps``
+   * - ``gomc_rst_coor_ckpoint_steps``
+     - ``gomc_run_steps``
+   * - ``gomc_hist_sample_steps``
+     - ``min(500, int(gomc_run_steps / 10))``
 
-	set_dims_box_1_list : list or null, [null or float or int (>0), null or float or int (>0), null or float or int (>0)]
-		The x, y, and z-dimensions of length for box 1 in Angstrom units.
-		This is a list of 3, which can contain a null, float or int (>0).
-		The length is auto read from the PDB files CRYST1 line, if it is containted there.
-		This command overrides the PDB value(s), and is needed for the simulation if
-		the data is not in the pdb file.
-		Note: if null is used instead of a list the PDB values will be used.
-		Note: if null is used instead of the x, y, or z-dimension, the
-		PDB file will be used for the null dimensions. Example: [10, null, null],
-		the x dimension would use 10 and the y and z dimensions would be the PDB
-		file values.
+For ``gomc_run_steps`` below 10, the derived histogram sampling interval
+is zero. Inspect the generated GOMC input and confirm that the selected
+engine accepts the interval before using such a short segment. These
+engine intervals are distinct from ``combine_dcd_files_cycle_freq``, which
+selects complete cycles for trajectory concatenation.
 
-	set_angle_box_0_list : list or null, [null or float or int, null or float or int, null or float or int]
-		The alpha, beta, and gamma angles for box 0 in degrees.
-		This is a list of 3, which can contain a null, float or int.
-		The angles are auto read from the PDB files CRYST1 line, if it is containted there.
-		This command overrides the PDB value(s), and is needed for the simulation if
-		the data is not in the pdb file.
-		Note: if null is used instead of a list the PDB values will be used.
-		Note: if null is used instead of the alpha, beta, and gamma angles, the
-		PDB file will be used for the null dimensions. Example: [10, null, null],
-		the alpha angle would use 10 and the beta and gamma angles would be the PDB
-		file values.
-		NOTE: CURRENTLY ONLY ORTHOGONAL BOXES ARE AVAILABLE, SO ONLY NULL OR 90
-		WILL BE ACCEPTED. NULL WILL AUTO DEFAUT TO 90.
+Continuity checks
+-----------------
 
-	set_angle_box_1_list : list or null, [null or float or int, null or float or int, null or float or int]
-		The alpha, beta, and gamma angles for box 1 in degrees.
-		This is a list of 3, which can contain a null, float or int.
-		The angles are auto read from the PDB files CRYST1 line, if it is containted there.
-		This command overrides the PDB value(s), and is needed for the simulation if
-		the data is not in the pdb file.
-		Note: if null is used instead of a list the PDB values will be used.
-		Note: if null is used instead of the alpha, beta, and gamma angles, the
-		PDB file will be used for the null dimensions. Example: [10, null, null],
-		the alpha angle would use 10 and the beta and gamma angles would be the PDB
-		file values.
-		NOTE: CURRENTLY ONLY ORTHOGONAL BOXES ARE AVAILABLE, SO ONLY NULL OR 90
-		WILL BE ACCEPTED. NULL WILL AUTO DEFAUT TO 90.
+.. list-table::
+   :header-rows: 1
+   :widths: 42 16 42
 
-	starting_ff_file_list_gomc : list of strings
-		All the force fields for the GOMC simulation.
-		The strings in the list must be the relative path and file name to the force field(s)
-		Example : ["required_data/equilb_box_298K/GOMC_TIPS3P_FF.inp", "required_data/equilb_box_298K/GOMC_NaCl_FF.inp"]
+   * - Parameter
+     - Default
+     - Definition
+   * - ``allowable_error_fraction_potential``
+     - ``0.005``
+     - Non-negative fractional threshold for logged potential-energy continuity checks between
+       NAMD segments.
+   * - ``allowable_error_fraction_vdw_plus_elec``
+     - ``0.005``
+     - Non-negative fractional threshold for logged VDW-plus-electrostatic continuity checks.
+   * - ``max_absolute_allowable_kcal_fraction_vdw_plus_elec``
+     - ``0.5``
+     - Non-negative threshold in kcal/mol. Skip the fractional VDW-plus-electrostatic check
+       below this magnitude to avoid a ratio near zero.
 
-	starting_ff_file_list_namd : list of strings
-		All the force fields for the NAMD simulation.
-		The strings in the list must be the relative path and file name to the force field(s)
-		Example : ["required_data/equilb_box_298K/NAMD_TIPS3P_FF.inp", "required_data/equilb_box_298K/NAMD_NaCl_FF.inp"]
+These checks report status; they do not stop a calculation.
 
-	starting_pdb_box_0_file : string
-		The relative path and filename to the starting PDB file for box 0,
-		which is initally fed to the NAMD simulation since it starts first.
-		The string in the list must be the relative path to the force fields and the file name
-		Example : "required_data/equilb_box_298K/TIPS3P_box_0.pdb"
+Supplied configuration
+----------------------
 
-	starting_psf_box_0_file : string
-		The relative path and filename to the starting PSF file box 0,
-		which is initally fed to the NAMD simulation since it starts first.
-		The string in the list must be the relative path to the force fields and the file name
-		Example : "required_data/equilb_box_298K/TIPS3P_box_0.psf
+The following file is the repository's GEMC example. It uses NAMD in
+box 0 only; GOMC handles both boxes. Replace the machine-specific engine
+paths before execution.
 
-	starting_pdb_box_1_file : string
-		The relative path and filename to the starting PDB file for box 1,
-		which is initally fed to the NAMD simulation since it starts first.
-		The string in the list must be the relative path to the force fields and the file name
-		Note: this is only needed for the "GCMC" and "GEMC" ensembles/simulation types
-		Example : "required_data/equilb_box_298K/TIPS3P_box_1.pdb"
-
-	starting_psf_box_1_file : string
-		The relative path and filename to the starting PSF file box 1,
-		which is initally fed to the NAMD simulation since it starts first.
-		The string in the list must be the relative path to the force fields and the file name
-		Note: this is only needed for the "GCMC" and "GEMC" ensembles/simulation types
-		Example : "required_data/equilb_box_298K/TIPS3P_box_1.psf
-
-	namd_bin_file : string
-		The relative path to the directory where the namd2 file binary is located.
-		This should be in the required_data/bin/NAMD212, or required_data/bin/NAMD212
-		or required_data/bin directory.
-		IMPORTANT MANUAL MODIFICATION: To use the GPU and CPU or either version of namd,
-		the copied files in this directory must be renamed namd2_CPU and namd2_GPU.
-		NOTE: THIS WAS ONLY TESTED ON NAMD VERSION 2.14, SO IT MAY NOT WORK ON OTHER
-		NAMD VERSIONS WITHOUT SOME CODE MODIFICATION.
-		Alternatively, a sybolic link to namd2 file binary could be there.
-		Example:  "required_data/bin/NAMD212"
-
-	gomc_bin_file : string
-		The relative path to the directory where the GOMC file binaries are located.
-		This should be in the required_data/bin directory.
-		Alternatively, a sybolic link to GOMC file binaries file binary could be there.
-		NOTE: THIS WAS ONLY TESTED ON THE GOMC DEVELOPMENT AFTER VERSION 2.70,
-		SO IT MAY NOT WORK ON OTHER GOMC VERSIONS WITHOUT SOME CODE MODIFICATION,
-		AND SOME ADDITIONAL FUNCTIONALLITY IS NOT IN PREVIOUS GOMC VERSIONS.
-		Example: "required_data/bin"
+.. literalinclude:: ../user_input_NAMD_GOMC.json
+   :language: json
+   :linenos:
