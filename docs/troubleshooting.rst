@@ -118,4 +118,3 @@ Output and restart
      - ``-w`` destination and ``-o`` value.
      - Choose a new relative directory. Use ``-o true`` only when replacing generated files
        there is intended.
-
