@@ -1,32 +1,120 @@
-Installation and Other Required Files
+Installation
 ============
 
-The hybrid py-MCMD Python code can be downloaded or cloned from the `py-MCMD GitHub repository <https://github.com/GOMC-WSU/py-MCMD>`_.  This hybrid NAMD_GOMC Python code does not require any setup, but does require the proper files as input, which are listed below:
+Prerequisites
+-------------
 
-* **PSF** and **PDB** files.  *NOTE:  One (1) PSF and PDB file are required for the NPT and NVT ensembles, while two (2) PSF and PDB files are required for the GCMC and GEMC ensembles.*
+The refactored py-MCMD workflow uses Linux runtime facilities and requires
+Python, NAMD, GOMC, and prepared simulation inputs. NAMD and GOMC are separate
+programs; py-MCMD does not install them. The default runtime store uses
+``/dev/shm``, so ensure that location has enough space for the intermediate
+files produced by the job. See :doc:`fifo_output_and_developer_mode`.
 
-* **Force field (.inp or .par) files**
+.. list-table::
+   :header-rows: 1
+   :widths: 25 75
 
-* **NAMD binary files** for the CPU and GPU version, depending on which one you plan on using.  *NOTE: NAMD provides two (2) different downloads, one (1) for the CPU version and one (1) for the GPU version.*
+   * - Component
+     - Requirement
+   * - Python packages
+     - Pydantic 2, NumPy, and Pandas for the refactored workflow; SciPy for standalone
+       combining.
+   * - NAMD
+     - Executable named ``namd2``; installed separately.
+   * - GOMC
+     - Executable matching the selected ensemble and CPU/GPU setting; installed separately.
+   * - CatDCD
+     - Required for trajectory concatenation; must run on the compute node.
+   * - Storage
+     - Space for managed runtime files and any retained raw or combined output.
+   * - Prepared system
+     - Compatible PSF, PDB, force-field files, and NAMD/GOMC templates.
 
-* **GOMC binary files**  are automatically built for all the ensembles when compiling GOMC.  The CPU version of GOMC is always built, while the GPU version of GOMC is only compiled if the proper CUDA version is installed and accessible during the building process.
+Obtain py-MCMD
+--------------
 
+Clone or download the repository:
+https://github.com/GOMC-WSU/py-MCMD.
 
-This Python code is currently compatible only with `NAMD version 2.14 <https://www.ks.uiuc.edu/Development/Download/download.cgi?PackageName=NAMD>`_ and `GOMC-development branch <https://github.com/GOMC-WSU/GOMC/tree/development>`_.  The NAMD and GOMC software needs to be installed before using this hybrid python code. Please refer to the NAMD and GOMC software instructions for installing them and building the binary files.  Please also see the `GOMC Manual <https://gomc.eng.wayne.edu/documentation/>`_ and the `NAMD Users Guide <https://www.ks.uiuc.edu/Research/namd/2.14/ug/>`_. These binary files can be moved to a different directory, as this directory is specified in the hybrid simulation input.
+To clone a new working copy:
 
+.. code-block:: bash
 
-* In NAMD, the binary file is typically located in the *NAMD_version_OS-CPUorGPU/* directory, named *namd2*.
-	*NOTE: the user will need to specify the NAMD binary file directory and file name in this python code variables.*
+   git clone https://github.com/GOMC-WSU/py-MCMD.git
+   cd py-MCMD
 
-* For GOMC, the binary files are typically located *GOMC_version_No/bin* directory. The CPU versions of the binary files are named GOMC_CPU_GCMC, GOMC_CPU_GEMC, GOMC_CPU_NPT, and GOMC_CPU_NVT.  The GPU versions of the files are named GOMC_GPU_GCMC, GOMC_GPU_GEMC, GOMC_GPU_NPT, and GOMC_GPU_NVT.
-	*NOTE: the user just needs to specify the GOMC binary directory since this Python code will select the proper binary file.*
+Run the remaining commands from the repository root. If a working copy
+already exists, change to that directory instead of cloning again.
 
+Python environment
+------------------
 
-**NOTE: This code was only tested on Linux operating systems.  It was not tested using the Windows, Mac, or other operating systems, so it may not function properly on these operating systems.**
+Run these commands from the repository root. The supplied Conda file includes
+NumPy, Pandas, and SciPy, but does not include Pydantic, which the refactored
+program requires:
 
+.. code-block:: bash
 
-**NOTE: A bug exists when running the NAMD simulations in GPU mode with the hybrid GEMC ensemble.  It is currently unclear if this is an issue with NAMD, CUDA, or a precision error since the NAMD simulations run perfectly in CPU mode.  A temporary workaround when using the hybrid GEMC ensemble is to run GOMC in GPU mode and NAMD in CPU mode.**
+   conda env create -f namd_gomc-env.yml
+   conda activate NAMD_GOMC-code
+   conda install -c conda-forge "pydantic>=2,<3"
+   python -c "import pydantic, numpy, pandas, scipy; print(pydantic.__version__)"
 
-**NOTE: ONLY run NAMD in the NVT ensemble, as running NAMD in the NPT ensemble will cause errors in the box positioning since NAMD and GOMC have different box centering algorithms when centering the box during box size changes.**
+The version printed by the last command must start with ``2.``. The supplied
+environment contains a broad set of dependencies for the older workflow.
+If that environment cannot be solved on the local platform, a smaller
+environment for the refactored program and the standalone combining script
+can be created with:
 
-**NOTE:**  GOMC does not currently use improper or Urey—Bradley potentials, so if the hybrid simulations contain impropers or Urey—Bradleys, the NAMD simulation energies will be different.  In a protein simulation, it should be OK not to use impropers or Urey-Bradleys in GOMC and utilize them in NAMD since the protein will not move in the GOMC simulation due to its size.  Each simulation will need to be individually evaluated to determine if not having the impropers or Urey-Bradleys in GOMC is irrelevant or significant to the simulation results.**
+.. code-block:: bash
+
+   conda create -n py-mcmd -c conda-forge python=3.11 "pydantic>=2,<3" numpy pandas scipy tk
+   conda activate py-mcmd
+
+The program is run directly from this repository; no ``pip install`` step is
+required for the commands in this manual. Check that the CLI can start:
+
+.. code-block:: bash
+
+   python py_mcmd_refactored/cli/main.py --version
+
+Simulation engines
+------------------
+
+Set ``namd2_bin_directory`` to a directory containing an executable named
+``namd2``. If the installed NAMD executable has a different name, place a
+``namd2`` symlink in that directory.
+
+Set ``gomc_bin_directory`` to a directory containing the executable for the
+selected device and ensemble. For example, CPU GEMC uses ``GOMC_CPU_GEMC``.
+If that file is absent, py-MCMD tries ``GOMC_CPU``; it makes the analogous
+choice for GPU builds. The selected files must be executable on the compute
+node where the job runs.
+
+The distributed templates and earlier project work used NAMD 2.14 and GOMC
+development builds. Test the selected versions with a short calculation
+before production. A successful ``--dry_run`` does not establish engine
+compatibility because it does not execute either engine.
+
+Input files and CatDCD
+----------------------
+
+Each run needs PSF, PDB, and force-field files compatible with both engines,
+plus the NAMD and ensemble-specific GOMC templates. The example files are in
+``required_data/``. The workflow currently accepts orthogonal boxes only. See
+:doc:`generating_systems` and :doc:`simulation_parameters_files`.
+
+The bundled CatDCD binary is used when combined DCD trajectories are
+requested. Check that the path selected by
+``rel_path_to_combine_binary_catdcd`` points to a binary for the local system.
+Energy and state summaries do not require trajectory concatenation.
+
+Engine-specific references
+--------------------------
+
+Consult the `NAMD User's Guide <https://www.ks.uiuc.edu/Research/namd/2.14/ug/>`_
+and `GOMC documentation <https://gomc.eng.wayne.edu/documentation/>`_ for
+installation, simulation controls, and force-field syntax. NAMD runs in NVT
+within this hybrid workflow; the GOMC stage controls the selected ensemble.
+Check force-field term support in the installed engine versions and
+compare energies for the same prepared configuration before production.

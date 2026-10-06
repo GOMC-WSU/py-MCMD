@@ -11,6 +11,7 @@
   "combined_data_dir": "combined_data",
   "rel_path_to_combine_binary_catdcd": "required_data/bin/catdcd-4.0b/LINUXAMD64/bin/catdcd4.0/catdcd",
   "combine_gomc_dcd_file": true,
+  "combine_dcd_files_cycle_freq": 1,
   "otf_keep_raw_cycles": 2,
   "no_core_box_0": 4,
   "no_core_box_1": 0,

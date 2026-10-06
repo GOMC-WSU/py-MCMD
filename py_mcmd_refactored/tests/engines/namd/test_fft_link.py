@@ -127,6 +127,26 @@ def test_link_run0_fft_skips_missing_source_file_in_dry_run(
     assert not dst.exists()
 
 
+def test_link_run0_fft_skips_missing_run0_dir_outside_dry_run(tmp_path: Path):
+    """A missing run-0 directory (e.g. cleaned up by the disk retention
+    policy) must not crash a real run: linking a cached FFT plan is a
+    NAMD startup-time optimization only, and NAMD replans on its own when
+    it's unavailable."""
+    cfg = make_cfg(tmp_path)
+    (tmp_path / "bin_namd").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "bin_namd" / "namd2").write_text("")
+    eng = NamdEngine(cfg, dry_run=False)
+
+    dest_dir = tmp_path / "NAMD" / "00000002_a"
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    # No run0 dir exists at all (neither 8- nor 10-digit width), so
+    # get_run0_fft_filename raises FileNotFoundError internally.
+    eng.link_run0_fft_file_into_dir(0, dest_dir)
+
+    assert list(dest_dir.iterdir()) == []
+
+
 def test_link_run0_fft_prefers_cached_copy_when_runtime_run0_removed(
     tmp_path: Path,
 ):

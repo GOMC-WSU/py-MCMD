@@ -9,7 +9,7 @@ BUILDDIR      = _build
 
 # User-friendly check for sphinx-build
 ifeq ($(shell which $(SPHINXBUILD) >/dev/null 2>&1; echo $$?), 1)
-$(error The '$(SPHINXBUILD)' command was not found. Make sure you have Sphinx installed, then set the SPHINXBUILD environment variable to point to the full path of the '$(SPHINXBUILD)' executable. Alternatively you can add the directory with the executable to your PATH. If you don't have Sphinx installed, grab it from http://sphinx-doc.org/)
+	$(error The '$(SPHINXBUILD)' command was not found. Install the packages in requirements.txt or docs-env.yml, then set SPHINXBUILD to the full path of the executable if needed.)
 endif
 
 # Internal variables.
@@ -85,17 +85,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/mbuild.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/py-MCMD.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/mbuild.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/py-MCMD.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/mbuild"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/mbuild"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/py-MCMD"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/py-MCMD"
 	@echo "# devhelp"
 
 epub:

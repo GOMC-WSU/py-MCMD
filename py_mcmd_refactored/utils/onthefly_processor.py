@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import logging
+import os
 import shutil
+import stat
 import subprocess
 from pathlib import Path
 from typing import Iterable, Optional, TextIO
@@ -301,6 +303,70 @@ def _set_catdcd_core(core_id: Optional[int]) -> None:
     _CATDCD_CORE = core_id
 
 
+def _ensure_catdcd_executable(catdcd_bin: str | Path) -> bool:
+    """Make sure the catdcd binary can actually be run.
+
+    The catdcd binary shipped under ``required_data/`` frequently lands on
+    disk without its execute bit (e.g. after an archive extraction or a
+    ``git`` checkout that dropped file modes). Without this, every per-cycle
+    DCD combine fails with ``[Errno 13] Permission denied`` and the run
+    quietly produces no combined trajectory.
+
+    This resolves the binary (``PATH`` lookup or a cwd-relative path),
+    adds the execute bits when the file is present but not executable, and
+    returns whether catdcd looks runnable. It only logs; it never raises.
+    """
+    raw = str(catdcd_bin)
+
+    # A bare name that resolves on PATH is fine as-is.
+    if os.sep not in raw and (os.altsep is None or os.altsep not in raw):
+        if shutil.which(raw):
+            return True
+
+    path = Path(raw)
+    if not path.is_absolute():
+        path = Path.cwd() / path
+
+    if not path.exists():
+        logger.warning(
+            "[OnTheFly] catdcd binary not found at %s -- combined DCD "
+            "trajectories will NOT be written. Check "
+            "rel_path_to_combine_binary_catdcd in the JSON.",
+            path,
+        )
+        return False
+
+    if os.access(path, os.X_OK):
+        return True
+
+    try:
+        mode = path.stat().st_mode
+        path.chmod(mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        logger.info(
+            "[OnTheFly] catdcd binary was not executable; added execute "
+            "permission: %s",
+            path,
+        )
+    except OSError as exc:
+        logger.warning(
+            "[OnTheFly] catdcd binary is not executable and chmod failed "
+            "(%s): %s -- combined DCD trajectories will NOT be written.",
+            exc,
+            path,
+        )
+        return False
+
+    if os.access(path, os.X_OK):
+        return True
+
+    logger.warning(
+        "[OnTheFly] catdcd binary still not executable after chmod: %s "
+        "-- combined DCD trajectories will NOT be written.",
+        path,
+    )
+    return False
+
+
 def _append_dcd(
     catdcd_bin: str | Path,
     src_dcd: str | Path,
@@ -486,6 +552,37 @@ class OnTheFlyProcessor:
             and self.sim_type != "GCMC"
         )
 
+        # Make sure catdcd is runnable before the first cycle. The shipped
+        # binary often lacks its execute bit, which otherwise turns every
+        # per-cycle combine into a silent "[Errno 13] Permission denied".
+        self._catdcd_ok = True
+        if self.combine_namd_dcd or self.combine_gomc_dcd:
+            self._catdcd_ok = _ensure_catdcd_executable(self.catdcd_bin)
+
+        # User-selectable frequency (in cycles) at which coordinates are
+        # written to the combined DCD trajectory. 1 => every cycle (default),
+        # N => every Nth cycle counted from the starting cycle. This mirrors
+        # the legacy combine_data_NAMD_GOMC.py `engine_directory_list[::freq]`
+        # behavior and keeps the ever-growing combined DCD (and the per-cycle
+        # catdcd rewrite) smaller.
+        try:
+            self.combine_dcd_files_cycle_freq = max(
+                1,
+                int(getattr(cfg, "combine_dcd_files_cycle_freq", 1)),
+            )
+        except (TypeError, ValueError):
+            self.combine_dcd_files_cycle_freq = 1
+
+        self._dcd_start_cycle = int(
+            getattr(cfg, "starting_at_cycle_namd_gomc_sims", 0)
+        )
+
+        if self.combine_dcd_files_cycle_freq > 1:
+            logger.info(
+                "[OnTheFly] Combined DCD save frequency: every %d cycles.",
+                self.combine_dcd_files_cycle_freq,
+            )
+
         self._current_step = 0
 
         self._namd_e_titles = None
@@ -646,6 +743,26 @@ class OnTheFlyProcessor:
     # ) -> None:
     #     self._process_namd_step(namd_run_no)
     #     self._process_gomc_step(gomc_run_no)
+    def _dcd_cycle_selected(
+        self,
+        gomc_run_no: int,
+    ) -> bool:
+        """Whether this cycle's coordinates go into the combined DCD.
+
+        Honors ``combine_dcd_files_cycle_freq``: freq == 1 writes every
+        cycle, freq == N writes every Nth cycle counted from the starting
+        cycle (``starting_at_cycle_namd_gomc_sims``). Matches the legacy
+        ``engine_directory_list[::combine_dcd_files_cycle_freq]`` slicing.
+        """
+        freq = self.combine_dcd_files_cycle_freq
+
+        if freq <= 1:
+            return True
+
+        cycle_no = int(gomc_run_no) // 2
+
+        return (cycle_no - self._dcd_start_cycle) % freq == 0
+
     def process_cycle(
         self,
         namd_run_no: int,
@@ -654,10 +771,26 @@ class OnTheFlyProcessor:
         self._process_namd_step(namd_run_no)
         self._process_gomc_step(gomc_run_no)
 
-        if self.combine_namd_dcd and self.sim_type in {"NVT", "NPT"}:
+        dcd_cycle_selected = self._dcd_cycle_selected(gomc_run_no)
+
+        if not dcd_cycle_selected and (
+            self.combine_namd_dcd or self.combine_gomc_dcd
+        ):
+            logger.info(
+                "[OnTheFly] Skipping combined DCD append for cycle %d "
+                "(combine_dcd_files_cycle_freq=%d).",
+                int(gomc_run_no) // 2,
+                self.combine_dcd_files_cycle_freq,
+            )
+
+        if (
+            self.combine_namd_dcd
+            and self.sim_type in {"NVT", "NPT"}
+            and dcd_cycle_selected
+        ):
             self._append_namd_dcd(namd_run_no)
 
-        if self.combine_gomc_dcd:
+        if self.combine_gomc_dcd and dcd_cycle_selected:
             self._append_gomc_dcd(gomc_run_no)
 
         self._copy_merged_psf(gomc_run_no)
