@@ -110,7 +110,7 @@ def test_extra_tokens_are_ignored_beyond_headers():
     assert df.loc[0, "POTENTIAL"] == pytest.approx(2.0)
 
 
-from types import SimpleNamespace
+from types 
 
 import pytest
 from utils.units import K_TO_KCAL_PER_MOL
