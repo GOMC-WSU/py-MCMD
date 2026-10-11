@@ -144,7 +144,7 @@ def test_load_from_json_constructor_logic(tmp_path: Path):
 
 
 def test_run_dir_defaults_and_override(tmp_path):
-    from py_mcmd_refactored.config.models import load_simulation_config
+    from py_mcmd_refactored.config.models 
 
     # defaults
     cfg1 = make_cfg()
