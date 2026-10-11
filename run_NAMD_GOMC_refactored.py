@@ -944,7 +944,7 @@ def get_namd_run_0_pme_dim(box_number):
             "{}/out.dat".format(namd_box_x_run_0_dir), "r"
         ).readlines()
 
-        for, line in enumerate(read_namd_box_x_run_0_log_file):
+        for line in enumerate(read_namd_box_x_run_0_log_file):
             split_line = line.split()
             if len(split_line) >= 7:
                 if (
@@ -2632,8 +2632,8 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
     gomc_e_inter_lj_box_x_initial_value = float(
         gomc_e_inter_lj_box_x_kcal_per_mol[0]
     )
-        gomc_e_inter_lj_box_x_kcal_per_mol[-1]
-    )
+    gomc_e_inter_lj_box_x_kcal_per_mol[-1]
+    
 
     gomc_e_lrc_box_x_kcal_per_mol = gomc_energy_data_box_x_df.loc[
         :, "LRC"
@@ -2646,7 +2646,7 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
     )
 
     gomc_e_vdw_plus_elec_box_x_kcal_per_mol = []
-    for vwd_elec_i in range(0, len(gomc_e_intra_nb_box_x_kcal_per_mol)):
+    for vwd_elec_i, item in enumerate(gomc_e_intra_nb_box_x_kcal_per_mol):
         gomc_e_vdw_plus_elec_box_x_kcal_per_mol.append(
             float(gomc_e_intra_nb_box_x_kcal_per_mol[vwd_elec_i])
             + float(gomc_e_inter_lj_box_x_kcal_per_mol[vwd_elec_i])
