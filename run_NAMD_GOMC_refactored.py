@@ -957,7 +957,7 @@ def get_namd_run_0_pme_dim(box_number):
                     namd_y_pme_grid_dim = int(split_line[5])
                     namd_z_pme_grid_dim = int(split_line[6])
 
-    except:
+    except Exception:
         namd_x_pme_grid_dim = None
         namd_y_pme_grid_dim = None
         namd_z_pme_grid_dim = None
