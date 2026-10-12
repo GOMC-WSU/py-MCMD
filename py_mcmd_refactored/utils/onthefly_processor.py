@@ -342,7 +342,6 @@ def _append_dcd(
     # taskset is standard on Linux; if unavailable the command still runs
     # normally, just without pinning.
     if _CATDCD_CORE is not None:
-        
 
         if shutil.which("taskset"):
             command = ["taskset", "-c", str(_CATDCD_CORE)] + command
