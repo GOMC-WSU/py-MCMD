@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -8,9 +9,36 @@ from utils.onthefly_processor import (
     K_TO_KCAL_MOL,
     OnTheFlyProcessor,
     _append_dcd,
+    _ensure_catdcd_executable,
     _parse_gomc_log,
     _parse_namd_log,
 )
+
+
+def test_ensure_catdcd_executable_adds_execute_bit(tmp_path: Path):
+    fake = tmp_path / "catdcd"
+    fake.write_bytes(b"#!/bin/sh\nexit 0\n")
+    fake.chmod(0o644)
+    assert not os.access(fake, os.X_OK)
+
+    assert _ensure_catdcd_executable(fake) is True
+    assert os.access(fake, os.X_OK)
+
+
+def test_ensure_catdcd_executable_reports_missing_binary(tmp_path: Path):
+    assert _ensure_catdcd_executable(tmp_path / "nope" / "catdcd") is False
+
+
+def test_ensure_catdcd_executable_leaves_runnable_binary_untouched(
+    tmp_path: Path,
+):
+    fake = tmp_path / "catdcd"
+    fake.write_bytes(b"#!/bin/sh\nexit 0\n")
+    fake.chmod(0o755)
+    mode_before = fake.stat().st_mode
+
+    assert _ensure_catdcd_executable(fake) is True
+    assert fake.stat().st_mode == mode_before
 
 
 def _cfg(
@@ -632,6 +660,128 @@ def test_process_cycle_skips_dcd_combination_when_flags_are_disabled(
         processor.close()
 
     assert dcd_calls == []
+
+
+def test_process_cycle_honors_combine_dcd_files_cycle_freq(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    cfg = _cfg(tmp_path)
+    cfg.combine_dcd_files_cycle_freq = 2
+    cfg.starting_at_cycle_namd_gomc_sims = 0
+
+    processor = OnTheFlyProcessor(
+        cfg,
+        tmp_path / "combined",
+        managed_root=tmp_path / "managed",
+    )
+
+    namd_calls: list[int] = []
+    gomc_calls: list[int] = []
+
+    monkeypatch.setattr(
+        processor,
+        "_append_namd_dcd",
+        lambda run_no: namd_calls.append(run_no),
+    )
+    monkeypatch.setattr(
+        processor,
+        "_append_gomc_dcd",
+        lambda run_no: gomc_calls.append(run_no),
+    )
+
+    try:
+        # cycles 0..3 -> (namd_run_no, gomc_run_no) = (0,1),(2,3),(4,5),(6,7)
+        for cycle_no in range(4):
+            processor.process_cycle(
+                2 * cycle_no,
+                2 * cycle_no + 1,
+            )
+    finally:
+        processor.close()
+
+    # freq == 2 from start cycle 0 -> only cycles 0 and 2 are written.
+    assert namd_calls == [0, 4]
+    assert gomc_calls == [1, 5]
+
+
+def test_process_cycle_cycle_freq_respects_starting_cycle_offset(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    cfg = _cfg(tmp_path)
+    cfg.combine_dcd_files_cycle_freq = 3
+    cfg.starting_at_cycle_namd_gomc_sims = 10
+
+    processor = OnTheFlyProcessor(
+        cfg,
+        tmp_path / "combined",
+        managed_root=tmp_path / "managed",
+    )
+
+    gomc_calls: list[int] = []
+
+    monkeypatch.setattr(
+        processor,
+        "_append_namd_dcd",
+        lambda run_no: None,
+    )
+    monkeypatch.setattr(
+        processor,
+        "_append_gomc_dcd",
+        lambda run_no: gomc_calls.append(run_no),
+    )
+
+    try:
+        for cycle_no in (10, 11, 12, 13, 14, 15, 16):
+            processor.process_cycle(
+                2 * cycle_no,
+                2 * cycle_no + 1,
+            )
+    finally:
+        processor.close()
+
+    # (cycle_no - 10) % 3 == 0 -> cycles 10, 13, 16 -> gomc_run_no 21, 27, 33
+    assert gomc_calls == [21, 27, 33]
+
+
+def test_process_cycle_cycle_freq_default_writes_every_cycle(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    cfg = _cfg(tmp_path)
+
+    processor = OnTheFlyProcessor(
+        cfg,
+        tmp_path / "combined",
+        managed_root=tmp_path / "managed",
+    )
+
+    assert processor.combine_dcd_files_cycle_freq == 1
+
+    gomc_calls: list[int] = []
+
+    monkeypatch.setattr(
+        processor,
+        "_append_namd_dcd",
+        lambda run_no: None,
+    )
+    monkeypatch.setattr(
+        processor,
+        "_append_gomc_dcd",
+        lambda run_no: gomc_calls.append(run_no),
+    )
+
+    try:
+        for cycle_no in range(4):
+            processor.process_cycle(
+                2 * cycle_no,
+                2 * cycle_no + 1,
+            )
+    finally:
+        processor.close()
+
+    assert gomc_calls == [1, 3, 5, 7]
 
 
 def test_append_namd_dcd_prefers_runtime_artifact_over_disk_fallback(

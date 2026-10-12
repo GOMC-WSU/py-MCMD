@@ -336,6 +336,85 @@ def test_managed_artifact_store_failure_preserves_runtime_dirs_for_debugging(
     assert store.get_step("GOMC", "0000000003").status == "failed"
 
 
+@pytest.mark.parametrize("engine", ["NAMD", "GOMC"])
+@pytest.mark.parametrize("developer_mode", [False, True])
+@pytest.mark.parametrize(
+    "cleanup_method", ["release_step", "cleanup_step", "cleanup_all"]
+)
+def test_failed_managed_step_survives_cleanup(
+    tmp_path: Path, engine, developer_mode, cleanup_method
+):
+    store = ManagedArtifactStore(
+        disk_roots={"NAMD": tmp_path / "NAMD", "GOMC": tmp_path / "GOMC"},
+        managed_root=tmp_path / "managed",
+        developer_mode=developer_mode,
+    )
+    failed = store.prepare_step(engine, "0000000003")
+    boxes = [0, 1] if engine == "NAMD" else [None]
+    for box in boxes:
+        runtime_dir = failed.runtime_dir(box)
+        (runtime_dir / "out.dat").write_text("engine failed\n")
+        (runtime_dir / "in.conf").write_text("failed configuration\n")
+        (runtime_dir / "partial.restart.coor").write_bytes(b"partial\x00")
+    store.finalize_step_failure(engine, failed.step_id)
+
+    successful = store.prepare_step(engine, "0000000001")
+    store.finalize_step_success(engine, successful.step_id)
+    cleanup = getattr(store, cleanup_method)
+    # Repeat cleanup to verify that preservation does not depend on the first
+    # call retaining an otherwise unregistered directory.
+    for _ in range(2):
+        if cleanup_method == "cleanup_all":
+            cleanup()
+        else:
+            cleanup(engine, failed.step_id)
+            cleanup(engine, successful.step_id)
+
+    assert store.get_step(engine, failed.step_id).status == "failed"
+    with pytest.raises(KeyError):
+        store.get_step(engine, successful.step_id)
+    for box in boxes:
+        runtime_dir = failed.runtime_dir(box)
+        assert (runtime_dir / "out.dat").read_text() == "engine failed\n"
+        assert (runtime_dir / "in.conf").read_text() == "failed configuration\n"
+        assert (
+            runtime_dir / "partial.restart.coor"
+        ).read_bytes() == b"partial\x00"
+        assert not successful.runtime_dir(box).exists()
+        if developer_mode:
+            assert (
+                failed.disk_dir(box) / "out.dat"
+            ).read_text() == "engine failed\n"
+        else:
+            assert not failed.disk_dir(box).exists()
+
+
+@pytest.mark.parametrize("developer_mode", [False, True])
+def test_failed_namd_step_preserves_linked_fft_cache(tmp_path, developer_mode):
+    store = ManagedArtifactStore(
+        disk_roots={"NAMD": tmp_path / "NAMD", "GOMC": tmp_path / "GOMC"},
+        managed_root=tmp_path / "managed",
+        developer_mode=developer_mode,
+    )
+    step = store.prepare_step("NAMD", "0000000002")
+    fft = store.cache_dir("NAMD") / "run0_fft_box0" / "FFTW_NAMD_plan.txt"
+    fft.parent.mkdir()
+    fft.write_text("fft plan\n")
+    link = step.runtime_dir(0) / fft.name
+    link.symlink_to(fft)
+    unrelated_cache = store.cache_dir("GOMC") / "other.cache"
+    unrelated_cache.write_text("other cache\n")
+    store.finalize_step_failure("NAMD", step.step_id)
+
+    store.release_step("NAMD", step.step_id)
+    store.cleanup_cache_dir("NAMD")
+    store.cleanup_all()
+
+    assert link.is_symlink()
+    assert link.read_text() == "fft plan\n"
+    assert not unrelated_cache.exists()
+
+
 def test_discover_managed_root_prefers_explicit_root_over_environment(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

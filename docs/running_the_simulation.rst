@@ -1,46 +1,139 @@
-Running the Simulation
-===============
+Running a Simulation
+====================
 
-The hybrid py-MCMD simulation can be conducted once the *"user_input_NAMD_GOMC.json"* file is properly filled out to the user's specifications, including generating or obtaining the proper PSF, PDB, and force field (.inp or .par files) and specifying their proper paths.
+Overview
+--------
 
-**WARNING:** Any hybrid simulation that encounters a NAMD simulation with zero atoms or non-fixed atoms will fail.  This failure will likely appear as a seg-fault in GOMC.  Currently, these types of simulations are not possible with this software.
+Run the CLI from the working directory used to resolve the input paths.
+Commands below assume the repository root. A coupled cycle executes NAMD
+first, then GOMC. For two-box GEMC, the two NAMD segments can run concurrently;
+NAMD and GOMC stages remain sequential.
 
-Example # 1: GEMC Ensemble
+CLI Parameters
+--------------
+
+.. code-block:: text
+
+   python py_mcmd_refactored/cli/main.py [-h] [--version] [-f FILE]
+       [-namd_sims_order {series,parallel}] [-v] [--dry_run]
+
+Square brackets mark optional arguments; do not type the brackets.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 35 25 40
+
+   * - Option
+     - Default
+     - Behavior
+   * - ``-h``, ``--help``
+     - Not set
+     - Print command help and exit.
+   * - ``--version``
+     - Not set
+     - Print the py-MCMD version and exit.
+   * - ``-f FILE``, ``--file FILE``
+     - ``user_input_NAMD_GOMC.json``
+     - Read the simulation configuration.
+   * - ``-namd_sims_order ORDER``, ``--namd_simulation_order ORDER``
+     - ``series``
+     - Select ``series`` or ``parallel`` for two-box GEMC NAMD stages.
+   * - ``--dry_run``
+     - Not set
+     - Generate inputs and run orchestration without launching NAMD or GOMC.
+   * - ``-v``, ``--verbose``
+     - Not set
+     - Accepted, but the current CLI retains INFO logging; DEBUG output is not enabled.
+
+.. important::
+
+   The CLI overrides JSON ``namd_simulation_order`` even when the option
+   is omitted. Pass ``-namd_sims_order parallel`` explicitly for parallel
+   execution. An invalid order falls back to ``series``.
+
+Execution
+---------
+
+Pre-run checks
+~~~~~~~~~~~~~~
+
+1. Activate the environment described in :doc:`installation`.
+2. Verify engine paths, starting structures, force fields, and templates.
+3. Confirm the ensemble and simulation-box geometry.
+4. Set the starting cycle to ``0`` for a new run.
+5. Select raw-output retention and on-the-fly processing.
+6. Use a separate working directory for each independent calculation.
+   Adjust relative input paths when using a directory other than the
+   repository root.
+
+Input-generation check (optional)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   python py_mcmd_refactored/cli/main.py \
+       -f user_input_NAMD_GOMC.json \
+       --dry_run
+
+A dry run exercises configuration loading and input generation. It does
+not test executable compatibility, engine input acceptance, force-field
+consistency, or the physical validity of the calculation.
+
+.. warning::
+
+   A dry run writes files and logs, including placeholder engine artifacts.
+   Use a separate working copy for this check. Do not use dry-run artifacts
+   as production restart data.
+
+A dry run can continue if an engine directory is absent. An existing GOMC
+directory without the expected executable can still cause failure.
+Check executable names and permissions independently.
+
+Production run
+~~~~~~~~~~~~~~
+
+.. code-block:: bash
+
+   python py_mcmd_refactored/cli/main.py -f user_input_NAMD_GOMC.json
+
+For GEMC with NAMD in both boxes, set
+``only_use_box_0_for_namd_for_gemc`` to ``false`` and allocate positive
+core counts to both boxes. To execute the NAMD segments concurrently:
+
+.. code-block:: bash
+
+   python py_mcmd_refactored/cli/main.py \
+       -f user_input_NAMD_GOMC.json \
+       -namd_sims_order parallel
+
+The parallel option has no effect when NAMD runs only box 0. Allocate
+enough resources for both segments when they run concurrently.
+
+Completion checks
+~~~~~~~~~~~~~~~~~
+
+The default log for a new calculation is
+``logs/NAMD_GOMC_started_at_cycle_No_0.log``. Successful execution records
+``All cycles completed.``. See :doc:`simulation_output` for log naming,
+output locations, and restart files.
+
+Completion does not establish equilibration or sampling convergence.
+Inspect engine logs, energy continuity reports, and the analysis files
+before interpreting results.
+
+.. warning::
+
+   Another invocation with the same starting cycle overwrites its run log.
+   Existing combined text files are opened for appending. Preserve the
+   previous results before reusing output locations.
+
+Troubleshooting
 ---------------
 
-Use a terminal window and move to the directory which contains the *run_NAMD_GOMC.py* file. Then run hybrid py-MCMD simulations with the NAMD simulations for box 0 and box 1 executed in parallel (assuming both boxes are being simulated in NAMD per the *“user_input_NAMD_GOMC.json”* file).
+Use :doc:`troubleshooting` for configuration, engine-startup, storage, and
+analysis errors. The workflow does not support a box containing no atoms
+or no mobile atoms.
 
-	.. code:: ipython3
-
-   		cd "directory_containing_run_NAMD_GOMC.py"
-
-		python run_NAMD_GOMC.py -f user_input_NAMD_GOMC.json -namd_sims_order parallel
-
-
-
-Example # 2: GCMC Ensemble
----------------
-
-Use a terminal window and move to the directory which contains the *run_NAMD_GOMC.py* file. Then run hybrid py-MCMD simulations.
-
-**NOTE:** The NAMD simulations default too in series, but it does not matter since the GCMC simulations box 1 is solely used as a reservoir without the need to evaluate the box's dynamics.
-
-	.. code:: ipython3
-
-   		cd "directory_containing_run_NAMD_GOMC.py"
-
-		python run_NAMD_GOMC.py -f user_input_NAMD_GOMC.json
-
-
-Flags for Running the Hybrid Simulation
----------------
-
-The flags for running the *run_NAMD_GOMC.py* file user_input_variables_NAMD_GOMC.json file, or whatever the user names it.
-
-	-f *or* --file : json file
-		Defines the variable inputs file used for the hybrid NAMD/GOMC simulation script.
-		This file, the *"user_input_variables_NAMD_GOMC.json"* file, is required
-		to run the hybrid simulation.
-
-	-namd_sims_order *or* --namd_simulation_order : default='series',  (options: 'series' or 'parallel')
-		This sets the NAMD simulation to be run in series or parallel. The data is entered only as series or parallel (default = series). This is only relevant for the GEMC ensemble when utilizing two (2) NAMD simulation boxes (i.e., only_use_box_0_for_namd_for_gemc = False  --> both box 0 and box 1). The GCMC, NVT, NPT, or the GEMC ensembles when using only one (1) NAMD simulation box (i.e., only_use_box_0_for_namd_for_gemc = True --> only box 0) are always run in series, since there is nothing to run in parallel. Note: This feature was added so the user can minimize the load on the GPU by running both NAMD simulations in parallel.
+Restart only from a completed coupled-cycle boundary; follow
+:doc:`simulation_output`. Test GPU NAMD/GEMC combinations on a short
+calculation before production.

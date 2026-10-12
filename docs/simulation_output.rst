@@ -1,28 +1,158 @@
-Simulation Output
-============
+Output Files and Restarts
+=========================
 
-The hybrid `py-MCMD <https://github.com/GOMC-WSU/py-MCMD>`_ Python code generates a few data outputs, which include:
+Output locations
+----------------
 
-* A log file for each simulation start/restart.  Additionally, one (1) NAMD and one (1) GOMC simulation folder and their output files per cycle, regardless of the number of restarts.  Please also see the image below.
+py-MCMD separates the run log, raw engine files, and combined analysis.
+Raw files and analysis files have different retention rules.
 
-	.. image:: _images/NAMD_GOMC_folders.png
-   		:width: 400
+.. list-table::
+   :header-rows: 1
+   :widths: 20 43 37
 
-* A *"NAMD"* folder consists of sub-folders containing individual NAMD simulation with it's output files (i.e., 1/2 of a cycle). Each iteration folder is listed in numerical order with the ending of either "_a" or "_b", where "_a" is box 0 and "_b" is box 1 of the previous GOMC simulation (see image below, which shows NAMD simulating only box 0).  These individual **NAMD simulation are always even numbered** to keep a trackable order between the simulation engines.  Note: box 1 is only applicable to the GEMC ensemble, if the user selects NAMD to run box 1.
+   * - Artifact
+     - Default location
+     - Retention
+   * - Run log
+     - ``logs/NAMD_GOMC_started_at_cycle_No_<start>.log``
+     - Written for the invocation; overwritten when the same starting cycle is reused.
+   * - Managed engine files
+     - Working-directory-specific root under ``/dev/shm``
+     - Controlled by ``disk_cleanup_mode``.
+   * - Raw NAMD disk copies
+     - ``NAMD/``
+     - Mirrored when ``developer_mode`` is ``true``.
+   * - Raw GOMC disk copies
+     - ``GOMC/``
+     - Mirrored when ``developer_mode`` is ``true``.
+   * - Combined analysis
+     - ``combined_data/``
+     - Written when ``process_on_the_fly`` is ``true``.
 
-	.. image:: _images/NAMD_subfolders_only_box_0.png
-   		:width: 500
+Set the on-disk destinations through ``log_dir``, ``path_namd_runs``,
+``path_gomc_runs``, and ``combined_data_dir`` in the JSON configuration.
+``PY_MCMD_MANAGED_OUTPUT_ROOT`` is an environment variable, not a JSON key.
 
-* A *"GOMC"* folder consists of sub-folders containing individual GOMC simulation with it's output files (i.e., 1/2 of a cycle). These individual **GOMC simulation are always odd numbered** to keep a trackable order between the simulation engines (see image below).  Note: box 1 is only applicable to the GCMC or GEMC ensembles, in which case, box 0 and box 1 are always contained in the same folder.
+.. important::
 
-	.. image:: _images/GOMC_subfolders.png
-   		:width: 500
+   Enable ``developer_mode`` before the original run if restart files
+   or standalone analysis will be needed. Combined trajectories and
+   summary tables cannot replace the raw restart state.
 
+With developer mode disabled, the on-disk NAMD/GOMC roots are placeholders.
+The raw files remain in managed storage until cleanup. See
+:doc:`fifo_output_and_developer_mode` for retention after success or failure.
 
-The hybrid simulation Python code outputs the main NAMD and GOMC folders, each containing 100s to 10,000s of individual simulations and associated files, which are utilized in the *post-simulation analysis* by combining all the files in the individual runs. These individual folders contain **PSF**, **PDB**, **DCD**, **System Energies**, and other **system State properties**, to name a few.
+Segment numbering
+-----------------
 
+Cycle indices start at zero. For cycle ``c``, the NAMD index is ``2*c``
+and the GOMC index is ``2*c + 1``. Directory indices are padded to ten
+digits.
 
-**At a minimum, the last completed individual GOMC run is required to restart the simulation; therefore, the user should always keep this file for continuing the simulation from its previous ending point. However, the simulation step numbers are properly calculated/arranged during the post-simulation analysis, and the user may need to correct for this if all the individual simulations are not kept for the final post-simulation analysis.**
+.. list-table::
+   :header-rows: 1
+   :widths: 10 45 45
 
+   * - Cycle
+     - NAMD box 0
+     - GOMC
+   * - 0
+     - ``NAMD/0000000000_a/``
+     - ``GOMC/0000000001/``
+   * - 1
+     - ``NAMD/0000000002_a/``
+     - ``GOMC/0000000003/``
+   * - 2
+     - ``NAMD/0000000004_a/``
+     - ``GOMC/0000000005/``
 
-Retaining all the individual simulation runs can add up to considerable storage requirements. Therefore, we recommended optimizing the number of steps and moves for each simulation engine and calculating the entire run's storage requirements before starting the production runs. *In the future, we plan on programming an auto-cleanup and that will combine all the individual runs on the fly and minimize the storage requirement.*
+When GEMC uses NAMD for both boxes, each NAMD index also has a ``_b``
+directory for box 1. A GOMC directory contains the corresponding GOMC
+stage's output, including both boxes when applicable.
+
+These directories contain engine inputs, logs, trajectories, and restart
+files produced by that segment. A directory can exist without a completed
+engine run; inspect its log and restart files.
+
+Run log and completion
+----------------------
+
+The run log records engine selection, cycle progress, errors, and timing
+records. ``All cycles completed.`` marks successful orchestration.
+Check the engine logs and energy continuity reports as well.
+
+.. warning::
+
+   The log is opened in write mode. Before repeating a starting cycle,
+   preserve the existing log and any failed-segment files required for
+   diagnosis.
+
+Combined analysis
+-----------------
+
+On-the-fly output includes energy and state records, an available merged
+PSF, and selected DCD trajectory segments. Filenames and ensemble coverage are
+listed in :doc:`simulation_analysis`.
+
+Text output is appended to existing files. Repeating cycles can produce
+duplicate records or repeated headers. For independent calculations, use
+separate working directories and output destinations.
+
+Restart procedure
+-----------------
+
+A restart resumes at a completed coupled-cycle boundary. It requires the
+previous completed NAMD/GOMC pair in the configured on-disk roots; it does
+not resume an arbitrary frame within a failed segment.
+
+1. Preserve the original JSON, structures, force fields, and templates.
+   Keep the complete raw NAMD and GOMC directories. Retain the initial
+   NAMD logs as well: the workflow reads run-0 PME-grid information.
+2. Identify the last fully completed coupled cycle from both engine logs.
+   Do not count a cycle whose NAMD stage finished but whose GOMC stage
+   failed.
+3. Set ``starting_at_cycle_namd_gomc_sims`` to the next cycle.
+   Set ``total_cycles_namd_gomc_sims`` to the final target count, not the
+   number of additional cycles.
+4. Keep the ensemble, topology, force fields, templates, and segment
+   lengths unchanged.
+5. Preserve existing combined output before resuming. If using a new
+   ``combined_data_dir``, its output will cover the resumed portion only.
+6. Run the CLI with the updated complete configuration.
+
+Example: resume at cycle 2
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Suppose cycles 0 and 1 completed and the target is five cycles. The previous
+completed pair is ``NAMD/0000000002_a/`` and ``GOMC/0000000003/``.
+For NAMD in both GEMC boxes, retain ``NAMD/0000000002_b/`` as well.
+
+Change the following fields in the existing configuration:
+
+.. code-block:: json
+
+   {
+     "total_cycles_namd_gomc_sims": 5,
+     "starting_at_cycle_namd_gomc_sims": 2,
+     "developer_mode": true
+   }
+
+This is a configuration fragment, not a complete input file. It executes
+cycles 2, 3, and 4: three additional cycles, not five.
+
+.. code-block:: bash
+
+   python py_mcmd_refactored/cli/main.py -f user_input_NAMD_GOMC.json
+
+For parallel two-NAMD-box GEMC, also pass
+``-namd_sims_order parallel``. Changing ``developer_mode`` after raw
+files have been removed does not recover those files.
+
+Analysis after completion
+-------------------------
+
+The standalone combining program reads retained on-disk engine segments.
+It uses a separate JSON configuration and expects roots named ``NAMD``
+and ``GOMC`` in its working directory. See :doc:`running_analysis_code`.
