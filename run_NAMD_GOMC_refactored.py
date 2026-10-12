@@ -944,7 +944,7 @@ def get_namd_run_0_pme_dim(box_number):
             "{}/out.dat".format(namd_box_x_run_0_dir), "r"
         ).readlines()
 
-        for i, line in enumerate(read_namd_box_x_run_0_log_file):
+        for line in enumerate(read_namd_box_x_run_0_log_file):
             split_line = line.split()
             if len(split_line) >= 7:
                 if (
@@ -957,7 +957,7 @@ def get_namd_run_0_pme_dim(box_number):
                     namd_y_pme_grid_dim = int(split_line[5])
                     namd_z_pme_grid_dim = int(split_line[6])
 
-    except:
+    except Exception:
         namd_x_pme_grid_dim = None
         namd_y_pme_grid_dim = None
         namd_z_pme_grid_dim = None
@@ -1668,7 +1668,6 @@ def get_namd_energy_data(read_namd_box_x_energy_file, e_default_namd_titles):
     )
     namd_e_vdw_box_x = namd_energy_data_box_x_df.loc[:, "VDW"]
     namd_e_vdw_box_x_initial_value = float(namd_e_vdw_box_x.values.tolist()[0])
-    namd_e_vdw_box_x_final_value = float(namd_e_vdw_box_x.values.tolist()[-1])
 
     namd_e_vdw_plus_elec_box_x = [
         float(namd_e_vdw_box_x[k_i]) + float(namd_e_electro_box_x[k_i])
@@ -2079,7 +2078,6 @@ def write_gomc_conf_file(
                         read_y_dim_box_1_origin = read_y_dim_box_1 / 2
                         read_z_dim_box_1 = read_pdb_file[i].split()[3:4]
                         read_z_dim_box_1 = float(read_z_dim_box_1[0])
-                        read_z_dim_box_1_origin = read_z_dim_box_1 / 2
 
                         read_angle_alpha = read_pdb_file[i].split()[4:5]
                         read_angle_alpha = read_angle_alpha[0]
@@ -2634,9 +2632,7 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
     gomc_e_inter_lj_box_x_initial_value = float(
         gomc_e_inter_lj_box_x_kcal_per_mol[0]
     )
-    gomc_e_inter_lj_box_x_final_value = float(
-        gomc_e_inter_lj_box_x_kcal_per_mol[-1]
-    )
+    gomc_e_inter_lj_box_x_kcal_per_mol[-1]
 
     gomc_e_lrc_box_x_kcal_per_mol = gomc_energy_data_box_x_df.loc[
         :, "LRC"
@@ -2649,7 +2645,7 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
     )
 
     gomc_e_vdw_plus_elec_box_x_kcal_per_mol = []
-    for vwd_elec_i in range(0, len(gomc_e_intra_nb_box_x_kcal_per_mol)):
+    for vwd_elec_i, item in enumerate(gomc_e_intra_nb_box_x_kcal_per_mol):
         gomc_e_vdw_plus_elec_box_x_kcal_per_mol.append(
             float(gomc_e_intra_nb_box_x_kcal_per_mol[vwd_elec_i])
             + float(gomc_e_inter_lj_box_x_kcal_per_mol[vwd_elec_i])

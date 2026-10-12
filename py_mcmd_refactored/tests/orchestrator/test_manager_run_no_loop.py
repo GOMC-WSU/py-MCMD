@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import orchestrator.manager as mgr
-import pytest
 from config.models import SimulationConfig
 
 

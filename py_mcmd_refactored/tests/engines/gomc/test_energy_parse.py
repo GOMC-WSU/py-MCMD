@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-import pandas as pd
 import pytest
 
 from py_mcmd_refactored.engines.gomc.energy_parse import get_gomc_energy_data
@@ -111,12 +110,12 @@ def test_extra_tokens_are_ignored_beyond_headers():
     assert df.loc[0, "POTENTIAL"] == pytest.approx(2.0)
 
 
-from types import SimpleNamespace
+from types
 
 import pytest
 from utils.units import K_TO_KCAL_PER_MOL
 
-from py_mcmd_refactored.engines.gomc.energy_parse import get_gomc_energy_data
+from py_mcmd_refactored.engines.gomc.energy_parse
 
 
 def test_gomc_energy_parser_uses_default_conversion_when_cfg_missing():
