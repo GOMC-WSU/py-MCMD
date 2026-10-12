@@ -78,6 +78,11 @@ Managed-storage cleanup
 Cleanup applies to managed runtime storage, not to raw files mirrored by
 developer mode. On failure, the remaining managed files are preserved for
 diagnosis; earlier files removed by rolling cleanup are not recovered.
+Failed segments remain registered in the artifact store and are excluded from
+step release and bulk cleanup, including when ``developer_mode`` is ``false``.
+Their files remain under the managed root recorded in the run log.
+Engine caches needed by failed segments are also retained, so links to cached
+NAMD FFT plans remain readable.
 
 .. warning::
 

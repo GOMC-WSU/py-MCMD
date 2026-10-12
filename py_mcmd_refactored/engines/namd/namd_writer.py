@@ -398,9 +398,9 @@ def _compute_pme_grid_dims(
     used_x: float,
     used_y: float,
     used_z: float,
-    given_x: int,
-    given_y: int,
-    given_z: int,
+    given_x: Optional[int],
+    given_y: Optional[int],
+    given_z: Optional[int],
     fft_add_namd_ang_to_box_dim: int,
     simulation_type: Optional[str],
 ) -> Tuple[int, int, int]:
