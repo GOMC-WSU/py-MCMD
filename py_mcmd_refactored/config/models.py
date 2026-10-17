@@ -123,6 +123,21 @@ class SimulationConfig(BaseModel):
         description="Whether to combine GOMC DCD trajectory files on-the-fly.",
     )
 
+    combine_dcd_files_cycle_freq: int = Field(
+        default=1,
+        ge=1,
+        description=(
+            "Frequency (in NAMD/GOMC cycles) at which coordinates are saved "
+            "to the combined DCD trajectory files. 1 = every cycle's frame is "
+            "written (default); 2 = every other cycle; N = every Nth cycle, "
+            "counted from starting_at_cycle_namd_gomc_sims. Larger values "
+            "shrink the combined DCD and speed up the run, because the "
+            "per-cycle catdcd combine rewrites the whole combined trajectory "
+            "each time it runs. Must be an integer >= 1. Applies to both the "
+            "NAMD and GOMC combined DCD files."
+        ),
+    )
+
     otf_keep_raw_cycles: int = Field(
         default=2,
         ge=1,
@@ -192,6 +207,24 @@ class SimulationConfig(BaseModel):
         if not isinstance(v, int):
             raise TypeError(
                 f"Enter no_core_box_1 as an integer; received {v!r} (type {type(v).__name__})."
+            )
+        return v
+
+    @field_validator("combine_dcd_files_cycle_freq", mode="before")
+    @classmethod
+    def _ensure_combine_dcd_files_cycle_freq_int(cls, v):
+        # bool is a subclass of int; reject it explicitly like the legacy code.
+        # Raise ValueError (not TypeError) so pydantic wraps it in a
+        # ValidationError alongside the other field errors.
+        if isinstance(v, bool) or not isinstance(v, int):
+            raise ValueError(
+                "The combine_dcd_files_cycle_freq value must be an integer; "
+                f"received {v!r} (type {type(v).__name__})."
+            )
+        if v < 1:
+            raise ValueError(
+                "The combine_dcd_files_cycle_freq value must be an integer "
+                "greater than or equal to 1 (>=1)."
             )
         return v
 

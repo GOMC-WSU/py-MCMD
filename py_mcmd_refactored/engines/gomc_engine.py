@@ -161,10 +161,26 @@ class GomcEngine(BaseEngine):
         )
 
         starts = GOMCStartFiles(
-            starting_pdb_box_0_file=Path(self.cfg.starting_pdb_box_0_file),
-            starting_pdb_box_1_file=Path(self.cfg.starting_pdb_box_1_file),
-            starting_psf_box_0_file=Path(self.cfg.starting_psf_box_0_file),
-            starting_psf_box_1_file=Path(self.cfg.starting_psf_box_1_file),
+            starting_pdb_box_0_file=(
+                Path(self.cfg.starting_pdb_box_0_file)
+                if self.cfg.starting_pdb_box_0_file
+                else None
+            ),
+            starting_pdb_box_1_file=(
+                Path(self.cfg.starting_pdb_box_1_file)
+                if self.cfg.starting_pdb_box_1_file
+                else None
+            ),
+            starting_psf_box_0_file=(
+                Path(self.cfg.starting_psf_box_0_file)
+                if self.cfg.starting_psf_box_0_file
+                else None
+            ),
+            starting_psf_box_1_file=(
+                Path(self.cfg.starting_psf_box_1_file)
+                if self.cfg.starting_psf_box_1_file
+                else None
+            ),
         )
 
         # 1) Write GOMC config

@@ -198,15 +198,30 @@ class ManagedArtifactStore:
     def finalize_step_failure(self, engine: str, step_id: str | int) -> None:
         resources = self.get_step(engine, step_id)
         resources.status = "failed"
+        if self.developer_mode:
+            try:
+                resources.mirror_to_disk()
+                self.logger.info(
+                    "[ARTIFACT_STORE] Mirrored failed step %s %s to disk.",
+                    engine,
+                    step_id,
+                )
+            except Exception as e:
+                self.logger.warning(
+                    "[ARTIFACT_STORE] Failed to mirror failed step resources to disk: %s",
+                    e,
+                )
+
         self.logger.warning(
-            "[ARTIFACT_STORE] finalized failure engine=%s step=%s; cleaning runtime dirs",
+            "[ARTIFACT_STORE] finalized failure engine=%s step=%s; preserving runtime dirs for debugging",
             resources.engine,
             resources.step_id,
         )
-        # self.cleanup_step(engine, step_id)
+        # self.cleanup_step(engine, step_id) intentionally not called: a failed
+        # step's runtime dir is left in place so it can be inspected.
 
     def release_step(self, engine: str, step_id: str | int) -> None:
-        """Release runtime files after downstream consumers no longer need them."""
+        """Release consumed runtime files, preserving failed steps for diagnosis."""
         self.logger.debug(
             "[ARTIFACT_STORE] releasing consumed step engine=%s step=%s",
             engine,
@@ -216,9 +231,22 @@ class ManagedArtifactStore:
 
     def cleanup_step(self, engine: str, step_id: str | int) -> None:
         key = self._key(engine, step_id)
-        resources = self._steps.pop(key, None)
+        resources = self._steps.get(key)
         if resources is None:
             return
+
+        # Both rolling release and cleanup_all use this path. A failed step
+        # may have no disk mirror when developer_mode=False, so keep its
+        # runtime files and registration available for inspection.
+        if resources.status == "failed":
+            self.logger.warning(
+                "[ARTIFACT_STORE] preserving failed step engine=%s step=%s",
+                resources.engine,
+                resources.step_id,
+            )
+            return
+
+        self._steps.pop(key)
 
         if resources.engine == "NAMD":
             shutil.rmtree(resources.runtime_dir(0), ignore_errors=True)
@@ -239,8 +267,19 @@ class ManagedArtifactStore:
         return path
 
     def cleanup_cache_dir(self, engine: str) -> None:
+        eng, _ = self._key(engine, "cache")
+        if any(
+            step.engine == eng and step.status == "failed"
+            for step in self._steps.values()
+        ):
+            # Failed NAMD directories can contain symlinks to cached FFT
+            # plans. Preserve their targets along with the runtime files.
+            self.logger.warning(
+                "[ARTIFACT_STORE] preserving cache for failed engine=%s", eng
+            )
+            return
         shutil.rmtree(
-            self.managed_root / "_engine_cache" / str(engine).strip().upper(),
+            self.managed_root / "_engine_cache" / eng,
             ignore_errors=True,
         )
 
@@ -248,7 +287,12 @@ class ManagedArtifactStore:
         for engine, step_id in list(self._steps.keys()):
             self.cleanup_step(engine, step_id)
 
-        shutil.rmtree(self.managed_root / "_engine_cache", ignore_errors=True)
+        for engine in self.disk_roots:
+            self.cleanup_cache_dir(engine)
+        try:
+            (self.managed_root / "_engine_cache").rmdir()
+        except OSError:
+            pass
 
         for engine in self.disk_roots:
             try:

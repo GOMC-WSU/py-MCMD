@@ -199,6 +199,56 @@ def _patch_successful_engines(
     )
 
 
+@pytest.mark.parametrize(
+    "failed_engine, failed_run", [("NAMD", 2), ("GOMC", 3)]
+)
+@pytest.mark.parametrize("cleanup_mode", ["compact", "minimal", "off"])
+def test_engine_failure_preserves_real_runtime_artifacts_without_developer_mode(
+    tmp_path, monkeypatch, failed_engine, failed_run, cleanup_mode
+):
+    monkeypatch.setenv("PY_MCMD_MANAGED_OUTPUT_ROOT", str(tmp_path / "managed"))
+    orch = mgr.SimulationOrchestrator(
+        _cfg(tmp_path, disk_cleanup_mode=cleanup_mode), dry_run=True
+    )
+
+    def run_segment(*, run_no, state, fifo_resources):
+        boxes = [0, 1] if fifo_resources.engine == "NAMD" else [None]
+        for box in boxes:
+            runtime_dir = fifo_resources.runtime_dir(box)
+            (runtime_dir / "in.conf").write_text("simulation configuration\n")
+            (runtime_dir / "out.dat").write_text("partial engine output\n")
+            (runtime_dir / "partial.restart.coor").write_bytes(b"partial\x00")
+        if run_no == failed_run:
+            raise RuntimeError("simulation failed")
+        return {"run_no": run_no}
+
+    monkeypatch.setattr(orch.namd, "run_segment", run_segment)
+    monkeypatch.setattr(orch.gomc, "run_segment", run_segment)
+    with pytest.raises(RuntimeError, match="simulation failed"):
+        orch.run()
+
+    step_id = orch._fifo_step_id(failed_run)
+    failed = orch.fifo_store.get_step(failed_engine, step_id)
+    assert failed.status == "failed"
+    # Even a later release or bulk cleanup must keep the only copy of the
+    # failed segment's files when no developer-mode mirror exists.
+    orch.fifo_store.release_step(failed_engine, step_id)
+    orch.fifo_store.cleanup_all()
+    assert orch.fifo_store.get_step(failed_engine, step_id) is failed
+    for box in ([0, 1] if failed_engine == "NAMD" else [None]):
+        runtime_dir = failed.runtime_dir(box)
+        assert (
+            runtime_dir / "in.conf"
+        ).read_text() == "simulation configuration\n"
+        assert (
+            runtime_dir / "out.dat"
+        ).read_text() == "partial engine output\n"
+        assert (
+            runtime_dir / "partial.restart.coor"
+        ).read_bytes() == b"partial\x00"
+        assert not failed.disk_dir(box).exists()
+
+
 def test_otf_processor_is_not_created_when_processing_is_disabled(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

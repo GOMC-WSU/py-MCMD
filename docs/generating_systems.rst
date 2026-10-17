@@ -1,28 +1,49 @@
+Preparing Simulation Systems
+============================
 
-Generating Systems
-=======
+py-MCMD requires a consistent system description for NAMD and GOMC. Prepare
+PSF, PDB, and force-field inputs, then run a short calculation in each engine
+independently before using the files in a hybrid workflow.
 
-Traditional Chemical Engineering Systems
--------
+Required consistency checks
+---------------------------
 
-Traditional chemical engineering systems are not proteins or other molecules requiring multiple residue names per molecule.  For these systems, the `Molecular Simulation Design Framework (MoSDeF) <https://mosdef.org>`_ software is **capable of generating all the PSF, PDB, and force field files required for the GOMC and NAMD simulations**, covering a variety of different systems.  The **MoSDeF** software creates all these files using only tens of lines of Python code.
-The **MoSDeF** tools permit simulation reproducibility across a variety of simulation engines,
-removing the requirement of expert knowledge in all the engines to repeat, continue, or advance the existing research.
-Additionally, the **MoSDeF** software permits the auto-generation of numerous and distinct systems, allowing large-scale screening of materials and chemicals via `Signac <https://signac.io>`_ to manage the simulations and data.
+* The PSF and PDB must describe the same atoms in the same order. Atom
+  types and bonded interactions must have parameters in each engine's
+  force-field files.
+* The PDB must provide valid box information through ``CRYST1``, unless all
+  needed box lengths are supplied with ``set_dims_box_0_list`` and
+  ``set_dims_box_1_list``.
+* Boxes must be orthogonal. py-MCMD accepts only 90-degree angles.
+* Check support for every force-field term in the installed engine builds,
+  including improper and Urey-Bradley terms. Do not delete terms solely
+  to make an input file load; doing so changes the molecular model.
+* For GCMC, residue names used in the chemical-potential/fugacity dictionary
+  must exactly match the names used by GOMC.
+* Compare engine energies for the same coordinates, box, and interaction
+  settings, after converting units. Investigate unexplained differences
+  before running a coupled calculation.
 
-The `MoSDeF <https://mosdef.org>`_ software ecosystem contains the following packages:
-    	* `mBuild <https://mbuild.mosdef.org/en/stable/>`_ -- A hierarchical, component based molecule builder
+Small-molecule and fluid systems
+--------------------------------
 
-    	* `foyer <https://foyer.mosdef.org/en/stable/>`_ -- A package for atom-typing as well as applying and disseminating forcefields
+`MoSDeF <https://mosdef.org>`_ can generate compatible structures and force
+fields for many molecular systems. The relevant components are
+`mBuild <https://mbuild.mosdef.org/en/stable/>`_,
+`foyer <https://foyer.mosdef.org/en/stable/>`_, and
+`GMSO <https://gmso.mosdef.org/en/stable/>`_. The
+`GOMC-MoSDeF repository <https://github.com/GOMC-WSU/GOMC-MoSDeF>`_ provides
+worked examples.
 
-    	* `GMSO <https://gmso.mosdef.org/en/stable/>`_ -- Flexible storage of chemical topology for molecular simulation
+Protein and multiresidue systems
+--------------------------------
 
+Use a preparation workflow that preserves the residue and topology definitions
+required by both engines. VMD or another appropriate builder may be used. In
+particular, inspect fixed bonds, fixed angles, and force-field terms before
+starting a hybrid run. A successful NAMD input alone does not establish that a
+GOMC input is compatible.
 
-The using MoSDeF software to setup the GOMC and NAMD simulations, is made even easier via the `GOMC-MoSDeF documentation <http://gomc.eng.wayne.edu/documentation/>`_, which contains links to the GOMC Manual, and the `GOMC-MoSDeF tutorial files <https://github.com/GOMC-WSU/GOMC-MoSDeF>`_ with `GOMC YouTube tutorial videos <https://youtube.com/playlist?list=PLdxD0z6HRx8Y9VhwcODxAHNQBBJDRvxMf>`_. The GOMC-MoSDeF's PDB, PSF, and force field files are identical to the NAMD files for the traditional chemical engineering simulations, unless there are fixed bonds and angles in the GOMC force field files.  Changing the fixed bonds and angles between the GOMC and NAMD force field files is as simple as changing one (1) variable and rerunning that line of code.
-
-
-
-Non-Traditional Chemical Engineering Systems
--------
-
-Non-Traditional chemical engineering systems are proteins or other molecules requiring multiple residue names per molecule. Currently, the GOMC-MoSDeF software is not compatible with these systems.  Therefore, these systems should be constructed using different software, such as `Visual Molecular Dynamics (VMD) <https://www.ks.uiuc.edu/Research/vmd/>`_, or other similar software.
+Place finished inputs under a calculation-specific directory and reference
+them from the JSON file. Keep the initial inputs unchanged when restarting. See
+:doc:`simulation_parameters_files` for the exact path fields.

@@ -332,14 +332,19 @@ class NamdEngine(BaseEngine):
                 )
 
         except FileNotFoundError as e:
-            if self.dry_run:
-                logger.warning(
-                    "[NAMD] Dry-run: run0 FFT source directory missing for box=%s; skipping FFT link. %s",
-                    box_number,
-                    e,
-                )
-                return
-            raise
+            # The run-0 output directory itself is gone (e.g. removed by the
+            # disk retention policy after enough cycles have passed, or never
+            # written under this run_root/managed_root). Linking a cached FFT
+            # plan is a NAMD startup-time optimization only -- if it's
+            # unavailable, NAMD simply recomputes its own FFTW plan, so this
+            # is safe to skip rather than fail the whole simulation.
+            logger.warning(
+                "[NAMD] run0 FFT dir not found for box=%s; skipping FFT link "
+                "(no cached FFT plan available). %s",
+                box_number,
+                e,
+            )
+            return
 
         if not fft_filename:
             logger.warning(

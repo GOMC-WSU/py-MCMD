@@ -611,3 +611,84 @@ def test_write_namd_conf_file_restart_with_vel_uses_binary_restart(
     # restart: Bool_restart true and PME sizes match the given ones
     assert "set r true" in txt
     assert "PMEGridSizeX 40" in txt
+
+
+@pytest.mark.parametrize("box_number", [0, 1])
+@pytest.mark.parametrize("binary_restart", [False, True])
+def test_write_namd_conf_file_pme_disabled_restart(
+    tmp_path, monkeypatch, box_number, binary_restart
+):
+    import struct
+
+    from py_mcmd_refactored.engines.namd import namd_writer as mod
+
+    monkeypatch.setattr(mod, "starting_ff_file_list_namd", [])
+    monkeypatch.setattr(mod, "check_for_pdb_dims_and_override", None)
+    monkeypatch.setattr(mod, "simulation_type", "NPT")
+
+    # Exercise the supported template with PME disabled, as in a run whose
+    # Run-0 log supplies no PME grid dimensions.
+    repo_root = Path(__file__).resolve().parents[4]
+    template = repo_root / "required_data" / "config_files" / "NAMD.conf"
+    template_lines = template.read_text().splitlines()
+    tpl = tmp_path / "no_pme.conf"
+    tpl.write_text(
+        "\n".join(
+            "PME no" if line.split() == ["PME", "yes"] else line
+            for line in template_lines
+        )
+        + "\n"
+    )
+
+    gomc = tmp_path / "GOMC" / "0000000001"
+    gomc.mkdir(parents=True)
+    restart_basename = f"Output_data_BOX_{box_number}_restart"
+    (gomc / f"{restart_basename}.pdb").write_text("CRYST1 10 20 30 90 90 90\n")
+    (gomc / f"{restart_basename}.psf").write_text("1 !NATOM\n")
+    if binary_restart:
+        (gomc / f"{restart_basename}.vel").write_bytes(
+            struct.pack("<i", 1) + b"\x00" * 24
+        )
+        (gomc / f"{restart_basename}.coor").write_bytes(
+            struct.pack("<i", 1) + b"\x00" * 24
+        )
+        (gomc / f"{restart_basename}.xsc").write_text("# restart cell\n")
+
+    out_dir = Path(
+        mod.write_namd_conf_file(
+            python_file_directory=tmp_path,
+            path_namd_template=tpl.name,
+            path_namd_runs="NAMD",
+            gomc_newdir=gomc,
+            run_no=2,
+            box_number=box_number,
+            namd_run_steps=1000,
+            namd_minimize_steps=100,
+            namd_rst_dcd_xst_steps=50,
+            namd_console_blkavg_e_and_p_steps=10,
+            simulation_temp_k=300.0,
+            simulation_pressure_bar=1.0,
+            starting_pdb_box_x_file="unused.pdb",
+            starting_psf_box_x_file="unused.psf",
+            namd_x_pme_grid_dim=None,
+            namd_y_pme_grid_dim=None,
+            namd_z_pme_grid_dim=None,
+        )
+    )
+    rendered = (out_dir / "in.conf").read_text()
+    statements = [line.split() for line in rendered.splitlines()]
+    assert ["PME", "no"] in statements
+    assert ["set", "RESTART_STATUS", str(binary_restart).lower()] in statements
+    for axis in "XYZ":
+        assert ["set", f"PME_Grid_Size_{axis}", "0"] in statements
+        assert f"{axis}_PME_GRID_DIM" not in rendered
+    assert "None" not in rendered
+    assert "Bool_restart" not in rendered
+    assert "unused" not in rendered
+    for directive, extension in [("coordinates", "pdb"), ("structure", "psf")]:
+        path = next(
+            parts[1] for parts in statements if parts and parts[0] == directive
+        )
+        assert (
+            out_dir / path
+        ).resolve() == gomc / f"{restart_basename}.{extension}"
