@@ -5,8 +5,9 @@ Overview
 --------
 
 ``combine_data_NAMD_GOMC.py`` combines retained raw segments after a
-simulation. It can produce two-box NAMD summaries and GCMC histogram
-and distribution files that are absent from the on-the-fly output.
+simulation. It supports two-box NAMD summaries and can produce additional
+GCMC histogram and distribution files. The on-the-fly processor also
+produces both NAMD box summaries when two-box GEMC MD is enabled.
 
 Prerequisites
 -------------

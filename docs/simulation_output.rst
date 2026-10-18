@@ -18,7 +18,7 @@ Raw files and analysis files have different retention rules.
      - ``logs/NAMD_GOMC_started_at_cycle_No_<start>.log``
      - Written for the invocation; overwritten when the same starting cycle is reused.
    * - Managed engine files
-     - Working-directory-specific root under ``/dev/shm``
+     - Unique per-invocation root under ``/dev/shm``
      - Controlled by ``disk_cleanup_mode``.
    * - Raw NAMD disk copies
      - ``NAMD/``
@@ -33,6 +33,10 @@ Raw files and analysis files have different retention rules.
 Set the on-disk destinations through ``log_dir``, ``path_namd_runs``,
 ``path_gomc_runs``, and ``combined_data_dir`` in the JSON configuration.
 ``PY_MCMD_MANAGED_OUTPUT_ROOT`` is an environment variable, not a JSON key.
+The managed root is recorded in the log. It stores intermediate engine
+files; it does not relocate the combined analysis destination. For example,
+running from the repository root writes combined data to
+``<repository>/combined_data/`` unless ``combined_data_dir`` is changed.
 
 .. important::
 
@@ -71,6 +75,12 @@ digits.
 When GEMC uses NAMD for both boxes, each NAMD index also has a ``_b``
 directory for box 1. A GOMC directory contains the corresponding GOMC
 stage's output, including both boxes when applicable.
+
+The ``_a/in.conf`` and ``_b/in.conf`` files are rendered from the liquid
+and gas NAMD templates respectively. In developer mode, each rendered
+input is archived to the corresponding disk segment directory before
+the engine starts. A temporarily skipped gas MD segment contains
+``NAMD_SKIPPED.txt`` instead of a NAMD trajectory and energy log.
 
 These directories contain engine inputs, logs, trajectories, and restart
 files produced by that segment. A directory can exist without a completed
@@ -134,9 +144,13 @@ Change the following fields in the existing configuration:
 .. code-block:: json
 
    {
-     "total_cycles_namd_gomc_sims": 5,
-     "starting_at_cycle_namd_gomc_sims": 2,
-     "developer_mode": true
+     "run_control": {
+       "total_cycles_namd_gomc_sims": 5,
+       "starting_at_cycle_namd_gomc_sims": 2
+     },
+     "output": {
+       "developer_mode": true
+     }
    }
 
 This is a configuration fragment, not a complete input file. It executes
@@ -146,9 +160,12 @@ cycles 2, 3, and 4: three additional cycles, not five.
 
    python py_mcmd_refactored/cli/main.py -f user_input_NAMD_GOMC.json
 
-For parallel two-NAMD-box GEMC, also pass
-``-namd_sims_order parallel``. Changing ``developer_mode`` after raw
-files have been removed does not recover those files.
+For parallel two-NAMD-box GEMC, retain ``namd_simulation_order`` set to
+``parallel`` in JSON, or explicitly pass ``-namd_sims_order parallel``.
+In sectioned JSON, edit the existing ``run_control`` and ``output``
+sections rather than duplicating these settings at the top level.
+Changing ``developer_mode`` after raw files have been removed does not
+recover those files.
 
 Analysis after completion
 -------------------------

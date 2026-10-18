@@ -46,7 +46,11 @@ Configuration and Python
    * - Input file or template not found
      - Working directory and configured path.
      - Resolve relative paths from the directory where the command is launched, not from the
-       JSON directory.
+       JSON directory. Distributed templates are selected automatically; review optional
+       overrides and the ``required_data/config_files/namd/`` and ``gomc/`` directories.
+   * - A setting appears in multiple sections
+     - The same key appears in more than one section or also at the top level.
+     - Keep one copy of each setting. Edit the existing section when using the supplied JSON.
 
 Engine startup and execution
 ----------------------------
@@ -71,8 +75,17 @@ Engine startup and execution
        engine.
    * - Two NAMD boxes run serially
      - CLI option and GEMC box settings.
-     - Set ``only_use_box_0_for_namd_for_gemc`` to ``false`` and pass
-       ``-namd_sims_order parallel`` ; the CLI default overrides JSON order.
+     - Set ``only_use_box_0_for_namd_for_gemc`` to ``false`` and
+       ``namd_simulation_order`` to ``parallel`` in JSON, with positive core counts for both
+       boxes. An explicit CLI option overrides JSON; omitting it preserves the JSON value.
+   * - Gas NAMD is skipped
+     - Box-1 molecule count and ``NAMD_SKIPPED.txt``.
+     - With fewer than two connected molecules, gas MD is temporarily skipped. GOMC continues
+       to update both boxes, and gas NAMD resumes when the population reaches two or more.
+   * - Energy comparisons fail after changing gas PME settings
+     - The rendered inputs, interaction settings, and energies for the same configuration.
+     - Check the separate liquid and gas templates and their consistency with GOMC. Validate
+       PME and cutoff changes independently rather than increasing comparison tolerances.
    * - ``--verbose`` does not enable DEBUG logs
      - Current CLI implementation.
      - Use the INFO run log and engine logs; the flag currently does not change the logging
@@ -103,7 +116,12 @@ Output and restart
    * - No combined text output
      - ``process_on_the_fly`` and engine records.
      - Enable on-the-fly processing before execution, or use standalone combining on retained
-       raw output.
+       raw output. Relative ``combined_data_dir`` paths start from the launch directory,
+       not the managed root or the JSON file's directory.
+   * - ``NAMD_data_box_1.txt`` is missing or empty
+     - Ensemble, NAMD box selection, on-the-fly processing, and sparse-gas messages.
+     - Enable both NAMD boxes for GEMC and on-the-fly processing. Liquid-only GEMC, GCMC,
+       NPT, and NVT do not run NAMD box 1. Skipped gas segments contribute no NAMD rows.
    * - Combined DCD missing
      - Processing flag, engine-specific DCD flag, CatDCD path, and source trajectory.
      - Check the processor warnings. NAMD combined DCD output is supported for NVT/NPT only.
