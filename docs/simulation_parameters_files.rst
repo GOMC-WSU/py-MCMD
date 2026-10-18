@@ -28,11 +28,11 @@ All relative paths are resolved from the current working directory.
      - ``starting_ff_file_list_namd``, ``starting_ff_file_list_gomc``
      - Lists of engine-specific parameter files describing the same system.
    * - NAMD template
-     - ``required_data/config_files/NAMD.conf``
-     - Override with ``path_namd_template``.
+     - Selected from ``required_data/config_files/namd/``
+     - Selected automatically by ensemble and, for GEMC, by box.
    * - GOMC template
-     - ``required_data/config_files/GOMC_<simulation_type>.conf``
-     - Override with ``path_gomc_template``.
+     - Selected from ``required_data/config_files/gomc/``
+     - Selected automatically by ensemble.
 
 JSON conventions
 ----------------
@@ -44,6 +44,39 @@ JSON conventions
   ``null``.
 * Defaults in the tables apply when a field is omitted; the supplied
   example may select a different value.
+
+The supplied JSON groups settings into named sections. Existing flat JSON
+files are also accepted; individual setting names and meanings are the same
+in both formats.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 75
+
+   * - Section
+     - Settings
+   * - ``simulation``
+     - Ensemble, temperature, and pressure.
+   * - ``gcmc``
+     - Chemical-potential or fugacity controls.
+   * - ``run_control``
+     - Cycle counts, segment lengths, and initial minimization.
+   * - ``execution``
+     - Engine device, NAMD box selection, core counts, and execution order.
+   * - ``engines``
+     - NAMD and GOMC executable directories.
+   * - ``force_fields``
+     - Parameter-file lists for both engines.
+   * - ``box_0``, ``box_1``
+     - Starting structures and box geometry.
+   * - ``output``
+     - Output destinations, retention, and trajectory processing.
+
+Sections are organizational: the loader flattens them before validation.
+Do not repeat a setting across sections or between a section and the top
+level, even with the same value. Sections cannot be nested inside one
+another. When editing the supplied file, update the existing section rather
+than adding a second copy of a setting at the top level.
 
 .. warning::
 
@@ -83,6 +116,67 @@ GEMC denotes Gibbs ensemble Monte Carlo; GCMC denotes grand canonical
 Monte Carlo. NAMD uses NVT dynamics for all four selections. GOMC
 implements the selected ensemble.
 
+Automatic template selection
+----------------------------
+
+Set ``simulation_type``; template-path fields can be omitted. The distributed
+templates are selected as follows, relative to ``required_data/config_files/``:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 12 32 32 24
+
+   * - Ensemble
+     - NAMD box 0
+     - NAMD box 1
+     - GOMC
+   * - ``GEMC``
+     - ``namd/gemc_liquid.conf``
+     - ``namd/gemc_gas.conf`` when enabled
+     - ``gomc/gemc.conf``
+   * - ``GCMC``
+     - ``namd/gcmc.conf``
+     - Not run
+     - ``gomc/gcmc.conf``
+   * - ``NPT``
+     - ``namd/npt.conf``
+     - Not run
+     - ``gomc/npt.conf``
+   * - ``NVT``
+     - ``namd/nvt.conf``
+     - Not run
+     - ``gomc/nvt.conf``
+
+An NPT simulation therefore uses one NAMD template. It does not require
+liquid and gas template paths. Set its pressure, box-0 structures, and
+geometry; set the required box-1 structure keys to ``null`` and
+``no_core_box_1`` to ``0``. NAMD still runs NVT dynamics; GOMC performs
+the NPT sampling.
+
+For GEMC, box 0 is assigned the liquid template and box 1 the gas template;
+selection follows the box number rather than a density measurement. Edit
+the appropriate template to change that phase's engine settings. For
+example, ``PMEGridSpacing`` in ``namd/gemc_gas.conf`` controls the gas
+template independently of the liquid template. Validate engine energies for
+the same configuration after changing PME or interaction settings; a
+coarser grid does not itself establish equivalent accuracy.
+
+Custom templates are optional. A GEMC per-box override
+(``path_namd_template_box_0`` or ``path_namd_template_box_1``) takes
+precedence over a shared ``path_namd_template`` override. Without either
+override, the corresponding automatic template is used. An explicit shared
+NAMD override applies to both GEMC boxes unless a box-specific override is
+provided. ``path_gomc_template`` overrides the automatic GOMC choice.
+These fields can be placed in ``engines`` when using sectioned input.
+Ordinary runs need none of these path fields, including ``null`` placeholders.
+
+Older distributed templates are kept under ``archive/`` where applicable.
+Recognized missing legacy paths, such as
+``required_data/config_files/NAMD.conf``, resolve to their relocated files.
+An existing file at an explicitly supplied path takes precedence. A legacy
+shared override still selects one shared template; omit it to use separate
+automatic GEMC templates.
+
 Run control
 -----------
 
@@ -111,7 +205,8 @@ Run control
      - For GEMC, ``true`` runs NAMD in box 0 only; ``false`` runs NAMD in both boxes.
    * - ``namd_simulation_order``
      - String; ``series``
-     - ``series`` or ``parallel`` for two-NAMD-box GEMC. The CLI overrides this field.
+     - ``series`` or ``parallel`` for two-NAMD-box GEMC. An explicit CLI option overrides
+       this field; omitting the option preserves the JSON value.
    * - ``namd_run_steps``
      - Integer ≥ 0; required
      - MD steps per NAMD segment.
@@ -127,9 +222,9 @@ ensemble, topology, force fields, and templates unchanged on restart.
 A start cycle of ``2`` and target count of ``5`` executes cycles 2, 3,
 and 4. See :doc:`simulation_output`.
 
-Pass ``-namd_sims_order parallel`` to select parallel NAMD execution.
-Omitting the CLI option selects ``series`` even if the JSON requests
-``parallel``.
+Set ``namd_simulation_order`` to ``parallel`` in JSON for concurrent NAMD
+execution, or pass ``-namd_sims_order parallel`` for an explicit CLI override.
+If neither supplies an order, the default is ``series``.
 
 Thermodynamic parameters
 ------------------------
@@ -218,11 +313,14 @@ Structures, force fields, and engine paths
      - Directory containing ``GOMC_<CPU/GPU>_<ENSEMBLE>`` ; ``GOMC_CPU`` or ``GOMC_GPU`` is
        accepted as a fallback.
    * - ``path_namd_template``
-     - String; distributed template
-     - Defaults to ``required_data/config_files/NAMD.conf``.
+     - String or ``null``; omitted by default
+     - Optional shared NAMD override; otherwise selected by ensemble.
+   * - ``path_namd_template_box_0``, ``path_namd_template_box_1``
+     - String or ``null``; omitted by default
+     - Optional GEMC per-box overrides, taking precedence over the shared override.
    * - ``path_gomc_template``
-     - String; ensemble template
-     - Defaults to ``required_data/config_files/GOMC_<simulation_type>.conf``.
+     - String or ``null``; omitted by default
+     - Optional GOMC override; otherwise selected by ensemble.
 
 Preserve the placeholders used by the distributed templates. Changes to
 engine settings, time steps, and move frequencies require independent
@@ -371,14 +469,20 @@ Continuity checks
      - Non-negative threshold in kcal/mol. Skip the fractional VDW-plus-electrostatic check
        below this magnitude to avoid a ratio near zero.
 
-These checks report status; they do not stop a calculation.
+These checks report status; they do not stop a calculation. When available,
+the parser uses native full-precision ``MCMD_ENERGY:`` boundary records for
+the corresponding NAMD timesteps. Older logs fall back to the ordinary
+``ENERGY:`` records. This avoids console-rounding errors without changing
+the acceptance thresholds.
 
 Supplied configuration
 ----------------------
 
 The following file is the repository's GEMC example. It uses NAMD in
-box 0 only; GOMC handles both boxes. Replace the machine-specific engine
-paths before execution.
+both boxes concurrently, with eight cores per NAMD box; GOMC handles both
+boxes in the following stage. It requests 10,000 cycles. Replace the
+machine-specific engine paths and review the cycle count before execution.
+See :doc:`quick_start` for a 10-cycle check with three cores per box.
 
 .. literalinclude:: ../user_input_NAMD_GOMC.json
    :language: json
