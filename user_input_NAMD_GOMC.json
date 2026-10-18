@@ -1,49 +1,63 @@
 {
-  "total_cycles_namd_gomc_sims": 5,
-  "starting_at_cycle_namd_gomc_sims": 0,
-  "gomc_use_CPU_or_GPU": "CPU",
-  "simulation_type": "GEMC",
-  "only_use_box_0_for_namd_for_gemc": true,
-  "namd_simulation_order": "parallel",
-  "developer_mode": false,
-  "disk_cleanup_mode": "compact",
-  "process_on_the_fly": true,
-  "combined_data_dir": "combined_data",
-  "rel_path_to_combine_binary_catdcd": "required_data/bin/catdcd-4.0b/LINUXAMD64/bin/catdcd4.0/catdcd",
-  "combine_gomc_dcd_file": true,
-  "combine_dcd_files_cycle_freq": 1,
-  "otf_keep_raw_cycles": 2,
-  "no_core_box_0": 4,
-  "no_core_box_1": 0,
-  "simulation_temp_k": 350,
-  "simulation_pressure_bar": 1.0,
-  "GCMC_ChemPot_or_Fugacity": null,
-  "GCMC_ChemPot_or_Fugacity_dict": null,
-  "namd_minimize_mult_scalar": 1,
-  "namd_run_steps": 1000,
-  "gomc_run_steps": 200,
-  "set_dims_box_0_list": null,
-  "set_dims_box_1_list": null,
-  "set_angle_box_0_list": [
-    90,
-    90,
-    90
-  ],
-  "set_angle_box_1_list": [
-    90,
-    90,
-    90
-  ],
-  "starting_ff_file_list_gomc": [
-    "required_data/input/OPC_FF_GOMC.inp"
-  ],
-  "starting_ff_file_list_namd": [
-    "required_data/input/OPC_FF_NAMD.inp"
-  ],
-  "starting_pdb_box_0_file": "required_data/input/GEMC_OPC_T350_N1000_BOX_0.pdb",
-  "starting_psf_box_0_file": "required_data/input/GEMC_OPC_T350_N1000_BOX_0.psf",
-  "starting_pdb_box_1_file": "required_data/input/GEMC_OPC_T350_N1000_BOX_1.pdb",
-  "starting_psf_box_1_file": "required_data/input/GEMC_OPC_T350_N1000_BOX_1.psf",
-  "namd2_bin_directory": "../../../NAMD_2.14_Linux-x86_64-multicore",
-  "gomc_bin_directory": "../../../GOMC_POTOFF/GOMC/bin"
+  "simulation": {
+    "simulation_type": "GEMC",
+    "simulation_temp_k": 350,
+    "simulation_pressure_bar": 1.0
+  },
+
+  "gcmc": {
+    "GCMC_ChemPot_or_Fugacity": null,
+    "GCMC_ChemPot_or_Fugacity_dict": null
+  },
+
+  "run_control": {
+    "total_cycles_namd_gomc_sims": 10000,
+    "starting_at_cycle_namd_gomc_sims": 0,
+    "namd_minimize_mult_scalar": 1,
+    "namd_run_steps": 1000,
+    "gomc_run_steps": 200
+  },
+
+  "execution": {
+    "gomc_use_CPU_or_GPU": "CPU",
+    "only_use_box_0_for_namd_for_gemc": false,
+    "no_core_box_0": 8,
+    "no_core_box_1": 8,
+    "namd_simulation_order": "parallel"
+  },
+
+  "engines": {
+    "namd2_bin_directory": "/home6/ia5498/NAMD_2.14_Linux-x86_64-multicore",
+    "gomc_bin_directory": "/home6/ia5498/GOMC/GOMC_dev/bin"
+  },
+
+  "force_fields": {
+    "starting_ff_file_list_namd": ["required_data/input/OPC_FF_NAMD.inp"],
+    "starting_ff_file_list_gomc": ["required_data/input/OPC_FF_GOMC.inp"]
+  },
+
+  "box_0": {
+    "starting_pdb_box_0_file": "required_data/input/GEMC_OPC_T350_N1000_BOX_0.pdb",
+    "starting_psf_box_0_file": "required_data/input/GEMC_OPC_T350_N1000_BOX_0.psf",
+    "set_dims_box_0_list": null,
+    "set_angle_box_0_list": [90, 90, 90]
+  },
+
+  "box_1": {
+    "starting_pdb_box_1_file": "required_data/input/GEMC_OPC_T350_N1000_BOX_1.pdb",
+    "starting_psf_box_1_file": "required_data/input/GEMC_OPC_T350_N1000_BOX_1.psf",
+    "set_dims_box_1_list": null,
+    "set_angle_box_1_list": [90, 90, 90]
+  },
+
+  "output": {
+    "developer_mode": false,
+    "disk_cleanup_mode": "compact",
+    "process_on_the_fly": true,
+    "combined_data_dir": "combined_data",
+    "rel_path_to_combine_binary_catdcd": "required_data/bin/catdcd-4.0b/LINUXAMD64/bin/catdcd4.0/catdcd",
+    "combine_gomc_dcd_file": true,
+    "combine_dcd_files_cycle_freq": 1,
+    "otf_keep_raw_cycles": 2
+  }
 }

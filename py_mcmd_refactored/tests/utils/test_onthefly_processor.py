@@ -377,6 +377,205 @@ def test_process_cycle_appends_rows_once_per_cycle_and_preserves_step_offsets(
     ]
 
 
+@pytest.mark.parametrize("gas_log_location", ["managed", "disk"])
+def test_two_box_gemc_writes_separate_tables_with_shared_cycle_offsets(
+    tmp_path: Path,
+    gas_log_location: str,
+):
+    cfg = _cfg(tmp_path, "GEMC")
+    cfg.only_use_box_0_for_namd_for_gemc = False
+    cfg.combine_namd_dcd_file = False
+    cfg.combine_gomc_dcd_file = False
+    managed_root = tmp_path / "managed"
+    combined_dir = tmp_path / "combined"
+
+    # Use distinct column orders and values to expose shared parser state
+    # or accidental reuse of liquid data for the gas phase.
+    gas_log = (
+        _namd_log(mass=20.0)
+        .replace(
+            "TS POTENTIAL ELECT PRESSURE VOLUME",
+            "TS VOLUME PRESSURE ELECT POTENTIAL",
+        )
+        .replace("-10.0 -2.0 1.0 1000.0", "2000.0 4.0 -0.2 -1.0")
+    )
+    gas_root = managed_root if gas_log_location == "managed" else tmp_path
+    gomc_log = _gomc_log(steps=(0, 10)) + _gomc_log(
+        box_no=1, steps=(0, 10)
+    ).replace("1000.0 500.0", "3000.0 1500.0").replace(
+        "1.5 2000.0 900.0", "2.5 4000.0 200.0"
+    )
+
+    for namd_run, gomc_run in ((0, 1), (2, 3)):
+        _write_log(
+            managed_root / "NAMD" / f"{namd_run:010d}_a" / "out.dat",
+            _namd_log(),
+        )
+        _write_log(
+            gas_root / "NAMD" / f"{namd_run:010d}_b" / "out.dat",
+            gas_log,
+        )
+        _write_log(
+            managed_root / "GOMC" / f"{gomc_run:010d}" / "out.dat",
+            gomc_log,
+        )
+
+    processor = OnTheFlyProcessor(cfg, combined_dir, managed_root=managed_root)
+    try:
+        processor.set_current_step(100)
+        processor.process_cycle(0, 1)
+        processor.process_cycle(2, 3)
+        assert processor._current_step == 130
+    finally:
+        processor.close()
+
+    for box in (0, 1):
+        raw_path = combined_dir / f"NAMD_data_box_{box}.txt"
+        raw_lines = raw_path.read_text().splitlines()
+        assert sum(line.startswith("ETITLE:") for line in raw_lines) == 1
+        raw_rows = [
+            line.split() for line in raw_lines if line.startswith("ENERGY:")
+        ]
+        assert [row[1] for row in raw_rows] == ["100", "105", "115", "120"]
+        titles = raw_lines[0].split()
+        expected_potential = -10.0 if box == 0 else -1.0
+        assert all(
+            float(row[titles.index("POTENTIAL")]) == expected_potential
+            for row in raw_rows
+        )
+
+        density_path = combined_dir / f"NAMD_data_density_box_{box}.txt"
+        density_lines = density_path.read_text().splitlines()
+        assert sum(line.endswith("DENSITY") for line in density_lines) == 1
+        assert len(density_lines) == 5
+        expected_density = (
+            AMU_PER_ANGSTROM3_TO_G_PER_CM3
+            * (100.0 / 1000.0 if box == 0 else 20.0 / 2000.0)
+            * 1000.0
+        )
+        assert all(
+            float(line.split()[-1]) == pytest.approx(expected_density)
+            for line in density_lines[1:]
+        )
+
+        combined_path = combined_dir / f"combined_NAMD_GOMC_data_box_{box}.txt"
+        combined_lines = combined_path.read_text().splitlines()
+        assert sum(line.startswith("#ENGINE") for line in combined_lines) == 1
+        rows = [line.split() for line in combined_lines[1:]]
+        assert [row[0] for row in rows] == ["NAMD", "NAMD", "GOMC"] * 2
+        assert [row[1] for row in rows] == [
+            "100",
+            "105",
+            "115",
+            "115",
+            "120",
+            "130",
+        ]
+        assert all(
+            float(row[2]) == expected_potential
+            for row in rows
+            if row[0] == "NAMD"
+        )
+        expected_elect = -2.0 if box == 0 else -0.2
+        expected_pressure = 1.0 if box == 0 else 4.0
+        expected_volume = 1000.0 if box == 0 else 2000.0
+        for row in rows:
+            if row[0] == "NAMD":
+                assert [float(value) for value in row[3:6]] == [
+                    expected_elect,
+                    expected_pressure,
+                    expected_volume,
+                ]
+
+        for suffix in ("", "kcal_per_mol_"):
+            stat_path = (
+                combined_dir / f"GOMC_Energies_Stat_{suffix}box_{box}.txt"
+            )
+            stat_lines = stat_path.read_text().splitlines()
+            assert sum(line.startswith("#STEP") for line in stat_lines) == 1
+            assert [line.split()[0] for line in stat_lines[1:]] == [
+                "115",
+                "130",
+            ]
+            expected_total = 1000.0 if box == 0 else 3000.0
+            if suffix:
+                expected_total *= K_TO_KCAL_MOL
+            assert all(
+                float(line.split()[1]) == pytest.approx(expected_total)
+                for line in stat_lines[1:]
+            )
+        expected_total = 1000.0 if box == 0 else 3000.0
+        assert all(
+            float(row[2]) == expected_total for row in rows if row[0] == "GOMC"
+        )
+
+
+@pytest.mark.parametrize(
+    "simulation_type,only_box0",
+    [("NVT", False), ("NPT", False), ("GCMC", False), ("GEMC", True)],
+)
+def test_single_namd_box_runs_do_not_create_gas_namd_tables(
+    tmp_path: Path,
+    simulation_type: str,
+    only_box0: bool,
+):
+    cfg = _cfg(tmp_path, simulation_type)
+    cfg.only_use_box_0_for_namd_for_gemc = only_box0
+    cfg.combine_namd_dcd_file = False
+    cfg.combine_gomc_dcd_file = False
+    _write_log(tmp_path / "NAMD" / "0000000000_a" / "out.dat", _namd_log())
+    _write_log(tmp_path / "NAMD" / "0000000000_b" / "out.dat", _namd_log())
+    processor = OnTheFlyProcessor(
+        cfg, tmp_path / "combined", managed_root=tmp_path / "managed"
+    )
+    try:
+        processor.process_cycle(0, 1)
+    finally:
+        processor.close()
+    assert (tmp_path / "combined" / "NAMD_data_box_0.txt").read_text()
+    assert not (tmp_path / "combined" / "NAMD_data_box_1.txt").exists()
+    assert not (tmp_path / "combined" / "NAMD_data_density_box_1.txt").exists()
+    mixed_gas_path = tmp_path / "combined" / "combined_NAMD_GOMC_data_box_1.txt"
+    assert not mixed_gas_path.exists()
+
+
+@pytest.mark.parametrize("skipped", [False, True])
+def test_two_box_gemc_missing_gas_log_does_not_reuse_liquid_data(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    skipped: bool,
+):
+    cfg = _cfg(tmp_path, "GEMC")
+    cfg.only_use_box_0_for_namd_for_gemc = False
+    cfg.combine_namd_dcd_file = False
+    cfg.combine_gomc_dcd_file = False
+    _write_log(tmp_path / "NAMD" / "0000000000_a" / "out.dat", _namd_log())
+    if skipped:
+        from engines.namd.sparse_box import SKIPPED_MARKER
+
+        marker = tmp_path / "managed" / "NAMD" / "0000000000_b" / SKIPPED_MARKER
+        marker.parent.mkdir(parents=True)
+        marker.write_text("Gas NAMD skipped: GOMC updates this box.\n")
+    _write_log(
+        tmp_path / "GOMC" / "0000000001" / "out.dat",
+        _gomc_log(steps=(0, 10)) + _gomc_log(box_no=1, steps=(0, 10)),
+    )
+    processor = OnTheFlyProcessor(
+        cfg, tmp_path / "combined", managed_root=tmp_path / "managed"
+    )
+    try:
+        processor.process_cycle(0, 1)
+        assert processor._current_step == 15
+    finally:
+        processor.close()
+    assert ("NAMD box-1 out.dat missing" in caplog.text) is not skipped
+    assert (tmp_path / "combined" / "NAMD_data_box_1.txt").read_text() == ""
+    mixed_gas_path = tmp_path / "combined" / "combined_NAMD_GOMC_data_box_1.txt"
+    rows = mixed_gas_path.read_text().splitlines()
+    assert len(rows) == 2
+    assert rows[1].split()[:2] == ["GOMC", "15"]
+
+
 def test_process_cycle_writes_kcal_and_density_converted_gomc_output(
     tmp_path: Path,
 ):

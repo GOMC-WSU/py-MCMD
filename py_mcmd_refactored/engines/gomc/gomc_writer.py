@@ -9,25 +9,27 @@ from typing import Iterable, Optional, Tuple
 
 from py_mcmd_refactored.config.models import SimulationConfig
 from py_mcmd_refactored.utils.path import format_cycle_id
+from py_mcmd_refactored.utils.template_paths import resolve_template_path
 
 
 def _update_pdb_with_namd_coor(
     pdb_in_path: Path, coor_bin_path: Path, pdb_out_path: Path
 ) -> bool:
-    """Read big-endian NAMD .coor file and overwrite coordinates of ATOM/HETATM lines in a new PDB."""
+    """Read either NAMD binary endian format and update PDB coordinates."""
     try:
-        with open(coor_bin_path, "rb") as f:
-            header = f.read(4)
-            if not header:
-                raise ValueError(f"Empty NAMD coor file: {coor_bin_path}")
-            num_atoms = struct.unpack(">i", header)[0]
-            coors = []
-            for _ in range(num_atoms):
-                data = f.read(24)
-                if len(data) < 24:
-                    raise ValueError("Unexpected EOF in NAMD coor file")
-                x, y, z = struct.unpack(">ddd", data)
-                coors.append((x, y, z))
+        raw = coor_bin_path.read_bytes()
+        if len(raw) < 4:
+            raise ValueError(f"Empty NAMD coor file: {coor_bin_path}")
+        for endian in ("<", ">"):
+            num_atoms = struct.unpack(f"{endian}i", raw[:4])[0]
+            if num_atoms > 0 and len(raw) == 4 + 24 * num_atoms:
+                coors = [
+                    struct.unpack_from(f"{endian}ddd", raw, 4 + 24 * i)
+                    for i in range(num_atoms)
+                ]
+                break
+        else:
+            raise ValueError(f"Invalid NAMD coor file: {coor_bin_path}")
     except Exception as e:
         log.warning(
             "[GOMC] Could not parse NAMD binary coordinates: %s. "
@@ -89,7 +91,7 @@ class GOMCIOPaths:
 
 
 def _load_text(p: Path) -> str:
-    return p.read_text()
+    return resolve_template_path(p).read_text()
 
 
 def _save_text(p: Path, s: str) -> None:
@@ -442,7 +444,10 @@ def write_gomc_conf_file(
     if cfg.simulation_type in {"GEMC", "GCMC"}:
         if (cfg.simulation_type == "GCMC") or (
             cfg.simulation_type == "GEMC"
-            and cfg.only_use_box_0_for_namd_for_gemc
+            and (
+                cfg.only_use_box_0_for_namd_for_gemc
+                or io.namd_box_1_dir is None
+            )
         ):
             if io.previous_gomc_dir is None:
                 # First-cycle GCMC and one-box GEMC use PDB/PSF inputs and
@@ -584,7 +589,10 @@ def write_gomc_conf_file(
     if cfg.simulation_type in {"GEMC", "GCMC"}:
         if (cfg.simulation_type == "GCMC" and io.previous_gomc_dir is None) or (
             cfg.simulation_type == "GEMC"
-            and cfg.only_use_box_0_for_namd_for_gemc
+            and (
+                cfg.only_use_box_0_for_namd_for_gemc
+                or io.namd_box_1_dir is None
+            )
             and io.previous_gomc_dir is None
         ):
             out = out.replace("restart_true_or_false", "false")
@@ -636,7 +644,13 @@ def write_gomc_conf_file(
                 "Warning: There is in error in the chemical potential settings for GCMC simulation."
             )
 
-    if io.previous_gomc_dir is not None:
+    if getattr(cfg, "shared_box0_files", False):
+        # The shared box-0 PSF may have been reconstructed from an older
+        # fixed-host restart. Its checkpoint is not topology-compatible.
+        out = out.replace(
+            "Restart_Checkpoint_file", "false Output_data_restart.chk"
+        )
+    elif io.previous_gomc_dir is not None:
         prev_chk = io.previous_gomc_dir / "Output_data_restart.chk"
 
         if prev_chk.exists():

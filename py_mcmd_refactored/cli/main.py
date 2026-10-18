@@ -48,7 +48,7 @@ def parse_args(argv=None):
         "-namd_sims_order",
         "--namd_simulation_order",
         help="This sets the NAMD simulation to be run in series or parallel. "
-        "The data is entered only as series or parallel (default = series). "
+        "Enter series or parallel (default = JSON setting, or series). "
         "This is only relevant for the GEMC ensemble when utilizing two (2) NAMD simulation "
         "boxes "
         "(i.e., only_use_box_0_for_namd_for_gemc = False  --> both box 0 and box 1)."
@@ -85,8 +85,8 @@ def parse_args(argv=None):
             "The NAMD simulations shall be run in <%s>.",
             args.namd_simulation_order,
         )
-    else:
-        # default to series if unspecified or invalid
+    elif args.namd_simulation_order is not None:
+        # Preserve the JSON setting when no override was supplied.
         args.namd_simulation_order = "series"
         logging.warning(
             "The NAMD simulations are not set to 'parallel' or 'series'. "
@@ -124,11 +124,12 @@ def main():
         logging.error("Failed to load config: %s", e)
         sys.exit(1)
 
-    # CLI overrides (do not require JSON config changes)
-    # NOTE: parse_args() normalizes invalid/missing values to "series".
-    cfg = cfg.model_copy(
-        update={"namd_simulation_order": args.namd_simulation_order}
-    )
+    # An explicit CLI option takes precedence; omission preserves JSON.
+    if args.namd_simulation_order is not None:
+        cfg = cfg.model_copy(
+            update={"namd_simulation_order": args.namd_simulation_order}
+        )
+    logging.info("NAMD simulation order: %s", cfg.namd_simulation_order)
 
     # hand off to the orchestrator
     sim = SimulationOrchestrator(cfg, dry_run=args.dry_run)

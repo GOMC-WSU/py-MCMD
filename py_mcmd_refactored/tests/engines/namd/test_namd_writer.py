@@ -629,7 +629,9 @@ def test_write_namd_conf_file_pme_disabled_restart(
     # Exercise the supported template with PME disabled, as in a run whose
     # Run-0 log supplies no PME grid dimensions.
     repo_root = Path(__file__).resolve().parents[4]
-    template = repo_root / "required_data" / "config_files" / "NAMD.conf"
+    template = (
+        repo_root / "required_data" / "config_files" / "namd" / "nvt.conf"
+    )
     template_lines = template.read_text().splitlines()
     tpl = tmp_path / "no_pme.conf"
     tpl.write_text(

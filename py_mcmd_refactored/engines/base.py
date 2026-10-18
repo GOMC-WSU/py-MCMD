@@ -1,5 +1,6 @@
 import logging
 import os
+import shutil
 from pathlib import Path
 
 from config.models import SimulationConfig
@@ -58,3 +59,12 @@ class Engine:
 
     def run(self):
         raise NotImplementedError("Subclasses must implement run()")
+
+    def _archive_input(self, runtime_dir: Path, disk_dir: Path) -> None:
+        """Save the rendered input before execution in developer mode."""
+        if not getattr(self.cfg, "developer_mode", False):
+            return
+        if runtime_dir.resolve() == disk_dir.resolve():
+            return
+        disk_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(runtime_dir / "in.conf", disk_dir / "in.conf")

@@ -9,6 +9,8 @@ from warnings import warn
 import numpy as np
 import pandas as pd
 
+from py_mcmd_refactored.utils.config_sections import flatten_config_sections
+
 # MD/MC simulations (NAMD/GOMC) for the NPT, NVT, GEMC, and GCMC ensembles
 # *************************************************
 # Import the user variables from the json file (start)
@@ -35,7 +37,7 @@ def _get_args():
         "-namd_sims_order",
         "--namd_simulation_order",
         help="This sets the NAMD simulation to be run in series or parallel. "
-        "The data is entered only as series or parallel (default = series). "
+        "Enter series or parallel (default = JSON setting, or series). "
         "This is only relevant for the GEMC ensemble when utilizing two (2) NAMD simulation "
         "boxes "
         "(i.e., only_use_box_0_for_namd_for_gemc = False  --> both box 0 and box 1)."
@@ -78,7 +80,8 @@ def _get_args():
         )
 
     elif (
-        parser_arguments.namd_simulation_order != "parallel"
+        parser_arguments.namd_simulation_order is not None
+        and parser_arguments.namd_simulation_order != "parallel"
         and parser_arguments.namd_simulation_order != "series"
     ):
         parser_arguments.namd_simulation_order = "series"
@@ -117,7 +120,12 @@ if json_filename is None and manual_testing_filename_input_override is True:
 json_file_data = json.load(
     open(json_filename)
 )  # standard name is "user_input_NAMD_GOMC.json"
+json_file_data = flatten_config_sections(json_file_data)
 json_file_data_keys_list = json_file_data.keys()
+if namd_sim_order is None:
+    namd_sim_order = json_file_data.get("namd_simulation_order", "series")
+    if namd_sim_order not in ("series", "parallel"):
+        raise ValueError("namd_simulation_order must be 'series' or 'parallel'")
 
 # get the total_cycles_namd_gomc_sims variable from the json file
 if "total_cycles_namd_gomc_sims" not in json_file_data_keys_list:
@@ -605,11 +613,32 @@ os.makedirs(path_gomc_runs, exist_ok=True)
 # *************************************************
 # create NAMD and GOMC config file templates locations (start)
 # *************************************************
-path_namd_template = "required_data/config_files/NAMD.conf"
-
-path_gomc_template = (
-    "required_data/config_files/GOMC_" + str(simulation_type) + ".conf"
+from py_mcmd_refactored.utils.template_paths import (
+    default_gomc_template,
+    default_namd_template,
+    resolve_template_path,
+    select_namd_template,
 )
+
+path_namd_template = json_file_data.get(
+    "path_namd_template"
+) or default_namd_template(simulation_type)
+path_namd_template_box_0 = select_namd_template(
+    simulation_type,
+    0,
+    json_file_data.get("path_namd_template"),
+    json_file_data.get("path_namd_template_box_0"),
+)
+path_namd_template_box_1 = select_namd_template(
+    simulation_type,
+    1,
+    json_file_data.get("path_namd_template"),
+    json_file_data.get("path_namd_template_box_1"),
+)
+
+path_gomc_template = json_file_data.get(
+    "path_gomc_template"
+) or default_gomc_template(simulation_type)
 # *************************************************
 # create NAMD and GOMC config file templates locations (end)
 # *************************************************
@@ -1286,7 +1315,10 @@ def write_namd_conf_file(
     generate_namd_file = open("{}/in.conf".format(namd_box_x_newdir), "w")
 
     namd_template_file = open(
-        "{}/{}".format(str(python_file_directory), path_namd_template), "r"
+        resolve_template_path(
+            os.path.join(str(python_file_directory), path_namd_template)
+        ),
+        "r",
     )
     namd_template_data = namd_template_file.read()
     namd_template_file.close()
@@ -1918,7 +1950,10 @@ def write_gomc_conf_file(
 
     # Create the GOMC configuration file
     gomc_template_file = open(
-        "{}/{}".format(str(python_file_directory), path_gomc_template), "r"
+        resolve_template_path(
+            os.path.join(str(python_file_directory), path_gomc_template)
+        ),
+        "r",
     )
     gomc_template_data = gomc_template_file.read()
     gomc_template_file.close()
@@ -2021,7 +2056,10 @@ def write_gomc_conf_file(
 
     if simulation_type in ["GEMC", "GCMC"]:
         readlines_gomc_template_file = open(
-            "{}/{}".format(str(python_file_directory), path_gomc_template), "r"
+            resolve_template_path(
+                os.path.join(str(python_file_directory), path_gomc_template)
+            ),
+            "r",
         ).readlines()
         if simulation_type in ["GCMC"] or (
             simulation_type in ["GEMC"]
@@ -2838,7 +2876,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
 
         namd_box_0_newdir = write_namd_conf_file(
             python_file_directory,
-            path_namd_template,
+            path_namd_template_box_0,
             path_namd_runs,
             gomc_newdir,
             run_no,
@@ -2873,7 +2911,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
 
             namd_box_1_newdir = write_namd_conf_file(
                 python_file_directory,
-                path_namd_template,
+                path_namd_template_box_1,
                 path_namd_runs,
                 gomc_newdir,
                 run_no,

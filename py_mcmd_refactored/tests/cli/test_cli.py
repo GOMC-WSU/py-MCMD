@@ -11,13 +11,24 @@ import pytest
 from cli.main import parse_args
 
 
-def test_main_overrides_config_namd_simulation_order(tmp_path, monkeypatch):
-    """Ensure cli.main.main() applies CLI override to SimulationConfig."""
+@pytest.mark.parametrize(
+    "json_order,cli_order,expected",
+    [
+        (None, "parallel", "parallel"),
+        ("parallel", None, "parallel"),
+        ("parallel", "series", "series"),
+        (None, None, "series"),
+    ],
+)
+def test_main_overrides_config_namd_simulation_order(
+    tmp_path, monkeypatch, json_order, cli_order, expected
+):
+    """An explicit CLI order overrides JSON; omission preserves its default."""
     import json
 
     import cli.main as cli_main
 
-    # Valid config JSON WITHOUT namd_simulation_order (so default would be "series")
+    # Valid input; the order is supplied separately for each case.
     cfg_dict = {
         "total_cycles_namd_gomc_sims": 1,
         "starting_at_cycle_namd_gomc_sims": 0,
@@ -47,6 +58,8 @@ def test_main_overrides_config_namd_simulation_order(tmp_path, monkeypatch):
         "gomc_bin_directory": "bin/gomc",
     }
     config_file = tmp_path / "cfg.json"
+    if json_order is not None:
+        cfg_dict["namd_simulation_order"] = json_order
     config_file.write_text(json.dumps(cfg_dict))
 
     captured = {}
@@ -60,22 +73,15 @@ def test_main_overrides_config_namd_simulation_order(tmp_path, monkeypatch):
 
     monkeypatch.setattr(cli_main, "SimulationOrchestrator", DummyOrchestrator)
 
-    monkeypatch.setattr(
-        cli_main.sys,
-        "argv",
-        [
-            "py-mcmd",
-            "--file",
-            str(config_file),
-            "--namd_simulation_order",
-            "parallel",
-        ],
-    )
+    argv = ["py-mcmd", "--file", str(config_file)]
+    if cli_order is not None:
+        argv += ["--namd_simulation_order", cli_order]
+    monkeypatch.setattr(cli_main.sys, "argv", argv)
 
     cli_main.main()
 
     assert "cfg" in captured
-    assert captured["cfg"].namd_simulation_order == "parallel"
+    assert captured["cfg"].namd_simulation_order == expected
 
 
 def test_parse_args_valid_file_and_order(tmp_path, caplog):

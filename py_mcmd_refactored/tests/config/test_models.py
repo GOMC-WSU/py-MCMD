@@ -56,6 +56,14 @@ def test_valid_minimal_config(tmp_path):
     assert cfg.set_angle_box_1_list == [90, 90, 90]
 
 
+@pytest.mark.parametrize("box", [0, 1])
+def test_empty_per_box_template_is_rejected(box):
+    data = minimal_config()
+    data[f"path_namd_template_box_{box}"] = ""
+    with pytest.raises(ValidationError, match=f"path_namd_template_box_{box}"):
+        SimulationConfig(**data)
+
+
 def test_negative_cycles_raises():
     data = minimal_config()
     data["total_cycles_namd_gomc_sims"] = -1

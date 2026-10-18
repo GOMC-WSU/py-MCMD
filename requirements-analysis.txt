@@ -1,0 +1,5 @@
+# Offline correlation analysis; does not require NAMD, GOMC, or JAX.
+pymbar==4.0.3
+numpy>=1.24,<2
+scipy>=1.10,<2
+matplotlib>=3.6,<4
