@@ -8,7 +8,9 @@ from utils.config_sections import flatten_config_sections
 
 
 @pytest.mark.parametrize("ensemble", ["GEMC", "GCMC", "NPT", "NVT"])
-def test_sectioned_input_matches_flat_input_for_each_ensemble(tmp_path, ensemble):
+def test_sectioned_input_matches_flat_input_for_each_ensemble(
+    tmp_path, ensemble
+):
     repo = Path(__file__).resolve().parents[3]
     sectioned = json.loads((repo / "user_input_NAMD_GOMC.json").read_text())
     sectioned["simulation"]["simulation_type"] = ensemble
@@ -53,13 +55,17 @@ def test_duplicate_settings_are_rejected_instead_of_silently_overwritten(
         data["simulation_type"] = value
     else:
         data["execution"] = {"simulation_type": value}
-    with pytest.raises(ValidationError, match="simulation_type.*appears in both"):
+    with pytest.raises(
+        ValidationError, match="simulation_type.*appears in both"
+    ):
         SimulationConfig(**data)
 
 
 @pytest.mark.parametrize("section", [None, [], "GEMC"])
 def test_section_must_be_a_json_object(section):
-    with pytest.raises(ValidationError, match="section 'simulation'.*JSON object"):
+    with pytest.raises(
+        ValidationError, match="section 'simulation'.*JSON object"
+    ):
         SimulationConfig(simulation=section)
 
 

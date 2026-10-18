@@ -619,23 +619,25 @@ from py_mcmd_refactored.utils.template_paths import (
     select_namd_template,
 )
 
-path_namd_template = (
-    json_file_data.get("path_namd_template")
-    or default_namd_template(simulation_type)
-)
+path_namd_template = json_file_data.get(
+    "path_namd_template"
+) or default_namd_template(simulation_type)
 path_namd_template_box_0 = select_namd_template(
-    simulation_type, 0, json_file_data.get("path_namd_template"),
+    simulation_type,
+    0,
+    json_file_data.get("path_namd_template"),
     json_file_data.get("path_namd_template_box_0"),
 )
 path_namd_template_box_1 = select_namd_template(
-    simulation_type, 1, json_file_data.get("path_namd_template"),
+    simulation_type,
+    1,
+    json_file_data.get("path_namd_template"),
     json_file_data.get("path_namd_template_box_1"),
 )
 
-path_gomc_template = (
-    json_file_data.get("path_gomc_template")
-    or default_gomc_template(simulation_type)
-)
+path_gomc_template = json_file_data.get(
+    "path_gomc_template"
+) or default_gomc_template(simulation_type)
 # *************************************************
 # create NAMD and GOMC config file templates locations (end)
 # *************************************************
@@ -1314,7 +1316,8 @@ def write_namd_conf_file(
     namd_template_file = open(
         resolve_template_path(
             os.path.join(str(python_file_directory), path_namd_template)
-        ), "r"
+        ),
+        "r",
     )
     namd_template_data = namd_template_file.read()
     namd_template_file.close()
@@ -1948,7 +1951,8 @@ def write_gomc_conf_file(
     gomc_template_file = open(
         resolve_template_path(
             os.path.join(str(python_file_directory), path_gomc_template)
-        ), "r"
+        ),
+        "r",
     )
     gomc_template_data = gomc_template_file.read()
     gomc_template_file.close()
@@ -2053,7 +2057,8 @@ def write_gomc_conf_file(
         readlines_gomc_template_file = open(
             resolve_template_path(
                 os.path.join(str(python_file_directory), path_gomc_template)
-            ), "r"
+            ),
+            "r",
         ).readlines()
         if simulation_type in ["GCMC"] or (
             simulation_type in ["GEMC"]

@@ -592,8 +592,7 @@ class OnTheFlyProcessor:
             self._namd_boxes.append(1)
 
         self._namd_titles = {
-            box: {"energy": None, "density": None}
-            for box in self._namd_boxes
+            box: {"energy": None, "density": None} for box in self._namd_boxes
         }
 
         self._gomc_titles = {
@@ -618,7 +617,11 @@ class OnTheFlyProcessor:
 
         for box in self._namd_boxes:
             for kind in (
-                "combined", "namd_raw", "namd_density", "gomc_stat", "gomc_kcal"
+                "combined",
+                "namd_raw",
+                "namd_density",
+                "gomc_stat",
+                "gomc_kcal",
             ):
                 self._header_written[f"{kind}{box}"] = False
 
@@ -648,7 +651,9 @@ class OnTheFlyProcessor:
             for box in self._namd_boxes
         }
         self._gomc_kcal_fh = {
-            box: self._open_append(f"GOMC_Energies_Stat_kcal_per_mol_box_{box}.txt")
+            box: self._open_append(
+                f"GOMC_Energies_Stat_kcal_per_mol_box_{box}.txt"
+            )
             for box in self._namd_boxes
         }
 
@@ -859,6 +864,7 @@ class OnTheFlyProcessor:
 
         if out_path is None:
             from engines.namd.sparse_box import SKIPPED_MARKER
+
             marker = self._resolve_artifact_path(
                 self._runtime_namd_dir(run_no, box_no),
                 self._namd_dir(run_no, box_no),
@@ -911,17 +917,13 @@ class OnTheFlyProcessor:
                 titles["density"]
                 and not self._header_written[density_header_key]
             ):
-                density_fh.write(
-                    "\t".join(titles["density"]) + "\n"
-                )
+                density_fh.write("\t".join(titles["density"]) + "\n")
 
                 self._header_written[density_header_key] = True
 
             density_value = str(density) if density is not None else "NA"
 
-            density_fh.write(
-                "\t".join(row[1:] + [density_value]) + "\n"
-            )
+            density_fh.write("\t".join(row[1:] + [density_value]) + "\n")
 
             def _column(
                 title: str,
@@ -1026,8 +1028,11 @@ class OnTheFlyProcessor:
             if 1 in self._combined_fh:
                 self._append_gomc_tables(
                     box1_rows[1:] if len(box1_rows) > 1 else box1_rows,
-                    box1_kcal_rows[1:]
-                    if len(box1_kcal_rows) > 1 else box1_kcal_rows,
+                    (
+                        box1_kcal_rows[1:]
+                        if len(box1_kcal_rows) > 1
+                        else box1_kcal_rows
+                    ),
                     box_no=1,
                 )
 

@@ -679,7 +679,8 @@ def test_first_cycle_gcmc_and_one_box_gemc_strip_all_binary_restart_lines(
 
 @pytest.mark.parametrize("ensemble", ["GCMC", "GEMC"])
 def test_subsequent_gcmc_uses_box1_restart_without_velocity_file(
-    tmp_path: Path, ensemble,
+    tmp_path: Path,
+    ensemble,
 ):
     proj = tmp_path / "proj"
     tpl = proj / "templates" / "gomc.tpl"

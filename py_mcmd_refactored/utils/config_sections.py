@@ -2,8 +2,15 @@
 
 CONFIG_SECTIONS = frozenset(
     {
-        "simulation", "gcmc", "run_control", "execution", "engines",
-        "force_fields", "box_0", "box_1", "output",
+        "simulation",
+        "gcmc",
+        "run_control",
+        "execution",
+        "engines",
+        "force_fields",
+        "box_0",
+        "box_1",
+        "output",
     }
 )
 

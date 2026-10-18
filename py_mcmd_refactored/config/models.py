@@ -12,7 +12,6 @@ from pydantic import (
     field_validator,
     model_validator,
 )
-
 from utils.config_sections import flatten_config_sections
 from utils.template_paths import (
     default_gomc_template,
@@ -388,14 +387,22 @@ class SimulationConfig(BaseModel):
             object.__setattr__(self, "GCMC_ChemPot_or_Fugacity", None)
             object.__setattr__(self, "GCMC_ChemPot_or_Fugacity_dict", None)
 
-        if bool(self.rigid_gomc_reference_pdb) != bool(self.rigid_gomc_reference_psf):
-            raise ValueError("Both rigid GOMC reference PDB and PSF are required")
+        if bool(self.rigid_gomc_reference_pdb) != bool(
+            self.rigid_gomc_reference_psf
+        ):
+            raise ValueError(
+                "Both rigid GOMC reference PDB and PSF are required"
+            )
         if self.rigid_gomc_reference_psf and sim != "GCMC":
-            raise ValueError("Rigid framework transfer is supported for GCMC only")
+            raise ValueError(
+                "Rigid framework transfer is supported for GCMC only"
+            )
         if self.shared_box0_files and sim != "GCMC":
             raise ValueError("Shared box-0 files are supported for GCMC only")
         if self.shared_box0_files and self.rigid_gomc_reference_psf:
-            raise ValueError("Shared box-0 files cannot use a second transfer mode")
+            raise ValueError(
+                "Shared box-0 files cannot use a second transfer mode"
+            )
         return self
 
     @model_validator(mode="after")
@@ -404,20 +411,28 @@ class SimulationConfig(BaseModel):
         # shared template still applies to both boxes in older input files.
         if self.simulation_type == "GEMC":
             self.path_namd_template_box_0 = select_namd_template(
-                self.simulation_type, 0, self.path_namd_template,
+                self.simulation_type,
+                0,
+                self.path_namd_template,
                 self.path_namd_template_box_0,
             )
             self.path_namd_template_box_1 = select_namd_template(
-                self.simulation_type, 1, self.path_namd_template,
+                self.simulation_type,
+                1,
+                self.path_namd_template,
                 self.path_namd_template_box_1,
             )
         # Only fill in defaults if user did NOT supply a value
         if self.path_namd_template is None:
-            self.path_namd_template = default_namd_template(self.simulation_type)
+            self.path_namd_template = default_namd_template(
+                self.simulation_type
+            )
 
         if self.path_gomc_template is None:
             # derive from simulation_type only if not provided
-            self.path_gomc_template = default_gomc_template(self.simulation_type)
+            self.path_gomc_template = default_gomc_template(
+                self.simulation_type
+            )
         return self
 
     @field_validator(

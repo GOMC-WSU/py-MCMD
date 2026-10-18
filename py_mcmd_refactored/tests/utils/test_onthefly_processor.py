@@ -391,10 +391,14 @@ def test_two_box_gemc_writes_separate_tables_with_shared_cycle_offsets(
 
     # Use distinct column orders and values to expose shared parser state
     # or accidental reuse of liquid data for the gas phase.
-    gas_log = _namd_log(mass=20.0).replace(
-        "TS POTENTIAL ELECT PRESSURE VOLUME",
-        "TS VOLUME PRESSURE ELECT POTENTIAL",
-    ).replace("-10.0 -2.0 1.0 1000.0", "2000.0 4.0 -0.2 -1.0")
+    gas_log = (
+        _namd_log(mass=20.0)
+        .replace(
+            "TS POTENTIAL ELECT PRESSURE VOLUME",
+            "TS VOLUME PRESSURE ELECT POTENTIAL",
+        )
+        .replace("-10.0 -2.0 1.0 1000.0", "2000.0 4.0 -0.2 -1.0")
+    )
     gas_root = managed_root if gas_log_location == "managed" else tmp_path
     gomc_log = _gomc_log(steps=(0, 10)) + _gomc_log(
         box_no=1, steps=(0, 10)
@@ -460,11 +464,17 @@ def test_two_box_gemc_writes_separate_tables_with_shared_cycle_offsets(
         rows = [line.split() for line in combined_lines[1:]]
         assert [row[0] for row in rows] == ["NAMD", "NAMD", "GOMC"] * 2
         assert [row[1] for row in rows] == [
-            "100", "105", "115", "115", "120", "130"
+            "100",
+            "105",
+            "115",
+            "115",
+            "120",
+            "130",
         ]
         assert all(
             float(row[2]) == expected_potential
-            for row in rows if row[0] == "NAMD"
+            for row in rows
+            if row[0] == "NAMD"
         )
         expected_elect = -2.0 if box == 0 else -0.2
         expected_pressure = 1.0 if box == 0 else 4.0
@@ -472,15 +482,20 @@ def test_two_box_gemc_writes_separate_tables_with_shared_cycle_offsets(
         for row in rows:
             if row[0] == "NAMD":
                 assert [float(value) for value in row[3:6]] == [
-                    expected_elect, expected_pressure, expected_volume
+                    expected_elect,
+                    expected_pressure,
+                    expected_volume,
                 ]
 
         for suffix in ("", "kcal_per_mol_"):
-            stat_path = combined_dir / f"GOMC_Energies_Stat_{suffix}box_{box}.txt"
+            stat_path = (
+                combined_dir / f"GOMC_Energies_Stat_{suffix}box_{box}.txt"
+            )
             stat_lines = stat_path.read_text().splitlines()
             assert sum(line.startswith("#STEP") for line in stat_lines) == 1
             assert [line.split()[0] for line in stat_lines[1:]] == [
-                "115", "130"
+                "115",
+                "130",
             ]
             expected_total = 1000.0 if box == 0 else 3000.0
             if suffix:
@@ -491,8 +506,7 @@ def test_two_box_gemc_writes_separate_tables_with_shared_cycle_offsets(
             )
         expected_total = 1000.0 if box == 0 else 3000.0
         assert all(
-            float(row[2]) == expected_total
-            for row in rows if row[0] == "GOMC"
+            float(row[2]) == expected_total for row in rows if row[0] == "GOMC"
         )
 
 
@@ -538,6 +552,7 @@ def test_two_box_gemc_missing_gas_log_does_not_reuse_liquid_data(
     _write_log(tmp_path / "NAMD" / "0000000000_a" / "out.dat", _namd_log())
     if skipped:
         from engines.namd.sparse_box import SKIPPED_MARKER
+
         marker = tmp_path / "managed" / "NAMD" / "0000000000_b" / SKIPPED_MARKER
         marker.parent.mkdir(parents=True)
         marker.write_text("Gas NAMD skipped: GOMC updates this box.\n")

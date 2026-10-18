@@ -6,10 +6,6 @@ from pathlib import Path
 from typing import Optional
 
 from engines.base import Engine as BaseEngine
-from engines.rigid_framework_transfer import (
-    RigidFrameworkGCMCTransfer,
-    unwrap_shared_box0_restart,
-)
 from engines.gomc.energy_metrics import get_gomc_energy_data_kcal_per_mol
 from engines.gomc.energy_parse import get_gomc_energy_data
 from engines.gomc.gomc_writer import (
@@ -19,6 +15,10 @@ from engines.gomc.gomc_writer import (
     write_gomc_conf_file,
 )
 from engines.namd.energy_compare import compare_namd_gomc_energies
+from engines.rigid_framework_transfer import (
+    RigidFrameworkGCMCTransfer,
+    unwrap_shared_box0_restart,
+)
 from orchestrator.state import RunState
 from utils.persisted_file_lists import persisted_output_path
 from utils.subprocess_runner import Command, SubprocessRunner
@@ -203,8 +203,10 @@ class GomcEngine(BaseEngine):
         if self.cfg.rigid_gomc_reference_psf:
             transfer = RigidFrameworkGCMCTransfer(self.cfg)
             rigid_pdb, rigid_psf, box1_pdb = transfer.prepare_gomc(
-                Path(gomc_newdir), Path(state.namd_box0_dir),
-                io.previous_gomc_dir, self.dry_run,
+                Path(gomc_newdir),
+                Path(state.namd_box0_dir),
+                io.previous_gomc_dir,
+                self.dry_run,
             )
             transfer.rewrite_gomc_conf(
                 Path(gomc_newdir) / "in.conf", rigid_pdb, rigid_psf, box1_pdb
@@ -280,8 +282,11 @@ class GomcEngine(BaseEngine):
                 else Path.cwd() / self.cfg.starting_psf_box_0_file
             )
             unwrap_shared_box0_restart(
-                Path(gomc_newdir), Path(state.namd_box0_dir), previous_psf,
-                self.cfg.framework_residue, self.cfg.single_site_guest_residue,
+                Path(gomc_newdir),
+                Path(state.namd_box0_dir),
+                previous_psf,
+                self.cfg.framework_residue,
+                self.cfg.single_site_guest_residue,
             )
 
         # 3) Parse energies -> cache in state
@@ -344,7 +349,9 @@ class GomcEngine(BaseEngine):
         # 4) Continuity check (NAMD -> GOMC) when values exist
         e0 = state.energy_box0
         if (
-            not (self.cfg.rigid_gomc_reference_psf or self.cfg.shared_box0_files)
+            not (
+                self.cfg.rigid_gomc_reference_psf or self.cfg.shared_box0_files
+            )
             and (e0.namd_potential_final is not None)
             and (e0.gomc_potential_initial is not None)
             and (e0.namd_vdw_plus_elec_final is not None)

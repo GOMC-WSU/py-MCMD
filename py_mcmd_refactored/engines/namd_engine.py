@@ -7,17 +7,17 @@ from turtle import width
 from typing import Optional
 
 from engines.base import Engine as BaseEngine
-from engines.rigid_framework_transfer import RigidFrameworkGCMCTransfer
 from engines.namd.constants import DEFAULT_NAMD_E_TITLES_LIST
 from engines.namd.energy import get_namd_energy_data
 from engines.namd.energy_compare import compare_namd_gomc_energies
 from engines.namd.namd_writer import write_namd_conf_file
-from engines.namd.sparse_box import SKIPPED_MARKER, molecule_count
 from engines.namd.parser import (
     extract_pme_grid_from_out,
     find_run0_fft_filename,
     get_run0_dir,
 )
+from engines.namd.sparse_box import SKIPPED_MARKER, molecule_count
+from engines.rigid_framework_transfer import RigidFrameworkGCMCTransfer
 from orchestrator.state import RunState
 from utils.path import format_cycle_id
 from utils.persisted_file_lists import persisted_output_path
@@ -487,9 +487,14 @@ class NamdEngine(BaseEngine):
 
         namd_box0_dir = write_namd_conf_file(
             python_file_directory,
-            (self.cfg.path_namd_template_box_0 or self.cfg.path_namd_template)
-            if self.cfg.simulation_type == "GEMC"
-            else self.cfg.path_namd_template,
+            (
+                (
+                    self.cfg.path_namd_template_box_0
+                    or self.cfg.path_namd_template
+                )
+                if self.cfg.simulation_type == "GEMC"
+                else self.cfg.path_namd_template
+            ),
             # self.cfg.path_namd_runs,
             runtime_namd_root,
             gomc_newdir,
@@ -529,8 +534,11 @@ class NamdEngine(BaseEngine):
         namd_box1_dir: Optional[str] = None
         sparse_gas = False
         if two_box and not self.dry_run:
-            psf = (Path(self.cfg.starting_psf_box_1_file) if run_no == 0 else
-                   Path(gomc_newdir) / "Output_data_BOX_1_restart.psf")
+            psf = (
+                Path(self.cfg.starting_psf_box_1_file)
+                if run_no == 0
+                else Path(gomc_newdir) / "Output_data_BOX_1_restart.psf"
+            )
             count = molecule_count(psf)
             sparse_gas = count < 2
             if sparse_gas:
@@ -538,7 +546,9 @@ class NamdEngine(BaseEngine):
                 e = state.energy_box1
                 e.namd_potential_initial = e.namd_potential_final = None
                 e.namd_vdw_plus_elec_initial = e.namd_vdw_plus_elec_final = None
-                skipped_dir = Path(runtime_namd_root) / f"{format_cycle_id(run_no)}_b"
+                skipped_dir = (
+                    Path(runtime_namd_root) / f"{format_cycle_id(run_no)}_b"
+                )
                 skipped_dir.mkdir(parents=True, exist_ok=True)
                 message = (
                     f"Gas NAMD skipped for run {run_no}: {count} molecule(s). "
@@ -549,7 +559,8 @@ class NamdEngine(BaseEngine):
         if two_box and not sparse_gas:
             namd_box1_dir = write_namd_conf_file(
                 python_file_directory,
-                self.cfg.path_namd_template_box_1 or self.cfg.path_namd_template,
+                self.cfg.path_namd_template_box_1
+                or self.cfg.path_namd_template,
                 # self.cfg.path_namd_runs,
                 runtime_namd_root,
                 gomc_newdir,
@@ -741,7 +752,9 @@ class NamdEngine(BaseEngine):
 
         # 5) Continuity check (GOMC -> NAMD) when applicable
         if (
-            not (self.cfg.rigid_gomc_reference_psf or self.cfg.shared_box0_files)
+            not (
+                self.cfg.rigid_gomc_reference_psf or self.cfg.shared_box0_files
+            )
             and run_no != 0
             and run_no != int(self.cfg.starting_sims_namd_gomc)
         ):

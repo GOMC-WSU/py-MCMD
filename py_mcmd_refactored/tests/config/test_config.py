@@ -184,8 +184,10 @@ def test_template_paths_derived_and_overridable(tmp_path):
 def test_template_paths_only_derived_when_missing(ensemble, null_paths):
     data = make_cfg(simulation_type=ensemble).model_dump()
     for key in (
-        "path_namd_template", "path_gomc_template",
-        "path_namd_template_box_0", "path_namd_template_box_1",
+        "path_namd_template",
+        "path_gomc_template",
+        "path_namd_template_box_0",
+        "path_namd_template_box_1",
     ):
         if null_paths:
             data[key] = None
@@ -193,7 +195,9 @@ def test_template_paths_only_derived_when_missing(ensemble, null_paths):
             data.pop(key)
     cfg = SimulationConfig(**data)
     namd_ensemble = {
-        "NPT": "npt", "GCMC": "gcmc", "GEMC": "gemc_liquid",
+        "NPT": "npt",
+        "GCMC": "gcmc",
+        "GEMC": "gemc_liquid",
     }.get(ensemble, "nvt")
     assert cfg.path_namd_template == (
         f"required_data/config_files/namd/{namd_ensemble}.conf"
@@ -215,7 +219,8 @@ def test_gemc_automatic_templates_preserve_custom_override_precedence(
     shared, gas
 ):
     cfg = make_cfg(
-        simulation_type="GEMC", path_namd_template=shared,
+        simulation_type="GEMC",
+        path_namd_template=shared,
         path_namd_template_box_1=gas,
     )
     assert cfg.path_namd_template_box_0 == (

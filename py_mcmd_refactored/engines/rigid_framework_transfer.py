@@ -4,6 +4,7 @@ The NAMD framework stays bonded and charged. GOMC receives a separate,
 fixed, zero-bond topology and its own force field. Neither engine's
 validated parameter file is generated or edited here.
 """
+
 from __future__ import annotations
 
 import os
@@ -58,20 +59,26 @@ def _namd_coor(path: Path) -> np.ndarray:
     for endian in ("<", ">"):
         n = struct.unpack(f"{endian}i", raw[:4])[0]
         if n > 0 and len(raw) == 4 + 24 * n:
-            return np.frombuffer(
-                raw, dtype=f"{endian}f8", offset=4
-            ).reshape(n, 3).copy()
+            return (
+                np.frombuffer(raw, dtype=f"{endian}f8", offset=4)
+                .reshape(n, 3)
+                .copy()
+            )
     raise ValueError(f"Invalid NAMD coordinate restart: {path}")
 
 
-def _write_psf(reference: Path, output: Path, framework: str, guest: str, n_guest: int):
+def _write_psf(
+    reference: Path, output: Path, framework: str, guest: str, n_guest: int
+):
     lines, at, atoms = _psf(reference)
     n_framework = sum(atom[3] == framework for atom in atoms)
     if atoms[:n_framework] != [atom for atom in atoms if atom[3] == framework]:
         raise ValueError("Reference PSF framework atoms must be contiguous")
     guest_atoms = [atom for atom in atoms if atom[3] == guest]
     if not guest_atoms or len(atoms) != n_framework + len(guest_atoms):
-        raise ValueError("Reference PSF must contain one-site guest atoms after framework")
+        raise ValueError(
+            "Reference PSF must contain one-site guest atoms after framework"
+        )
     if n_guest < 0:
         raise ValueError("Negative guest count")
     template = guest_atoms[0]
@@ -132,7 +139,8 @@ def _write_pdb(
     if len(coords) < n_framework:
         raise ValueError("Missing framework coordinates")
     preamble = [
-        line for line in lines[: lines.index(atoms[0])]
+        line
+        for line in lines[: lines.index(atoms[0])]
         if not line.startswith("CRYST1")
     ]
     preamble.insert(
@@ -151,12 +159,15 @@ def _write_pdb(
     output.write_text("".join(output_lines))
 
 
-def _add_gomc_restart_remark(source: Path, output: Path, displacement: float = 0.5):
+def _add_gomc_restart_remark(
+    source: Path, output: Path, displacement: float = 0.5
+):
     """Supply GOMC's fixed-width move scale and remove unrelated REMARKs."""
     if displacement <= 0:
         raise ValueError("GOMC displacement scale must be positive")
     lines = [
-        line for line in source.read_text().splitlines(keepends=True)
+        line
+        for line in source.read_text().splitlines(keepends=True)
         if not line.startswith("REMARK")
     ]
     if not any(line.startswith("CRYST1") for line in lines):
@@ -185,12 +196,21 @@ def unwrap_shared_box0_restart(
     _, _, before = _psf(Path(previous_psf))
     _, _, after = _psf(gomc_dir / "Output_data_BOX_0_restart.psf")
     n_framework = sum(atom[3] == framework for atom in before)
-    if n_framework == 0 or any(atom[3] != framework for atom in before[:n_framework]):
+    if n_framework == 0 or any(
+        atom[3] != framework for atom in before[:n_framework]
+    ):
         raise ValueError("Shared box-0 PSF needs contiguous framework atoms")
-    if len(after) < n_framework or any(atom[3] != framework for atom in after[:n_framework]):
+    if len(after) < n_framework or any(
+        atom[3] != framework for atom in after[:n_framework]
+    ):
         raise ValueError("GOMC changed the framework atom count or order")
-    if any(a[4:8] != b[4:8] for a, b in zip(before[:n_framework], after[:n_framework])):
-        raise ValueError("GOMC changed framework names, types, charges, or masses")
+    if any(
+        a[4:8] != b[4:8]
+        for a, b in zip(before[:n_framework], after[:n_framework])
+    ):
+        raise ValueError(
+            "GOMC changed framework names, types, charges, or masses"
+        )
     if any(atom[3] != guest for atom in after[n_framework:]):
         raise ValueError("Unexpected guest residue in GOMC box 0")
     namd_xyz = _namd_coor(Path(namd_dir) / "namdOut.restart.coor")
@@ -198,9 +218,13 @@ def unwrap_shared_box0_restart(
     lines, pdb_atoms, gomc_xyz = _pdb(restart_pdb)
     if len(namd_xyz) != len(before) or len(gomc_xyz) != len(after):
         raise ValueError("Shared box-0 PSF and coordinate counts differ")
-    if any(line[17:21].strip() != framework for line in pdb_atoms[:n_framework]):
+    if any(
+        line[17:21].strip() != framework for line in pdb_atoms[:n_framework]
+    ):
         raise ValueError("GOMC restart PDB framework order differs from PSF")
-    if any(abs(float(line[60:66]) - 1.0) > 1e-6 for line in pdb_atoms[:n_framework]):
+    if any(
+        abs(float(line[60:66]) - 1.0) > 1e-6 for line in pdb_atoms[:n_framework]
+    ):
         raise ValueError("GOMC framework is not fixed in its restart PDB")
     box = _box_from_xsc(gomc_dir / "Output_data_BOX_0_restart.xsc")
     difference = gomc_xyz[:n_framework] - namd_xyz[:n_framework]
@@ -215,7 +239,11 @@ def unwrap_shared_box0_restart(
     for line in lines:
         if line.startswith(("ATOM  ", "HETATM")):
             if atom_index < n_framework:
-                line = line[:30] + "".join(f"{v:8.3f}" for v in unwrapped[atom_index]) + line[54:]
+                line = (
+                    line[:30]
+                    + "".join(f"{v:8.3f}" for v in unwrapped[atom_index])
+                    + line[54:]
+                )
             atom_index += 1
         new_lines.append(line)
     temp = restart_pdb.with_suffix(".pdb.tmp")
@@ -240,12 +268,20 @@ class RigidFrameworkGCMCTransfer:
         if not n_host or len(n_host) != len(g_host):
             raise ValueError("NAMD and GOMC framework atom counts differ")
         if [a[4:6] for a in n_host] != [a[4:6] for a in g_host]:
-            raise ValueError("NAMD and GOMC framework atom order or types differ")
+            raise ValueError(
+                "NAMD and GOMC framework atom order or types differ"
+            )
         self.n_framework = len(n_host)
         if len(n_atoms) <= self.n_framework or len(g_atoms) <= self.n_framework:
             raise ValueError("Both references need a one-site guest template")
 
-    def prepare_gomc(self, run_dir: Path, namd_dir: Path, previous_gomc: Path | None, dry_run: bool):
+    def prepare_gomc(
+        self,
+        run_dir: Path,
+        namd_dir: Path,
+        previous_gomc: Path | None,
+        dry_run: bool,
+    ):
         run_dir = Path(run_dir)
         coords_path = Path(namd_dir) / "namdOut.restart.coor"
         if dry_run:
@@ -263,17 +299,28 @@ class RigidFrameworkGCMCTransfer:
         pdb = run_dir / "rigid_box_0.pdb"
         _write_psf(self.gomc_psf, psf, self.framework, self.guest, n_guest)
         _write_pdb(
-            self.namd_pdb, run_dir / "namd_reference_box_0.pdb",
-            self.framework, self.guest, coords, box, self.n_framework,
+            self.namd_pdb,
+            run_dir / "namd_reference_box_0.pdb",
+            self.framework,
+            self.guest,
+            coords,
+            box,
+            self.n_framework,
         )
         _write_pdb(
-            self.gomc_pdb, pdb, self.framework, self.guest,
-            coords % box, box, self.n_framework,
+            self.gomc_pdb,
+            pdb,
+            self.framework,
+            self.guest,
+            coords % box,
+            box,
+            self.n_framework,
         )
         _add_gomc_restart_remark(pdb, pdb)
         box1_source = (
             Path(previous_gomc) / "Output_data_BOX_1_restart.pdb"
-            if previous_gomc is not None else self.box1_pdb
+            if previous_gomc is not None
+            else self.box1_pdb
         )
         box1_pdb = run_dir / "restart_box_1.pdb"
         _add_gomc_restart_remark(box1_source, box1_pdb)
@@ -290,11 +337,22 @@ class RigidFrameworkGCMCTransfer:
         _, _, restart_atoms = _psf(restart_psf)
         _, _, pre_xyz = _pdb(pre_pdb)
         _, _, restart_xyz = _pdb(restart_pdb)
-        if len(pre_atoms) != len(pre_xyz) or len(restart_atoms) != len(restart_xyz):
+        if len(pre_atoms) != len(pre_xyz) or len(restart_atoms) != len(
+            restart_xyz
+        ):
             raise ValueError("GOMC PSF/PDB atom counts differ")
-        pre_host = [i for i, atom in enumerate(pre_atoms) if atom[3] == self.framework]
-        restart_host = [i for i, atom in enumerate(restart_atoms) if atom[3] == self.framework]
-        if len(pre_host) != self.n_framework or len(restart_host) != self.n_framework:
+        pre_host = [
+            i for i, atom in enumerate(pre_atoms) if atom[3] == self.framework
+        ]
+        restart_host = [
+            i
+            for i, atom in enumerate(restart_atoms)
+            if atom[3] == self.framework
+        ]
+        if (
+            len(pre_host) != self.n_framework
+            or len(restart_host) != self.n_framework
+        ):
             raise ValueError("Framework atom count changed in GOMC")
         if Counter(pre_atoms[i][5] for i in pre_host) != Counter(
             restart_atoms[i][5] for i in restart_host
@@ -303,10 +361,15 @@ class RigidFrameworkGCMCTransfer:
         mapped = np.empty((self.n_framework, 3))
         for atom_type in set(pre_atoms[i][5] for i in pre_host):
             targets = [i for i in pre_host if pre_atoms[i][5] == atom_type]
-            candidates = [i for i in restart_host if restart_atoms[i][5] == atom_type]
+            candidates = [
+                i for i in restart_host if restart_atoms[i][5] == atom_type
+            ]
             tree = cKDTree(restart_xyz[candidates] % box, boxsize=box)
             distance, nearest = tree.query(pre_xyz[targets] % box, k=1)
-            if len(set(nearest.tolist())) != len(nearest) or np.max(distance) > 0.005:
+            if (
+                len(set(nearest.tolist())) != len(nearest)
+                or np.max(distance) > 0.005
+            ):
                 raise ValueError(
                     f"Cannot uniquely map fixed framework type {atom_type}; "
                     f"maximum distance {np.max(distance):.6f} A"
@@ -314,7 +377,8 @@ class RigidFrameworkGCMCTransfer:
             for target, candidate in zip(targets, nearest):
                 mapped[target] = restart_xyz[candidates[candidate]]
         guests = [
-            restart_xyz[i] for i, atom in enumerate(restart_atoms)
+            restart_xyz[i]
+            for i, atom in enumerate(restart_atoms)
             if atom[3] == self.guest
         ]
         if len(restart_atoms) != self.n_framework + len(guests):
@@ -329,7 +393,15 @@ class RigidFrameworkGCMCTransfer:
         psf = run_dir / "namd_ready_box_0.psf"
         pdb = run_dir / "namd_ready_box_0.pdb"
         _write_psf(self.namd_psf, psf, self.framework, self.guest, len(guests))
-        _write_pdb(self.namd_pdb, pdb, self.framework, self.guest, coords, box, self.n_framework)
+        _write_pdb(
+            self.namd_pdb,
+            pdb,
+            self.framework,
+            self.guest,
+            coords,
+            box,
+            self.n_framework,
+        )
         return pdb, psf
 
     @staticmethod
@@ -358,10 +430,16 @@ class RigidFrameworkGCMCTransfer:
         text = conf.read_text()
         rel_pdb = os.path.relpath(pdb, conf.parent)
         rel_psf = os.path.relpath(psf, conf.parent)
-        text, n_pdb = re.subn(r"(?m)^coordinates\s+\S+\s*$", f"coordinates {rel_pdb}", text)
-        text, n_psf = re.subn(r"(?m)^structure\s+\S+\s*$", f"structure {rel_psf}", text)
+        text, n_pdb = re.subn(
+            r"(?m)^coordinates\s+\S+\s*$", f"coordinates {rel_pdb}", text
+        )
+        text, n_psf = re.subn(
+            r"(?m)^structure\s+\S+\s*$", f"structure {rel_psf}", text
+        )
         text, n_restart = re.subn(
-            r"(?m)^set RESTART_STATUS\s+\S+\s*$", "set RESTART_STATUS false", text
+            r"(?m)^set RESTART_STATUS\s+\S+\s*$",
+            "set RESTART_STATUS false",
+            text,
         )
         if (n_pdb, n_psf, n_restart) != (1, 1, 1):
             raise ValueError("Unexpected NAMD template structure")

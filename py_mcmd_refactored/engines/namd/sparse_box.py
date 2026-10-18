@@ -1,6 +1,6 @@
 """Detect boxes that cannot safely use NAMD's LJ tail correction."""
-from pathlib import Path
 
+from pathlib import Path
 
 SKIPPED_MARKER = "NAMD_SKIPPED.txt"
 

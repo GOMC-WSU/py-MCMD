@@ -1,4 +1,5 @@
 """Locations of distributed engine templates and legacy path compatibility."""
+
 from pathlib import Path
 
 DEFAULT_NAMD_TEMPLATE = "required_data/config_files/namd/nvt.conf"

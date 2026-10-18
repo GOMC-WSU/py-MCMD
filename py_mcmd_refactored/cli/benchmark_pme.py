@@ -1,4 +1,5 @@
 """Compare NAMD gas meshes at identical coordinates in an isolated directory."""
+
 from __future__ import annotations
 
 import argparse
@@ -31,7 +32,9 @@ def main():
     parser.add_argument("-f", "--file", default="user_input_NAMD_GOMC.json")
     parser.add_argument("--namd-binary", type=Path)
     parser.add_argument(
-        "--output", required=True, type=Path,
+        "--output",
+        required=True,
+        type=Path,
         help="New directory for inputs, logs, forces and report.json",
     )
     parser.add_argument("--cores", type=int, default=4)
@@ -66,11 +69,23 @@ def main():
     ):
         run_dir = Path(
             nw.write_namd_conf_file(
-                root, template, output / name, "NA", 0, 1,
-                args.steps, 0, args.steps, args.steps,
-                cfg.simulation_temp_k, cfg.simulation_pressure_bar,
-                cfg.starting_pdb_box_1_file, cfg.starting_psf_box_1_file,
-                None, None, None,
+                root,
+                template,
+                output / name,
+                "NA",
+                0,
+                1,
+                args.steps,
+                0,
+                args.steps,
+                args.steps,
+                cfg.simulation_temp_k,
+                cfg.simulation_pressure_bar,
+                cfg.starting_pdb_box_1_file,
+                cfg.starting_psf_box_1_file,
+                None,
+                None,
+                None,
                 set_x_dim=cfg.set_dims_box_1_list[0],
                 set_y_dim=cfg.set_dims_box_1_list[1],
                 set_z_dim=cfg.set_dims_box_1_list[2],
@@ -86,7 +101,8 @@ def main():
         if spacing is not None:
             conf = re.sub(
                 r"(?im)^\s*PMEGridSpacing\s+[^\n]+",
-                f"PMEGridSpacing {spacing}", conf,
+                f"PMEGridSpacing {spacing}",
+                conf,
             )
             conf = re.sub(r"(?im)^\s*PMEInterpOrder\s+[^\n]+", "", conf)
             # Insert before the first force evaluation.
@@ -107,8 +123,11 @@ def main():
         with (run_dir / "out.dat").open("w") as out:
             subprocess.run(
                 [str(binary), f"+p{args.cores}", "in.conf"],
-                cwd=run_dir, stdout=out, stderr=subprocess.STDOUT,
-                check=True, timeout=600,
+                cwd=run_dir,
+                stdout=out,
+                stderr=subprocess.STDOUT,
+                check=True,
+                timeout=600,
             )
         elapsed = time.perf_counter() - start
         lines = (run_dir / "out.dat").read_text().splitlines()
@@ -125,7 +144,11 @@ def main():
             "electrostatic_kcal_per_mol": values["ELECT"],
             "potential_kcal_per_mol": values["POTENTIAL"],
             "grid": next(
-                (line.strip() for line in lines if "PME GRID DIMENSIONS" in line),
+                (
+                    line.strip()
+                    for line in lines
+                    if "PME GRID DIMENSIONS" in line
+                ),
                 None,
             ),
         }
@@ -134,7 +157,7 @@ def main():
     )
     for name in ("baseline", "candidate"):
         delta = forces[name] - forces["reference"]
-        rms = float(np.sqrt(np.mean(np.sum(delta ** 2, axis=1))))
+        rms = float(np.sqrt(np.mean(np.sum(delta**2, axis=1))))
         reports[name].update(
             force_vector_rms_error_kcal_per_mol_angstrom=rms,
             force_vector_max_error_kcal_per_mol_angstrom=float(
@@ -145,11 +168,14 @@ def main():
             ),
             electrostatic_error_kcal_per_mol=(
                 reports[name]["electrostatic_kcal_per_mol"]
-                - reports["reference"]["electrostatic_kcal_per_mol"]),
+                - reports["reference"]["electrostatic_kcal_per_mol"]
+            ),
         )
     report = {
-        "input": str(Path(args.file).resolve()), "binary": str(binary),
-        "cores": args.cores, "steps": args.steps,
+        "input": str(Path(args.file).resolve()),
+        "binary": str(binary),
+        "cores": args.cores,
+        "steps": args.steps,
         "reference_spacing": args.reference_spacing,
         "note": (
             "One starting gas configuration; timings include startup "

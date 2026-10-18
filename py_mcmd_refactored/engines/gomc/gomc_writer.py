@@ -444,8 +444,10 @@ def write_gomc_conf_file(
     if cfg.simulation_type in {"GEMC", "GCMC"}:
         if (cfg.simulation_type == "GCMC") or (
             cfg.simulation_type == "GEMC"
-            and (cfg.only_use_box_0_for_namd_for_gemc
-                 or io.namd_box_1_dir is None)
+            and (
+                cfg.only_use_box_0_for_namd_for_gemc
+                or io.namd_box_1_dir is None
+            )
         ):
             if io.previous_gomc_dir is None:
                 # First-cycle GCMC and one-box GEMC use PDB/PSF inputs and
@@ -587,8 +589,10 @@ def write_gomc_conf_file(
     if cfg.simulation_type in {"GEMC", "GCMC"}:
         if (cfg.simulation_type == "GCMC" and io.previous_gomc_dir is None) or (
             cfg.simulation_type == "GEMC"
-            and (cfg.only_use_box_0_for_namd_for_gemc
-                 or io.namd_box_1_dir is None)
+            and (
+                cfg.only_use_box_0_for_namd_for_gemc
+                or io.namd_box_1_dir is None
+            )
             and io.previous_gomc_dir is None
         ):
             out = out.replace("restart_true_or_false", "false")

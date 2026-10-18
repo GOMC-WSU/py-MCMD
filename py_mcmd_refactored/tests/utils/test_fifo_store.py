@@ -515,15 +515,19 @@ def test_default_runtime_roots_are_isolated_in_same_working_directory(
     assert _discover_managed_root() != _discover_managed_root()
 
 
-@pytest.mark.parametrize("basename,archived,recover", [
-    ("in.conf", True, True),
-    ("in.conf", False, False),
-    ("Output_data_BOX_0_restart.coor", True, False),
-])
+@pytest.mark.parametrize(
+    "basename,archived,recover",
+    [
+        ("in.conf", True, True),
+        ("in.conf", False, False),
+        ("Output_data_BOX_0_restart.coor", True, False),
+    ],
+)
 def test_mirror_race_recovers_only_already_archived_configuration(
     tmp_path, monkeypatch, caplog, basename, archived, recover
 ):
     import shutil
+
     from utils.fifo_store import StepResources
 
     src, dst = tmp_path / "runtime", tmp_path / "disk"

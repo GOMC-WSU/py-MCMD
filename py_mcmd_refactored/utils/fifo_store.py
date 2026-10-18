@@ -105,11 +105,16 @@ class StepResources:
                     # Inputs are archived before engine execution. A vanished
                     # runtime configuration must not invalidate finished MD/MC
                     # when its complete input is already safely on disk.
-                    if (item.name == "in.conf" and not item.exists()
-                            and target.is_file() and target.stat().st_size > 0):
+                    if (
+                        item.name == "in.conf"
+                        and not item.exists()
+                        and target.is_file()
+                        and target.stat().st_size > 0
+                    ):
                         logging.getLogger(__name__).warning(
                             "Runtime input disappeared during mirroring; "
-                            "retaining the archived configuration: %s", target,
+                            "retaining the archived configuration: %s",
+                            target,
                         )
                         continue
                     raise

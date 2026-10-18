@@ -259,12 +259,21 @@ def test_two_box_templates_and_parallel_execution_through_restart(
     liquid = repo / "required_data/config_files/namd/gemc_liquid.conf"
     gas = repo / "required_data/config_files/namd/gemc_gas.conf"
     cfg = _cfg(
-        tmp_path, simulation_type="GEMC",
+        tmp_path,
+        simulation_type="GEMC",
         only_use_box_0_for_namd_for_gemc=False,
-        namd_simulation_order="parallel", no_core_box_0=2, no_core_box_1=3,
-        path_namd_template=str(shared) if template_mode != "automatic" else None,
-        path_namd_template_box_0=str(liquid) if template_mode == "per_box" else None,
-        path_namd_template_box_1=str(gas) if template_mode == "per_box" else None,
+        namd_simulation_order="parallel",
+        no_core_box_0=2,
+        no_core_box_1=3,
+        path_namd_template=(
+            str(shared) if template_mode != "automatic" else None
+        ),
+        path_namd_template_box_0=(
+            str(liquid) if template_mode == "per_box" else None
+        ),
+        path_namd_template_box_1=(
+            str(gas) if template_mode == "per_box" else None
+        ),
     )
     monkeypatch.chdir(tmp_path)
     if template_mode == "automatic":
@@ -298,23 +307,31 @@ def test_two_box_templates_and_parallel_execution_through_restart(
         result = eng.run_segment(run_no=run_no, state=st)
         assert result["mode"] == "parallel"
         assert [kind for kind, _ in eng.runner.calls] == [
-            "start", "start", "wait", "wait"
+            "start",
+            "start",
+            "wait",
+            "wait",
         ]
         assert eng.runner.calls[0][1].argv[1] == "+p2"
         assert eng.runner.calls[1][1].argv[1] == "+p3"
         for box in (0, 1):
             conf = (Path(result[f"namd_box{box}_dir"]) / "in.conf").read_text()
-            expected = "4.0" if template_mode != "shared" and box == 1 else (
-                "1.0" if template_mode != "shared" else "1"
+            expected = (
+                "4.0"
+                if template_mode != "shared" and box == 1
+                else ("1.0" if template_mode != "shared" else "1")
             )
             assert f"PMEGridSpacing      {expected}\n" in conf
-            expected_cutoff = "8.0" if template_mode == "shared" else (
-                "12.0" if box == 0 else "50.0"
+            expected_cutoff = (
+                "8.0"
+                if template_mode == "shared"
+                else ("12.0" if box == 0 else "50.0")
             )
             assert f"cutoff              {expected_cutoff}\n" in conf
             assert "PMEGridSizeX        ${PME_Grid_Size_X}" not in (
                 "\n".join(
-                    line for line in conf.splitlines()
+                    line
+                    for line in conf.splitlines()
                     if not line.startswith("#")
                 )
             )
@@ -341,9 +358,12 @@ def test_missing_gas_template_fails_before_starting_either_box(
 ):
     repo = Path(__file__).resolve().parents[4]
     cfg = _cfg(
-        tmp_path, simulation_type="GEMC",
+        tmp_path,
+        simulation_type="GEMC",
         only_use_box_0_for_namd_for_gemc=False,
-        path_namd_template=str(repo / "required_data/config_files/namd/nvt.conf"),
+        path_namd_template=str(
+            repo / "required_data/config_files/namd/nvt.conf"
+        ),
         path_namd_template_box_1=str(tmp_path / "missing.conf"),
         starting_pdb_box_0_file=str(
             repo / "required_data/input/GEMC_OPC_T350_N1000_BOX_0.pdb"
@@ -365,15 +385,20 @@ def test_non_gemc_uses_shared_template_and_ignores_gemc_overrides(
     pdb = tmp_path / "box0.pdb"
     pdb.write_text("CRYST1 25 25 25 90 90 90\n")
     cfg = _cfg(
-        tmp_path, simulation_type=ensemble,
+        tmp_path,
+        simulation_type=ensemble,
         only_use_box_0_for_namd_for_gemc=False,
         namd_simulation_order="parallel",
-        path_namd_template=str(repo / "required_data/config_files/namd/nvt.conf"),
+        path_namd_template=str(
+            repo / "required_data/config_files/namd/nvt.conf"
+        ),
         path_namd_template_box_0=str(tmp_path / "unused_liquid.conf"),
         path_namd_template_box_1=str(tmp_path / "unused_gas.conf"),
         starting_pdb_box_0_file=str(pdb),
         GCMC_ChemPot_or_Fugacity="ChemPot" if ensemble == "GCMC" else None,
-        GCMC_ChemPot_or_Fugacity_dict={"TIP4": -1000} if ensemble == "GCMC" else None,
+        GCMC_ChemPot_or_Fugacity_dict=(
+            {"TIP4": -1000} if ensemble == "GCMC" else None
+        ),
     )
     engine = NamdEngine(cfg, dry_run=True)
     result = engine.run_segment(run_no=0, state=_state())
@@ -390,10 +415,15 @@ def test_single_box_selects_its_workflow_template_without_explicit_paths(
     pdb = tmp_path / "box0.pdb"
     pdb.write_text("CRYST1 25 25 25 90 90 90\n")
     cfg = _cfg(
-        tmp_path, simulation_type=ensemble, path_namd_template=None,
-        path_gomc_template=None, starting_pdb_box_0_file=str(pdb),
+        tmp_path,
+        simulation_type=ensemble,
+        path_namd_template=None,
+        path_gomc_template=None,
+        starting_pdb_box_0_file=str(pdb),
         GCMC_ChemPot_or_Fugacity="ChemPot" if ensemble == "GCMC" else None,
-        GCMC_ChemPot_or_Fugacity_dict={"TIP4": -1000} if ensemble == "GCMC" else None,
+        GCMC_ChemPot_or_Fugacity_dict=(
+            {"TIP4": -1000} if ensemble == "GCMC" else None
+        ),
     )
     assert cfg.path_namd_template.endswith(f"namd/{ensemble.lower()}.conf")
     assert cfg.path_gomc_template.endswith(f"gomc/{ensemble.lower()}.conf")
@@ -419,12 +449,17 @@ def test_sparse_gas_skips_md_and_resumes_after_population_recovers(
     previous.mkdir(parents=True)
     gas_psf = previous / "Output_data_BOX_1_restart.psf"
     write_water_psf(gas_psf, initial_waters)
-    cfg = _cfg(tmp_path, simulation_type="GEMC",
-               only_use_box_0_for_namd_for_gemc=False,
-               namd_simulation_order="parallel")
+    cfg = _cfg(
+        tmp_path,
+        simulation_type="GEMC",
+        only_use_box_0_for_namd_for_gemc=False,
+        namd_simulation_order="parallel",
+    )
     engine = NamdEngine(cfg, dry_run=True)
     engine.dry_run = False
-    monkeypatch.setattr(engine, "link_run0_fft_file_into_dir", lambda *a, **k: None)
+    monkeypatch.setattr(
+        engine, "link_run0_fft_file_into_dir", lambda *a, **k: None
+    )
 
     class Recorder(DryRunSubprocessRunner):
         def __init__(self):
@@ -457,7 +492,9 @@ def test_sparse_gas_skips_md_and_resumes_after_population_recovers(
     assert state.namd_box1_dir is None
     assert state.energy_box1.namd_potential_final is None
     assert state.energy_box1.namd_vdw_plus_elec_initial is None
-    assert (Path(cfg.path_namd_runs) / "0000000002_b" / SKIPPED_MARKER).is_file()
+    assert (
+        Path(cfg.path_namd_runs) / "0000000002_b" / SKIPPED_MARKER
+    ).is_file()
 
     write_water_psf(gas_psf, 2)
     engine.runner.started.clear()
