@@ -287,3 +287,29 @@ def test_gomc_managed_stdout_routes_only_to_runtime_dir(tmp_path: Path):
 
     assert kwargs == {"stdout_path": runtime_dir / "out.dat"}
     assert "stdout_disk_path" not in kwargs
+
+
+def test_zero_exit_with_energy_warning_continues_handoff(
+    tmp_path, monkeypatch_writer
+):
+    cfg = _cfg(tmp_path)
+    engine = GomcEngine(cfg, dry_run=True)
+    engine.dry_run = False
+    state = _state(tmp_path)
+
+    class InconsistentRunner:
+        def start(self, command):
+            command.stdout_path.write_text(
+                "ETITLE: STEP TOTAL INTRA(B) INTRA(NB) INTER(LJ) LRC TOTAL_ELECT\n"
+                "ENER_0: 5 2 0 0 1 0 1\n"
+                "Warning: Updated energy differs from Recalculated Energy!\n"
+            )
+            return object()
+
+        def wait(self, handle):
+            return 0
+
+    engine.runner = InconsistentRunner()
+    engine.run_segment(run_no=1, state=state)
+    assert state.current_step == cfg.gomc_run_steps
+    assert state.energy_box0.gomc_potential_final is not None

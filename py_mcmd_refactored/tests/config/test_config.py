@@ -165,8 +165,8 @@ def test_run_dir_defaults_and_override(tmp_path):
 def test_template_paths_derived_and_overridable(tmp_path):
     # default derivation from simulation_type
     cfg = make_cfg(simulation_type="NPT")
-    assert cfg.path_namd_template == "required_data/config_files/NAMD.conf"
-    assert cfg.path_gomc_template == "required_data/config_files/GOMC_NPT.conf"
+    assert cfg.path_namd_template == "required_data/config_files/namd/npt.conf"
+    assert cfg.path_gomc_template == "required_data/config_files/gomc/npt.conf"
 
     # JSON override still respected
     data = make_cfg(simulation_type="NVT").model_dump()
@@ -179,13 +179,51 @@ def test_template_paths_derived_and_overridable(tmp_path):
     assert cfg2.path_gomc_template == "custom/GOMC_custom.conf"
 
 
-def test_template_paths_only_derived_when_missing():
-    data = make_cfg(simulation_type="NVT").model_dump()
-    data["path_namd_template"] = None
-    data["path_gomc_template"] = None
+@pytest.mark.parametrize("ensemble", ["NVT", "NPT", "GCMC", "GEMC"])
+@pytest.mark.parametrize("null_paths", [False, True])
+def test_template_paths_only_derived_when_missing(ensemble, null_paths):
+    data = make_cfg(simulation_type=ensemble).model_dump()
+    for key in (
+        "path_namd_template", "path_gomc_template",
+        "path_namd_template_box_0", "path_namd_template_box_1",
+    ):
+        if null_paths:
+            data[key] = None
+        else:
+            data.pop(key)
     cfg = SimulationConfig(**data)
-    assert cfg.path_namd_template == "required_data/config_files/NAMD.conf"
-    assert cfg.path_gomc_template == "required_data/config_files/GOMC_NVT.conf"
+    namd_ensemble = {
+        "NPT": "npt", "GCMC": "gcmc", "GEMC": "gemc_liquid",
+    }.get(ensemble, "nvt")
+    assert cfg.path_namd_template == (
+        f"required_data/config_files/namd/{namd_ensemble}.conf"
+    )
+    assert cfg.path_gomc_template == (
+        f"required_data/config_files/gomc/{ensemble.lower()}.conf"
+    )
+    if ensemble == "GEMC":
+        assert cfg.path_namd_template_box_0.endswith("namd/gemc_liquid.conf")
+        assert cfg.path_namd_template_box_1.endswith("namd/gemc_gas.conf")
+    else:
+        assert cfg.path_namd_template_box_0 is None
+        assert cfg.path_namd_template_box_1 is None
+
+
+@pytest.mark.parametrize("shared", [None, "custom/shared.conf"])
+@pytest.mark.parametrize("gas", [None, "custom/gas.conf"])
+def test_gemc_automatic_templates_preserve_custom_override_precedence(
+    shared, gas
+):
+    cfg = make_cfg(
+        simulation_type="GEMC", path_namd_template=shared,
+        path_namd_template_box_1=gas,
+    )
+    assert cfg.path_namd_template_box_0 == (
+        shared or "required_data/config_files/namd/gemc_liquid.conf"
+    )
+    assert cfg.path_namd_template_box_1 == (
+        gas or shared or "required_data/config_files/namd/gemc_gas.conf"
+    )
 
 
 def test_ff_lists_accept_valid_strings():

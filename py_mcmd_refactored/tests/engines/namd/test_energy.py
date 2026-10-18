@@ -156,3 +156,64 @@ def test_legacy_facade_propagates_errors():
         get_namd_energy_data(
             [et], ["TS", "BOND", "ANGLE", "DIHED", "VDW", "ELECT", "POTENTIAL"]
         )
+
+
+def test_full_precision_boundaries_preserve_timeline_and_legacy_facade():
+    lines = [
+        ETITLE,
+        "ENERGY: 0 0 0 0 -0.0004 -0.0100 -0.0103\n",
+        "MCMD_ENERGY: 0 -0.00996495760282370 -0.0003416617528543481 -0.01030661934798132\n",
+        "ENERGY: 50 0 0 0 -0.0004 -0.0100 -0.0104\n",
+        "ENERGY: 100 0 0 0 -0.0003 0.0018 0.0015\n",
+        "MCMD_ENERGY: 100 0.001799387155511185 -0.0002961437753475718 0.001503243380163613\n",
+    ]
+    data = parse_namd_energy_lines(iter(lines), DEFAULTS)
+    assert len(data.raw_rows) == 3
+    assert data.potential_first == -0.01030661934798132
+    assert data.potential_last == 0.001503243380163613
+    assert data.potential[1] == -0.0104
+    assert data.vdw_plus_elec_last == data.elect_last + data.vdw[-1]
+    assert get_namd_energy_data(iter(lines), DEFAULTS)[4:6] == (
+        data.potential_first, data.potential_last
+    )
+
+
+def test_full_precision_prevents_rounding_induced_gas_failure():
+    from engines.namd.energy_compare import _fraction_error
+
+    lines = [ETITLE, "ENERGY: 100 0 0 0 -0.0004 -0.0100 -0.0103\n"]
+    gomc = -0.01035757585513675
+    rounded = parse_namd_energy_lines(lines, DEFAULTS)
+    precise = parse_namd_energy_lines(lines + [
+        "MCMD_ENERGY: 100 -0.00996495760282370 -0.0003416617528543481 -0.01030661934798132\n"
+    ], DEFAULTS)
+    assert _fraction_error(rounded.potential_last, gomc) > 0.005
+    assert _fraction_error(precise.potential_last, gomc) <= 0.005
+
+
+def test_full_precision_does_not_hide_actual_mismatch():
+    from engines.namd.energy_compare import _fraction_error
+
+    data = parse_namd_energy_lines([
+        ETITLE, "ENERGY: 0 0 0 0 -0.0004 -0.0026 -0.0030\n",
+        "MCMD_ENERGY: 0 -0.002619026392721935 -0.000365639463330948 -0.002984665849125233\n",
+    ], DEFAULTS)
+    assert _fraction_error(data.potential_last, -0.003029539710830279) > 0.005
+
+
+@pytest.mark.parametrize("record", [
+    "MCMD_ENERGY: 0 1 2\n",
+    "MCMD_ENERGY: 0 nan 2 3\n",
+    "MCMD_ENERGY: 0 1 2 inf\n",
+])
+def test_invalid_full_precision_record_is_rejected(record):
+    with pytest.raises(ValueError):
+        parse_namd_energy_lines([ETITLE, E1, record], DEFAULTS)
+
+
+def test_precision_record_for_another_step_does_not_overwrite_boundaries():
+    data = parse_namd_energy_lines([
+        ETITLE, E1, E2, "MCMD_ENERGY: 50 99 99 99\n"
+    ], DEFAULTS)
+    assert data.potential_first == 15.0
+    assert data.potential_last == 18.0

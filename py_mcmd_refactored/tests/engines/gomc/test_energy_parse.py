@@ -147,3 +147,16 @@ def test_gomc_energy_parser_prefers_cfg_conversion_when_present():
     assert df.loc[0, "ELECT"] == pytest.approx(0.5)
     assert df.loc[0, "POTENTIAL"] == pytest.approx(1.0)
     assert df.loc[0, "VDW"] == pytest.approx(1.5)
+
+
+@pytest.mark.parametrize("box", [0, 1])
+def test_recalculated_energy_warning_does_not_reject_segment(box):
+    # GOMC can print this warning after valid energy rows and still exit zero.
+    lines = [
+        "ETITLE: STEP ELECT POTENTIAL VDW\n",
+        f"ENER_{box}: 200 1.0 2.0 3.0\n",
+        "Warning: Updated energy differs from Recalculated Energy!\n",
+    ]
+    df = get_gomc_energy_data(_cfg(), iter(lines), box_number=box)
+    assert df.loc[0, "STEP"] == 200
+    assert df.loc[0, "POTENTIAL"] == 2.0

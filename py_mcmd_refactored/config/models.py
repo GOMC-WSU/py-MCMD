@@ -13,6 +13,13 @@ from pydantic import (
     model_validator,
 )
 
+from utils.config_sections import flatten_config_sections
+from utils.template_paths import (
+    default_gomc_template,
+    default_namd_template,
+    select_namd_template,
+)
+
 
 class SimulationConfig(BaseModel):
     """
@@ -170,6 +177,13 @@ class SimulationConfig(BaseModel):
     starting_psf_box_0_file: str
     starting_pdb_box_1_file: Optional[str]
     starting_psf_box_1_file: Optional[str]
+
+    # Optional dual-topology handoff for a fixed framework and one-site guest.
+    rigid_gomc_reference_pdb: Optional[str] = None
+    rigid_gomc_reference_psf: Optional[str] = None
+    shared_box0_files: StrictBool = False
+    framework_residue: str = "ZI8"
+    single_site_guest_residue: str = "CH4"
     namd2_bin_directory: str
     gomc_bin_directory: str
 
@@ -179,6 +193,16 @@ class SimulationConfig(BaseModel):
 
     # Make these truly optional so we can detect “missing”
     path_namd_template: Optional[str] = Field(default=None)
+    path_namd_template_box_0: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        description="Optional GEMC box-0 override; default liquid template.",
+    )
+    path_namd_template_box_1: Optional[str] = Field(
+        default=None,
+        min_length=1,
+        description="Optional GEMC box-1 override; default gas template.",
+    )
     path_gomc_template: Optional[str] = Field(default=None)
 
     # Logging
@@ -189,6 +213,13 @@ class SimulationConfig(BaseModel):
     # derived (used by orchestrator/engines)
     effective_no_core_box_1: int = 0
     total_no_cores: int = 0
+
+    @model_validator(mode="before")
+    @classmethod
+    def _accept_sectioned_input(cls, data):
+        if isinstance(data, dict):
+            return flatten_config_sections(data)
+        return data
 
     @field_validator("no_core_box_0", mode="before")
     @classmethod
@@ -357,19 +388,36 @@ class SimulationConfig(BaseModel):
             object.__setattr__(self, "GCMC_ChemPot_or_Fugacity", None)
             object.__setattr__(self, "GCMC_ChemPot_or_Fugacity_dict", None)
 
+        if bool(self.rigid_gomc_reference_pdb) != bool(self.rigid_gomc_reference_psf):
+            raise ValueError("Both rigid GOMC reference PDB and PSF are required")
+        if self.rigid_gomc_reference_psf and sim != "GCMC":
+            raise ValueError("Rigid framework transfer is supported for GCMC only")
+        if self.shared_box0_files and sim != "GCMC":
+            raise ValueError("Shared box-0 files are supported for GCMC only")
+        if self.shared_box0_files and self.rigid_gomc_reference_psf:
+            raise ValueError("Shared box-0 files cannot use a second transfer mode")
         return self
 
     @model_validator(mode="after")
     def _derive_template_paths_when_missing(self):
+        # Resolve GEMC boxes before deriving the shared default so an explicit
+        # shared template still applies to both boxes in older input files.
+        if self.simulation_type == "GEMC":
+            self.path_namd_template_box_0 = select_namd_template(
+                self.simulation_type, 0, self.path_namd_template,
+                self.path_namd_template_box_0,
+            )
+            self.path_namd_template_box_1 = select_namd_template(
+                self.simulation_type, 1, self.path_namd_template,
+                self.path_namd_template_box_1,
+            )
         # Only fill in defaults if user did NOT supply a value
         if self.path_namd_template is None:
-            self.path_namd_template = "required_data/config_files/NAMD.conf"
+            self.path_namd_template = default_namd_template(self.simulation_type)
 
         if self.path_gomc_template is None:
             # derive from simulation_type only if not provided
-            self.path_gomc_template = (
-                f"required_data/config_files/GOMC_{self.simulation_type}.conf"
-            )
+            self.path_gomc_template = default_gomc_template(self.simulation_type)
         return self
 
     @field_validator(

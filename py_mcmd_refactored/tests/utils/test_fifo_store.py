@@ -505,3 +505,44 @@ def test_legacy_fifo_store_release_step_matches_cleanup_behavior(
 
     with pytest.raises(KeyError):
         store.get_step("GOMC", 8)
+
+
+def test_default_runtime_roots_are_isolated_in_same_working_directory(
+    tmp_path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("PY_MCMD_MANAGED_OUTPUT_ROOT", raising=False)
+    assert _discover_managed_root() != _discover_managed_root()
+
+
+@pytest.mark.parametrize("basename,archived,recover", [
+    ("in.conf", True, True),
+    ("in.conf", False, False),
+    ("Output_data_BOX_0_restart.coor", True, False),
+])
+def test_mirror_race_recovers_only_already_archived_configuration(
+    tmp_path, monkeypatch, caplog, basename, archived, recover
+):
+    import shutil
+    from utils.fifo_store import StepResources
+
+    src, dst = tmp_path / "runtime", tmp_path / "disk"
+    src.mkdir()
+    dst.mkdir()
+    (src / basename).write_text("complete input or restart")
+    if archived:
+        (dst / basename).write_text("archived before execution")
+    original_copy = shutil.copy2
+
+    def delete_during_copy(source, target):
+        source.unlink()
+        return original_copy(source, target)
+
+    monkeypatch.setattr(shutil, "copy2", delete_during_copy)
+    if recover:
+        StepResources._mirror_tree(src, dst)
+        assert (dst / basename).read_text() == "archived before execution"
+        assert "retaining the archived configuration" in caplog.text
+    else:
+        with pytest.raises(FileNotFoundError):
+            StepResources._mirror_tree(src, dst)

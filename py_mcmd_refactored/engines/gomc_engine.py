@@ -1,10 +1,15 @@
 import logging
 import os
+import shutil
 import time
 from pathlib import Path
 from typing import Optional
 
 from engines.base import Engine as BaseEngine
+from engines.rigid_framework_transfer import (
+    RigidFrameworkGCMCTransfer,
+    unwrap_shared_box0_restart,
+)
 from engines.gomc.energy_metrics import get_gomc_energy_data_kcal_per_mol
 from engines.gomc.energy_parse import get_gomc_energy_data
 from engines.gomc.gomc_writer import (
@@ -194,11 +199,22 @@ class GomcEngine(BaseEngine):
         )
 
         state.gomc_dir = Path(gomc_newdir)
+        transfer = None
+        if self.cfg.rigid_gomc_reference_psf:
+            transfer = RigidFrameworkGCMCTransfer(self.cfg)
+            rigid_pdb, rigid_psf, box1_pdb = transfer.prepare_gomc(
+                Path(gomc_newdir), Path(state.namd_box0_dir),
+                io.previous_gomc_dir, self.dry_run,
+            )
+            transfer.rewrite_gomc_conf(
+                Path(gomc_newdir) / "in.conf", rigid_pdb, rigid_psf, box1_pdb
+            )
 
         # 2) Execute GOMC (stdout -> out.dat)
 
         disk_gomc_dir = self._disk_gomc_dir(fifo_resources, run_no)
         disk_gomc_dir.mkdir(parents=True, exist_ok=True)
+        self._archive_input(Path(gomc_newdir), disk_gomc_dir)
 
         cmd = Command(
             argv=[
@@ -232,9 +248,40 @@ class GomcEngine(BaseEngine):
                     Path(gomc_newdir), box_number=1
                 )
 
+        if transfer is not None and self.dry_run:
+            shutil.copyfile(
+                Path(gomc_newdir) / "rigid_box_0.pdb",
+                Path(gomc_newdir) / "Output_data_BOX_0_restart.pdb",
+            )
+            shutil.copyfile(
+                Path(gomc_newdir) / "rigid_box_0.psf",
+                Path(gomc_newdir) / "Output_data_BOX_0_restart.psf",
+            )
+            shutil.copyfile(
+                Path(state.namd_box0_dir) / "namdOut.restart.xsc",
+                Path(gomc_newdir) / "Output_data_BOX_0_restart.xsc",
+            )
+            box1 = self.cfg.set_dims_box_1_list
+            (Path(gomc_newdir) / "Output_data_BOX_1_restart.xsc").write_text(
+                f"0 {box1[0]} 0 0 0 {box1[1]} 0 0 0 {box1[2]}\n"
+            )
+
         if rc != 0 and not self.dry_run:
             raise RuntimeError(
                 f"GOMC failed (rc={rc}) for run_no={run_no} in {gomc_newdir}"
+            )
+
+        if transfer is not None:
+            transfer.prepare_namd(Path(gomc_newdir))
+        elif self.cfg.shared_box0_files and not self.dry_run:
+            previous_psf = (
+                io.previous_gomc_dir / "Output_data_BOX_0_restart.psf"
+                if io.previous_gomc_dir is not None
+                else Path.cwd() / self.cfg.starting_psf_box_0_file
+            )
+            unwrap_shared_box0_restart(
+                Path(gomc_newdir), Path(state.namd_box0_dir), previous_psf,
+                self.cfg.framework_residue, self.cfg.single_site_guest_residue,
             )
 
         # 3) Parse energies -> cache in state
@@ -297,7 +344,8 @@ class GomcEngine(BaseEngine):
         # 4) Continuity check (NAMD -> GOMC) when values exist
         e0 = state.energy_box0
         if (
-            (e0.namd_potential_final is not None)
+            not (self.cfg.rigid_gomc_reference_psf or self.cfg.shared_box0_files)
+            and (e0.namd_potential_final is not None)
             and (e0.gomc_potential_initial is not None)
             and (e0.namd_vdw_plus_elec_final is not None)
             and (e0.gomc_vdw_plus_elec_initial is not None)
