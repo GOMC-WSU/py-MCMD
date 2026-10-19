@@ -44,6 +44,6 @@
   "starting_psf_box_0_file": "required_data/input/GEMC_OPC_T350_N1000_BOX_0.psf",
   "starting_pdb_box_1_file": "required_data/input/GEMC_OPC_T350_N1000_BOX_1.pdb",
   "starting_psf_box_1_file": "required_data/input/GEMC_OPC_T350_N1000_BOX_1.psf",
-  "namd2_bin_directory": "../../../NAMD_2.14_Linux-x86_64-multicore",
-  "gomc_bin_directory": "../../../GOMC_POTOFF/GOMC/bin"
+  "namd2_bin_directory": "../NAMD_2.14_Linux-x86_64-multicore",
+  "gomc_bin_directory":"../GOMC/bin"
 }

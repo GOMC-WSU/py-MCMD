@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from py_mcmd_refactored.version import get_version
+from py_mcmd.version import get_version
 
 project = "py-MCMD"
 author = "Crawford, B., Mehryar H., Potoff J., Schwiebert L., and Uddin N."

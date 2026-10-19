@@ -76,7 +76,7 @@ required for the commands in this manual. Check that the CLI can start:
 
 .. code-block:: bash
 
-   python py_mcmd_refactored/cli/main.py --version
+   python -m py_mcmd.cli.main --version
 
 Simulation engines
 ------------------

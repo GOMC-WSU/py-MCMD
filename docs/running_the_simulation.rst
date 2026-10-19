@@ -14,7 +14,7 @@ CLI Parameters
 
 .. code-block:: text
 
-   python py_mcmd_refactored/cli/main.py [-h] [--version] [-f FILE]
+   python -m py_mcmd.cli.main [-h] [--version] [-f FILE]
        [-namd_sims_order {series,parallel}] [-v] [--dry_run]
 
 Square brackets mark optional arguments; do not type the brackets.
@@ -71,7 +71,7 @@ Input-generation check (optional)
 
 .. code-block:: bash
 
-   python py_mcmd_refactored/cli/main.py \
+   python -m py_mcmd.cli.main \
        -f user_input_NAMD_GOMC.json \
        --dry_run
 
@@ -94,7 +94,7 @@ Production run
 
 .. code-block:: bash
 
-   python py_mcmd_refactored/cli/main.py -f user_input_NAMD_GOMC.json
+   python -m py_mcmd.cli.main -f user_input_NAMD_GOMC.json
 
 For GEMC with NAMD in both boxes, set
 ``only_use_box_0_for_namd_for_gemc`` to ``false`` and allocate positive
@@ -102,7 +102,7 @@ core counts to both boxes. To execute the NAMD segments concurrently:
 
 .. code-block:: bash
 
-   python py_mcmd_refactored/cli/main.py \
+   python -m py_mcmd.cli.main \
        -f user_input_NAMD_GOMC.json \
        -namd_sims_order parallel
 
