@@ -144,7 +144,7 @@ cycles 2, 3, and 4: three additional cycles, not five.
 
 .. code-block:: bash
 
-   python py_mcmd_refactored/cli/main.py -f user_input_NAMD_GOMC.json
+   python -m py_mcmd.cli.main -f user_input_NAMD_GOMC.json
 
 For parallel two-NAMD-box GEMC, also pass
 ``-namd_sims_order parallel``. Changing ``developer_mode`` after raw

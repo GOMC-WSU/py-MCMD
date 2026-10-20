@@ -4,6 +4,8 @@ sim_output_refactor_real_run/
 GOMC/
 NAMD/
 logs/
+# Generated simulation outputs
+/combined_data/
 NAMD_GOMC_started_at_cycle_No_0.log
 
 **/__pycache__/**
@@ -22,4 +24,4 @@ required_data/GOMC_bin/
 required_data/NAMD_CPU/
 
 # Local development archives
-py_mcmd_refactored.zip
+py_mcmd.zip

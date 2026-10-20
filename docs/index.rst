@@ -9,7 +9,7 @@ in GOMC. Each cycle runs one NAMD stage followed by one GOMC stage and
 transfers the simulation state between engines.
 
 This manual documents the refactored command-line program,
-``py_mcmd_refactored/cli/main.py``. Commands assume the repository root
+``py_mcmd/cli/main.py``. Commands assume the repository root
 as the working directory unless stated otherwise. Relative input paths
 are resolved from the current working directory, not from the directory
 containing the JSON configuration.
