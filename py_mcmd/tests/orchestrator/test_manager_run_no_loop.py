@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 import py_mcmd.orchestrator.manager as mgr
 from py_mcmd.config.models import SimulationConfig
 
