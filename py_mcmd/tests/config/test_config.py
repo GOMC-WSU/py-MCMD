@@ -1,7 +1,3 @@
-import sys
-
-sys.path.insert(0, "/home/arsalan/wsu-gomc/py-MCMD-hm/py_mcmd")
-
 import json
 from pathlib import Path
 
@@ -58,8 +54,6 @@ def with_two_box(cfg_kwargs):
 
 def test_load_config():
     # Resolve the JSON file path *relative* to the project root
-    project_root = Path(__file__).parent.parent.parent
-    # config_path = project_root / "user_input_NAMD_GOMC.json"
     config_path = repo_root() / "user_input_NAMD_GOMC.json"
     # sanity check
     assert config_path.exists(), f"Config not found at {config_path}"
@@ -145,8 +139,6 @@ def test_load_from_json_constructor_logic(tmp_path: Path):
 
 
 def test_run_dir_defaults_and_override(tmp_path):
-    from py_mcmd.config.models import load_simulation_config
-
     # defaults
     cfg1 = make_cfg()
     assert cfg1.path_namd_runs == "NAMD"

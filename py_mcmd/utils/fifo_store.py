@@ -4,9 +4,10 @@ import hashlib
 import logging
 import os
 import shutil
-from dataclasses import dataclass
+import stat
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Mapping, Optional
 
 # def _discover_managed_root(explicit_root: Optional[str | Path] = None) -> Path:
 #     if explicit_root is not None:
@@ -319,15 +320,6 @@ class FifoStore:
 
 # keep the legacy FIFO test symbol available
 # the orchestrator only uses it as an import/type alias
-
-
-import logging
-import os
-import shutil
-import stat
-from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Callable, Mapping, Optional
 
 DualWritePathFactory = Callable[[str, str, str], Optional[Path]]
 
