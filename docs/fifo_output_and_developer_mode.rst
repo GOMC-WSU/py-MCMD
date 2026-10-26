@@ -3,10 +3,11 @@ Runtime Storage and Developer Mode
 
 The refactored workflow uses managed runtime storage for files exchanged by
 NAMD, GOMC, and the on-the-fly processor. On Linux, the default managed root is
-a directory under ``/dev/shm`` derived from the working directory. If that
-location is unavailable, the program uses ``.managed_outputs`` in the working
-directory. Set ``PY_MCMD_MANAGED_OUTPUT_ROOT`` before starting py-MCMD to
-choose another location. The run log records the managed root.
+a directory under ``/dev/shm`` whose name combines the working-directory
+identity with a unique suffix for each invocation. If that location is
+unavailable, the program uses a unique subdirectory of ``.managed_outputs``
+in the working directory. Set ``PY_MCMD_MANAGED_OUTPUT_ROOT`` before starting
+py-MCMD to choose an explicit location. The run log records the managed root.
 
 Output controls
 ---------------
@@ -20,11 +21,15 @@ Output controls
    Keep the managed workflow and mirror each completed engine segment to the
    configured on-disk NAMD and GOMC directories. Use this mode when raw files
    must be inspected, a run may be restarted, or the legacy combining program
-   will be used. Failed step files are mirrored for diagnosis as well.
+   will be used. Rendered ``in.conf`` inputs are archived to disk before
+   engine execution; completed output is mirrored afterward. Failed step
+   files are mirrored for diagnosis as well.
 
 Setting ``process_on_the_fly`` to ``true`` is independent of developer mode. It writes
 combined analysis output as the calculation proceeds; it does not make a
 default-mode run restartable.
+The default ``combined_data/`` destination is relative to the launch
+directory and remains on disk independently of managed runtime cleanup.
 
 Retained output
 ---------------
@@ -84,12 +89,12 @@ Their files remain under the managed root recorded in the run log.
 Engine caches needed by failed segments are also retained, so links to cached
 NAMD FFT plans remain readable.
 
-.. warning::
-
-   The managed root is derived from the working directory, not uniquely
-   allocated for each invocation. Run independent calculations in
-   separate working directories. Do not launch concurrent calculations
-   that share a managed-output root.
+Default managed roots are unique to each invocation. An explicit
+``PY_MCMD_MANAGED_OUTPUT_ROOT`` is used as supplied, so choose a different
+value for each concurrent calculation. Independent calculations also need
+separate working directories or distinct disk output and log destinations:
+unique managed roots do not prevent collisions in shared ``NAMD/``,
+``GOMC/``, ``logs/``, or ``combined_data/`` directories.
 
 Restart requirement
 -------------------

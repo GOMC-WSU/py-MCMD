@@ -38,6 +38,11 @@ The NAMD stage uses NVT dynamics for every ensemble. The workflow supports
 orthogonal boxes. Validate the prepared system in each engine before a
 production calculation.
 
+GEMC can use independent liquid and gas NAMD templates with separate CPU
+allocations. Both NAMD boxes may run concurrently before the GOMC stage;
+liquid-only MD remains available. Each simulated NAMD box has its own
+combined energy output.
+
 Prerequisites
 -------------
 
@@ -54,8 +59,10 @@ Input Files
 -----------
 
 The simulation JSON specifies the ensemble, starting PSF/PDB files,
-force fields, templates, segment lengths, and output controls.
-The supplied example contains machine-specific engine paths.
+force fields, segment lengths, and output controls. Engine templates are
+selected automatically from the ensemble; optional overrides are supported.
+Settings can be grouped into named sections or supplied in the legacy flat
+format. The supplied example contains machine-specific engine paths.
 
 .. toctree::
    :maxdepth: 1

@@ -100,9 +100,18 @@ Input files and CatDCD
 ----------------------
 
 Each run needs PSF, PDB, and force-field files compatible with both engines,
-plus the NAMD and ensemble-specific GOMC templates. The example files are in
+plus the NAMD and ensemble-specific GOMC templates. Templates are distributed
+under ``required_data/config_files/namd/`` and ``required_data/config_files/gomc/``.
+The workflow selects them automatically from ``simulation_type``; GEMC uses
+separate liquid and gas NAMD templates when both MD boxes are enabled.
+NPT, NVT, and GCMC each use one NAMD template. No template-path fields are
+needed for the distributed defaults. The example files are in
 ``required_data/``. The workflow currently accepts orthogonal boxes only. See
 :doc:`generating_systems` and :doc:`simulation_parameters_files`.
+
+For concurrent two-box GEMC MD, allocate at least the sum of
+``no_core_box_0`` and ``no_core_box_1`` CPU cores. For example, eight
+cores per box requires a sixteen-core job allocation.
 
 The bundled CatDCD binary is used when combined DCD trajectories are
 requested. Check that the path selected by

@@ -36,8 +36,8 @@ Square brackets mark optional arguments; do not type the brackets.
      - ``user_input_NAMD_GOMC.json``
      - Read the simulation configuration.
    * - ``-namd_sims_order ORDER``, ``--namd_simulation_order ORDER``
-     - ``series``
-     - Select ``series`` or ``parallel`` for two-box GEMC NAMD stages.
+     - JSON value, otherwise ``series``
+     - Explicitly override ``series`` or ``parallel`` for two-box GEMC NAMD stages.
    * - ``--dry_run``
      - Not set
      - Generate inputs and run orchestration without launching NAMD or GOMC.
@@ -45,11 +45,10 @@ Square brackets mark optional arguments; do not type the brackets.
      - Not set
      - Accepted, but the current CLI retains INFO logging; DEBUG output is not enabled.
 
-.. important::
-
-   The CLI overrides JSON ``namd_simulation_order`` even when the option
-   is omitted. Pass ``-namd_sims_order parallel`` explicitly for parallel
-   execution. An invalid order falls back to ``series``.
+An explicit execution-order option overrides JSON ``namd_simulation_order``.
+When the option is omitted, the JSON value is preserved; if that field is
+also omitted, the default is ``series``. An invalid CLI order falls back to
+``series`` with a warning.
 
 Execution
 ---------
@@ -98,7 +97,28 @@ Production run
 
 For GEMC with NAMD in both boxes, set
 ``only_use_box_0_for_namd_for_gemc`` to ``false`` and allocate positive
-core counts to both boxes. To execute the NAMD segments concurrently:
+core counts to both boxes. For example, update the existing ``execution``
+section with the following values:
+
+.. code-block:: json
+
+   {
+     "execution": {
+       "gomc_use_CPU_or_GPU": "CPU",
+       "only_use_box_0_for_namd_for_gemc": false,
+       "no_core_box_0": 3,
+       "no_core_box_1": 3,
+       "namd_simulation_order": "parallel"
+     }
+   }
+
+This is a configuration fragment, not a complete input. With these settings,
+the ordinary run command already selects parallel execution. The liquid
+and gas NAMD inputs are generated from ``namd/gemc_liquid.conf`` and
+``namd/gemc_gas.conf`` respectively; GOMC uses ``gomc/gemc.conf`` under
+``required_data/config_files/``. No template paths are needed in JSON.
+
+To override the JSON order explicitly:
 
 .. code-block:: bash
 
@@ -107,7 +127,41 @@ core counts to both boxes. To execute the NAMD segments concurrently:
        -namd_sims_order parallel
 
 The parallel option has no effect when NAMD runs only box 0. Allocate
-enough resources for both segments when they run concurrently.
+enough resources for both segments when they run concurrently: three cores
+per box requires at least six allocated CPU cores; eight per box requires
+at least sixteen. The GOMC stage starts after the active NAMD segments finish.
+
+Liquid-only GEMC
+~~~~~~~~~~~~~~~~
+
+Set ``only_use_box_0_for_namd_for_gemc`` to ``true`` and
+``no_core_box_1`` to ``0`` in ``execution``. Only box 0 then runs in NAMD,
+using the liquid template; GOMC continues to update both boxes. Retain the
+box-1 starting structures because GOMC still needs them.
+
+Single-box NPT and NVT
+~~~~~~~~~~~~~~~~~~~~~~
+
+Set ``simulation_type`` to ``NPT`` or ``NVT`` in ``simulation``.
+The workflow automatically uses ``namd/npt.conf`` or ``namd/nvt.conf``
+and the matching GOMC template. Set ``no_core_box_1`` to ``0`` and the
+required box-1 structure keys to ``null``. NPT also requires
+``simulation_pressure_bar``. These ensembles use only NAMD box 0;
+the execution-order option has no effect. See
+:doc:`simulation_parameters_files` for the complete input requirements.
+
+Sparse gas boxes in GEMC
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before each gas NAMD segment, the workflow counts connected molecules in
+the box-1 PSF. If fewer than two are present, gas MD is temporarily skipped
+to avoid NAMD's sparse-box tail-correction failure. Liquid MD and the
+two-box GOMC stage continue. Gas MD resumes automatically at a later cycle
+when the population reaches two or more molecules.
+
+The skipped segment is logged and marked by ``NAMD_SKIPPED.txt`` in its
+``_b`` segment directory. It contributes no NAMD energy rows or continuity
+comparisons. This behavior does not bypass genuine engine failures.
 
 Completion checks
 ~~~~~~~~~~~~~~~~~
@@ -131,8 +185,9 @@ Troubleshooting
 ---------------
 
 Use :doc:`troubleshooting` for configuration, engine-startup, storage, and
-analysis errors. The workflow does not support a box containing no atoms
-or no mobile atoms.
+analysis errors. An active NAMD box must contain atoms with mobile degrees
+of freedom. Sparse GEMC gas boxes use the temporary MD-skip procedure
+described above.
 
 Restart only from a completed coupled-cycle boundary; follow
 :doc:`simulation_output`. Test GPU NAMD/GEMC combinations on a short
