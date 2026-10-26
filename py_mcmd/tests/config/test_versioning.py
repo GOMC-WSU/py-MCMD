@@ -3,10 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from cli.main import parse_args
 
 from py_mcmd import __version__ as package_version
 from py_mcmd import get_version as package_get_version
+from py_mcmd.cli.main import parse_args
 from py_mcmd.config.models import SimulationConfig
 from py_mcmd.orchestrator.manager import SimulationOrchestrator
 from py_mcmd.version import __version__ as source_version
@@ -68,7 +68,7 @@ def test_cli_version_output_uses_cli_version_source(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    import cli.main as cli_main
+    import py_mcmd.cli.main as cli_main
 
     sentinel = "9.9.9-test"
     monkeypatch.setattr(cli_main, "get_version", lambda: sentinel)

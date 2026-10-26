@@ -27,6 +27,7 @@ def _validate_box_number(box_number: int) -> None:
 from py_mcmd.utils.path import (  # zero-prefix helper from your utils
     format_cycle_id,
 )
+from py_mcmd.utils.template_paths import resolve_template_path
 
 
 def _compute_namd_box_dir(
@@ -75,7 +76,9 @@ def _load_template_text(
     Resolve the template path relative to `python_file_directory` (if needed)
     and return its non-empty text. Raises if missing or empty.
     """
-    tpl_path = _resolve_under(Path(python_file_directory), path_namd_template)
+    tpl_path = resolve_template_path(
+        _resolve_under(Path(python_file_directory), path_namd_template)
+    )
     if not tpl_path.is_file():
         raise FileNotFoundError(f"NAMD template not found: {tpl_path}")
     data = tpl_path.read_text(encoding=encoding)

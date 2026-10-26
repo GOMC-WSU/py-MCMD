@@ -54,6 +54,7 @@ def _extract_titles_and_rows(
     """
     titles: List[str] = []
     rows: List[List[float]] = []
+    precise_rows: Dict[float, Tuple[float, float, float]] = {}
 
     for line in lines:
         if line.startswith("ETITLE:"):
@@ -62,6 +63,16 @@ def _extract_titles_and_rows(
             parts = line.split()
             numeric = [math.nan] + [float(x) for x in parts[1:]]
             rows.append(numeric)
+        elif line.startswith("MCMD_ENERGY:"):
+            # Native Tcl callback: TS ELECT VDW POTENTIAL, printed with 17
+            # significant digits. Ordinary NAMD energies have only 4 decimals.
+            parts = line.split()
+            if len(parts) != 5:
+                raise ValueError("Malformed MCMD_ENERGY boundary record")
+            step, elect, vdw, potential = map(float, parts[1:])
+            if not all(math.isfinite(v) for v in (step, elect, vdw, potential)):
+                raise ValueError("Non-finite MCMD_ENERGY boundary record")
+            precise_rows[step] = (elect, vdw, potential)
 
     titles = _normalize_titles(titles, default_titles)
 
@@ -76,6 +87,14 @@ def _extract_titles_and_rows(
         elif len(r) > width:
             r = r[:width]
         norm_rows.append(r)
+
+    if precise_rows:
+        indices = _column_indices(titles, ("TS", "ELECT", "VDW", "POTENTIAL"))
+        for row in norm_rows:
+            precise = precise_rows.get(row[indices["TS"]])
+            if precise is not None:
+                for field, value in zip(("ELECT", "VDW", "POTENTIAL"), precise):
+                    row[indices[field]] = value
 
     return titles, norm_rows
 
@@ -117,6 +136,8 @@ def parse_namd_energy_lines(
     - Falls back to `default_titles` if ETITLE is missing.
     - Returns typed series and convenience first/last scalars.
     - Requires columns: ELECT, POTENTIAL, VDW.
+    - Uses full-precision MCMD_ENERGY records for matching timestep rows,
+      preserving the ordinary ENERGY timeline and legacy-log fallback.
     """
     titles, rows = _extract_titles_and_rows(lines, default_titles)
     idx = _column_indices(titles, required=("ELECT", "POTENTIAL", "VDW"))

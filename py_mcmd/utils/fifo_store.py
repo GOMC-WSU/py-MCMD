@@ -7,6 +7,7 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+from uuid import uuid4
 
 # def _discover_managed_root(explicit_root: Optional[str | Path] = None) -> Path:
 #     if explicit_root is not None:
@@ -37,10 +38,10 @@ def _discover_managed_root(explicit_root: Optional[str | Path] = None) -> Path:
         unique_id = f"{cwd.parent.name}_{cwd.name}"
         path_hash = hashlib.md5(str(cwd).encode()).hexdigest()[:6]
         # e.g. /dev/shm/py_mcmd_case_1_7ae391
-        unique_name = f"py_mcmd_{unique_id}_{path_hash}"
+        unique_name = f"py_mcmd_{unique_id}_{path_hash}_{uuid4().hex[:12]}"
         return shm_root / unique_name
 
-    return Path.cwd() / ".managed_outputs"
+    return Path.cwd() / ".managed_outputs" / uuid4().hex
 
 
 @dataclass
@@ -98,7 +99,25 @@ class StepResources:
                 target.mkdir(parents=True, exist_ok=True)
             else:
                 target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(item, target)
+                try:
+                    shutil.copy2(item, target)
+                except FileNotFoundError:
+                    # Inputs are archived before engine execution. A vanished
+                    # runtime configuration must not invalidate finished MD/MC
+                    # when its complete input is already safely on disk.
+                    if (
+                        item.name == "in.conf"
+                        and not item.exists()
+                        and target.is_file()
+                        and target.stat().st_size > 0
+                    ):
+                        logging.getLogger(__name__).warning(
+                            "Runtime input disappeared during mirroring; "
+                            "retaining the archived configuration: %s",
+                            target,
+                        )
+                        continue
+                    raise
 
 
 class ManagedArtifactStore:
