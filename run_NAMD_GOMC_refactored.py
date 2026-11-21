@@ -2629,7 +2629,7 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
     gomc_e_inter_lj_box_x_kcal_per_mol = gomc_energy_data_box_x_df.loc[
         :, "INTER(LJ)"
     ].tolist()
-    _gomc_e_inter_lj_box_x_initial_value = float(
+    gomc_e_inter_lj_box_x_initial_value = float(
         gomc_e_inter_lj_box_x_kcal_per_mol[0]
     )
     gomc_e_inter_lj_box_x_kcal_per_mol[-1]
@@ -3119,13 +3119,6 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
         if run_no != 0 and run_no != starting_sims_namd_gomc:
             # Compare the Last GOMC and first NAMD value to confirm the simulation data
             # VMD comparison between NAMD and GOMC data box 0
-
-            gomc_e_vdw_plus_elec_box_0_kcal_per_mol = (
-                gomc_energy_data_box_0_df.loc[:, "VDW+ELEC"].tolist()
-            )
-            gomc_e_vdw_plus_elec_box_0_final_value = float(
-                gomc_e_vdw_plus_elec_box_0_kcal_per_mol[-1]
-            )
 
             compare_namd_gomc_energies(
                 gomc_e_potential_box_0_final_value,
