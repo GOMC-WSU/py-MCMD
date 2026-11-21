@@ -3120,6 +3120,13 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
             # Compare the Last GOMC and first NAMD value to confirm the simulation data
             # VMD comparison between NAMD and GOMC data box 0
 
+            gomc_e_vdw_plus_elec_box_0_kcal_per_mol = (
+                gomc_energy_data_box_0_df.loc[:, "VDW+ELEC"].tolist()
+            )
+            gomc_e_vdw_plus_elec_box_0_final_value = float(
+                gomc_e_vdw_plus_elec_box_0_kcal_per_mol[-1]
+            )
+
             compare_namd_gomc_energies(
                 gomc_e_potential_box_0_final_value,
                 namd_e_potential_box_0_initial_value,
