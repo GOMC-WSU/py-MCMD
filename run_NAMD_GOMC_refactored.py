@@ -2619,7 +2619,7 @@ def get_gomc_energy_data_kcal_per_mol(gomc_energy_data_box_x_df):
     gomc_e_intra_nb_box_x_kcal_per_mol = gomc_energy_data_box_x_df.loc[
         :, "INTRA(NB)"
     ].tolist()
-    gomc_e_intra_nb_box_x_initial_value = float(
+    _gomc_e_intra_nb_box_x_initial_value = float(
         gomc_e_intra_nb_box_x_kcal_per_mol[0]
     )
     gomc_e_intra_nb_box_x_final_value = float(
@@ -3141,7 +3141,7 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
             gomc_e_vdw_plus_elec_box_1_final_value = float(
                 gomc_e_vdw_plus_elec_box_1_kcal_per_mol[-1]
             )
-            
+
             if (
                 simulation_type in ["GEMC"]
                 and only_use_box_0_for_namd_for_gemc is False
