@@ -107,6 +107,7 @@ from pathlib import Path
 
 import engines.namd_engine as ne  # for logger patch
 
+
 def _patch_logger(monkeypatch):
     class DummyLogger:
         def info(self, *args, **kwargs):

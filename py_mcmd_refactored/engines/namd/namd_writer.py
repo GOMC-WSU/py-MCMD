@@ -53,7 +53,6 @@ def _compute_namd_box_dir(
 # --- Step 3. load template safely (resolve + read) ------------------------------
 
 
-
 def _resolve_under(base: Path, maybe_relative: Path | str) -> Path:
     """
     If `maybe_relative` is absolute, return as Path.

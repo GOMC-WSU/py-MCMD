@@ -3135,9 +3135,9 @@ for run_no in range(starting_sims_namd_gomc, total_sims_namd_gomc):
             gomc_e_potential_box_1_final_value = float(
                 gomc_e_potential_box_1_kcal_per_mol[-1]
             )
-            gomc_e_vdw_plus_elec_box_1_kcal_per_mol = gomc_energy_data_box_1_df.loc[
-                :, "VDW+ELEC"
-            ].tolist()
+            gomc_e_vdw_plus_elec_box_1_kcal_per_mol = (
+                gomc_energy_data_box_1_df.loc[:, "VDW+ELEC"].tolist()
+            )
             gomc_e_vdw_plus_elec_box_1_final_value = float(
                 gomc_e_vdw_plus_elec_box_1_kcal_per_mol[-1]
             )
